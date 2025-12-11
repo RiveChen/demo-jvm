@@ -40,3 +40,8 @@ TEST_F(ClassFileTest, InvalidMagic) {
   class_loader::ClassFileParser invalid_parser(invalid_data);
   EXPECT_THROW(invalid_parser.parse(), std::runtime_error);
 }
+
+TEST_F(ClassFileTest, ParseVersion) {
+  auto class_file = parser_->parse();
+  EXPECT_EQ(class_file->version.toString(), "52.0");
+}

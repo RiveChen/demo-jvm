@@ -11,6 +11,7 @@
 #pragma once
 
 #include "common/types.h"
+#include "version.h"
 
 namespace class_loader {
 
@@ -18,14 +19,14 @@ constexpr common::U4 kClassFileMagic = 0xCAFEBABE;
 
 class ClassFile {
  public:
-  ClassFile() {}
+  explicit ClassFile(Version version) : version(std::move(version)) {}
   ClassFile(const ClassFile&)            = delete;
   ClassFile(ClassFile&&)                 = default;
   ClassFile& operator=(const ClassFile&) = delete;
   ClassFile& operator=(ClassFile&&)      = default;
   ~ClassFile()                           = default;
 
-  friend class ClassFileParser;
+  Version version;
 };
 
 }  // namespace class_loader
