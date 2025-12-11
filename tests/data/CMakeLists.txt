@@ -20,7 +20,7 @@ make_directory(${CLASS_OUTPUT_DIR})
 # javac -d build/test_classes tests/test_data/java/*.java
 add_custom_command(
     OUTPUT ${CLASS_OUTPUT_DIR}/timestamp # use timestamp file as a generation marker
-    COMMAND ${Java_JAVAC_EXECUTABLE} -d ${CLASS_OUTPUT_DIR} ${JAVA_SOURCES}
+    COMMAND ${Java_JAVAC_EXECUTABLE} ${JAVAC_FLAGS} -d ${CLASS_OUTPUT_DIR} ${JAVA_SOURCES}
     COMMAND ${CMAKE_COMMAND} -E touch ${CLASS_OUTPUT_DIR}/timestamp
     DEPENDS ${JAVA_SOURCES}
     COMMENT "Compiling test Java files..."
