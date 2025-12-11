@@ -2,21 +2,16 @@
 
 #include <gtest/gtest.h>
 
+#include "common/types.h"
+
 class ByteReaderTest : public ::testing::Test {
  protected:
-  void SetUp() override {
-    std::vector<char> dummy_bytes = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08};
-    input_  = new std::istringstream(std::string(dummy_bytes.begin(), dummy_bytes.end()));
-    reader_ = new class_loader::ByteReader(*input_);
-  }
+  void SetUp() override { reader_ = std::make_unique<class_loader::ByteReader>(dummy_bytes_); }
 
-  void TearDown() override {
-    delete reader_;
-    delete input_;
-  }
+  void TearDown() override {}
 
-  std::istringstream*       input_;
-  class_loader::ByteReader* reader_;
+  std::vector<common::U1> dummy_bytes_ = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08};
+  std::unique_ptr<class_loader::ByteReader> reader_;
 };
 
 TEST_F(ByteReaderTest, ReadU2AndU1) {
@@ -39,4 +34,12 @@ TEST_F(ByteReaderTest, ReadIntoBuffer) {
   EXPECT_EQ(buffer[1], 0x02);
   EXPECT_EQ(buffer[2], 0x03);
   EXPECT_EQ(buffer[3], 0x04);
+}
+
+TEST_F(ByteReaderTest, ReadOutOfBounds) {
+  EXPECT_THROW(reader_->readBytes(100), std::out_of_range);
+}
+
+TEST_F(ByteReaderTest, ReadIntoNullBuffer) {
+  EXPECT_THROW(reader_->readBytes(nullptr, 4), std::invalid_argument);
 }
