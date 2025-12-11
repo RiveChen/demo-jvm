@@ -1,0 +1,42 @@
+# .clang-tidy
+
+# InheritParentConfig: true allows inheriting or overriding config in subdirectories, suitable for large projects
+InheritParentConfig: true
+
+# Checks: Specify which checks to enable or disable.
+# Wildcard * makes it easy to enable a whole group of checks.
+# Prepend - to disable a specific check.
+Checks: >
+  # Enable all clang-analyzer-* checks, which can find many serious logic errors
+  clang-analyzer-*,
+
+  # Enable most bugprone-* checks to help avoid common pitfalls
+  bugprone-*,
+  -bugprone-easily-swappable-parameters, # Sometimes noisy, can be disabled by default
+
+  # Enable most performance-* checks to discover potential performance issues
+  performance-*,
+
+  # Enable modernize-* checks to help migrate code to modern C++ (e.g., use nullptr, override, etc.)
+  modernize-*,
+  -modernize-use-trailing-return-type, # Trailing return types are personal style; can disable
+
+  # Enable readability-* checks to improve code readability
+  readability-*,
+  -readability-identifier-naming # We'll define naming conventions ourselves; tool disabled to avoid conflict
+
+# LineLength: Sets the allowed maximum line length (e.g., 120 characters); warnings if exceeded
+LineLength: 256
+
+# HeaderFilterRegex: Defines which header files to analyze.
+# Set to '.*' to analyze all included headers, useful in initial cleanup.
+HeaderFilterRegex: '.*'
+
+# CheckOptions: Provide additional configuration for specific checks
+CheckOptions:
+  # For example, configure your own naming style for identifier checks (if enabled)
+  # - key: readability-identifier-naming.NamespaceCase
+  #   value: lower_case
+  # - key: readability-identifier-naming.ClassCase
+  #   value: CamelCase
+  # ... and so on
