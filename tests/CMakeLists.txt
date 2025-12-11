@@ -4,3 +4,4 @@ include(GoogleTest)
 
 # Add subdirectories here as the project grows
 add_subdirectory(sanity)
+add_subdirectory(modules)
