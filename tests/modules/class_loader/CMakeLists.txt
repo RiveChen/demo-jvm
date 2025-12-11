@@ -1,4 +1,4 @@
-add_executable(test_class_loader byte_reader_test.cpp)
+add_executable(test_class_loader byte_reader_test.cpp class_file_test.cpp)
 target_link_libraries(test_class_loader PRIVATE jvm_classloader GTest::gtest_main)
 
 # compile testing .java files to .class files
