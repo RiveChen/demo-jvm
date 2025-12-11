@@ -34,7 +34,8 @@ class ClassFileParser {
   ByteReader& getReader() { return reader_; }
 
  private:
-  void parseMagic();
+  void    parseMagic();
+  Version parseVersion();
 
   // stateful parsing
   ByteReader reader_;
