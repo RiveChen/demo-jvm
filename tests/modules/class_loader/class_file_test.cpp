@@ -82,3 +82,22 @@ TEST_F(ClassFileTest, ParseInterfaces) {
   EXPECT_EQ(class_file->interfaces_count, 0);
   EXPECT_EQ(class_file->interfaces, std::vector<common::U2>());
 }
+
+TEST_F(ClassFileTest, ParseFields) {
+  auto class_file = parser_->parse();
+  EXPECT_EQ(class_file->fields.getMembers().size(), 0);
+}
+
+TEST_F(ClassFileTest, ParseMethods) {
+  auto class_file = parser_->parse();
+  EXPECT_EQ(class_file->methods.getMembers().size(), 2);
+  EXPECT_EQ(class_file->methods.getMembers()[0]->name, "<init>");
+  EXPECT_EQ(
+    class_file->constant_pool.getUtf8String(class_file->methods.getMembers()[0]->descriptor_index),
+    "()V");
+}
+
+TEST_F(ClassFileTest, ParseAttributes) {
+  auto class_file = parser_->parse();
+  EXPECT_EQ(class_file->attributes.getAttributes().size(), 0);
+}

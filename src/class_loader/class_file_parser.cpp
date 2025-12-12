@@ -14,12 +14,16 @@ std::unique_ptr<ClassFile> ClassFileParser::parse() {
   auto super_class_index = reader_.read<U2>();
   auto interfaces_count  = reader_.read<U2>();
   auto interfaces        = std::vector<common::U2>(interfaces_count);
+  auto fields            = parseFields();
+  auto methods           = parseMethods();
+  auto attributes        = parseAttributes();
   for (common::U2 i = 0; i < interfaces_count; ++i) {
     interfaces[i] = reader_.read<U2>();
   }
   return std::make_unique<ClassFile>(std::move(version), std::move(constant_pool),
                                      std::move(access_flags), this_class_index, super_class_index,
-                                     interfaces_count, std::move(interfaces));
+                                     interfaces_count, std::move(interfaces), std::move(fields),
+                                     std::move(methods), std::move(attributes));
 }
 
 void ClassFileParser::parseMagic() {
@@ -121,6 +125,36 @@ std::unique_ptr<ConstantInfo> ClassFileParser::createConstantInfo() {
 AccessFlags<flags::Class> ClassFileParser::parseAccessFlags() {
   U2 flags = reader_.read<U2>();
   return AccessFlags<flags::Class>(flags);
+}
+
+MemberTable ClassFileParser::parseFields() {
+  U2                                       count = reader_.read<U2>();
+  std::vector<std::unique_ptr<MemberInfo>> fields;
+  for (auto i = 0; i < count; i++) {
+    fields.push_back(createFieldInfo());
+  }
+  return MemberTable(std::move(fields));
+}
+
+MemberTable ClassFileParser::parseMethods() {
+  U2                                       count = reader_.read<U2>();
+  std::vector<std::unique_ptr<MemberInfo>> methods;
+  for (auto i = 0; i < count; i++) {
+    methods.push_back(createMethodInfo());
+  }
+  return MemberTable(std::move(methods));
+}
+
+std::unique_ptr<FieldInfo> ClassFileParser::createFieldInfo() {
+  auto info = std::make_unique<FieldInfo>();
+  info->readInfo(*this);
+  return info;
+}
+
+std::unique_ptr<MethodInfo> ClassFileParser::createMethodInfo() {
+  auto info = std::make_unique<MethodInfo>();
+  info->readInfo(*this);
+  return info;
 }
 
 AttributeTable ClassFileParser::parseAttributes() {
