@@ -1,3 +1,3 @@
-add_executable(test_endian endian_test.cpp)
+add_executable(test_endian endian_test.cpp access_flags_test.cpp)
 target_link_libraries(test_endian PRIVATE jvm_common GTest::gtest_main)
 gtest_discover_tests(test_endian)
