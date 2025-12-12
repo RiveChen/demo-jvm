@@ -63,6 +63,7 @@ enum class Field : U2 {
 template <typename FlagEnum>
 class AccessFlags {
  public:
+  AccessFlags() : flags_(0) {}
   explicit AccessFlags(U2 flags) : flags_(flags) {}
 
   bool has(FlagEnum flag) const { return flags_ & static_cast<U2>(flag); }

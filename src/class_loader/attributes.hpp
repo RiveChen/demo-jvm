@@ -53,6 +53,8 @@ class AttributeTable {
     return nullptr;
   };
 
+  std::vector<std::unique_ptr<AttributeInfo>>& getAttributes() { return attributes; }
+
  private:
   std::vector<std::unique_ptr<AttributeInfo>> attributes;
 };

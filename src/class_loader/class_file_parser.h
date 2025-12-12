@@ -32,17 +32,22 @@ class ClassFileParser {
    */
   std::unique_ptr<ClassFile> parse();
 
-  ByteReader& getReader() { return reader_; }
+  ByteReader&         getReader() { return reader_; }
+  const ConstantPool& getConstantPool() { return *constant_pool_ref_; }
 
  private:
   void                                      parseMagic();
   Version                                   parseVersion();
   ConstantPool                              parseConstantPool();
   common::AccessFlags<common::flags::Class> parseAccessFlags();
+  MemberTable                               parseFields();
+  MemberTable                               parseMethods();
   AttributeTable                            parseAttributes();
 
   std::unique_ptr<ConstantInfo>  createConstantInfo();
   std::unique_ptr<AttributeInfo> createAttributeInfo();
+  std::unique_ptr<FieldInfo>     createFieldInfo();
+  std::unique_ptr<MethodInfo>    createMethodInfo();
 
   // stateful parsing
   ByteReader reader_;
@@ -51,6 +56,8 @@ class ClassFileParser {
 
   // the following classes need parsing of nested attributes
   friend class CodeAttribute;
+  friend class FieldInfo;
+  friend class MethodInfo;
 };
 
 }  // namespace class_loader
