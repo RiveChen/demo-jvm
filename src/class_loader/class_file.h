@@ -10,6 +10,7 @@
  */
 #pragma once
 
+#include "common/access_flags.hpp"
 #include "common/types.h"
 #include "constant_pool.h"
 #include "version.h"
@@ -20,16 +21,20 @@ constexpr common::U4 kClassFileMagic = 0xCAFEBABE;
 
 class ClassFile {
  public:
-  explicit ClassFile(Version version, ConstantPool constant_pool)
-    : version(std::move(version)), constant_pool(std::move(constant_pool)) {}
+  explicit ClassFile(Version version, ConstantPool constant_pool,
+                     common::AccessFlags<common::flags::Class> access_flags)
+    : version(std::move(version)),
+      constant_pool(std::move(constant_pool)),
+      access_flags(std::move(access_flags)) {}
   ClassFile(const ClassFile&)            = delete;
   ClassFile(ClassFile&&)                 = default;
   ClassFile& operator=(const ClassFile&) = delete;
   ClassFile& operator=(ClassFile&&)      = default;
   ~ClassFile()                           = default;
 
-  Version      version;
-  ConstantPool constant_pool;
+  Version                                   version;
+  ConstantPool                              constant_pool;
+  common::AccessFlags<common::flags::Class> access_flags;
 };
 
 }  // namespace class_loader

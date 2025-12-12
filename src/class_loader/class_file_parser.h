@@ -34,9 +34,10 @@ class ClassFileParser {
   ByteReader& getReader() { return reader_; }
 
  private:
-  void         parseMagic();
-  Version      parseVersion();
-  ConstantPool parseConstantPool();
+  void                                      parseMagic();
+  Version                                   parseVersion();
+  ConstantPool                              parseConstantPool();
+  common::AccessFlags<common::flags::Class> parseAccessFlags();
 
   std::unique_ptr<ConstantInfo> createConstantInfo();
 
