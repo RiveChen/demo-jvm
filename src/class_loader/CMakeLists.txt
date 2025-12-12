@@ -1,4 +1,4 @@
-add_library(jvm_classloader STATIC class_file_parser.cpp)
+add_library(jvm_classloader STATIC class_file_parser.cpp constant_pool.cpp)
 target_include_directories(jvm_classloader PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/..
 )

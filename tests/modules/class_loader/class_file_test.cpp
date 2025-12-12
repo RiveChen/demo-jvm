@@ -45,3 +45,12 @@ TEST_F(ClassFileTest, ParseVersion) {
   auto class_file = parser_->parse();
   EXPECT_EQ(class_file->version.toString(), "52.0");
 }
+
+TEST_F(ClassFileTest, ParseConstantPool) {
+  auto  class_file    = parser_->parse();
+  auto& constant_pool = class_file->constant_pool;
+  EXPECT_EQ(constant_pool.size(), 26);
+  EXPECT_EQ(constant_pool.getUtf8String(4), "java/lang/Object");
+  EXPECT_EQ(constant_pool.getClassName(2), "java/lang/Object");
+  EXPECT_THROW(constant_pool.getConstantInfo(0), std::invalid_argument);
+}
