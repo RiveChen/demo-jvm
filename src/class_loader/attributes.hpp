@@ -15,7 +15,7 @@
 
 #include "common/types.h"
 
-namespace class_loader {
+namespace jvm::class_loader {
 
 class ByteReader;
 class ClassFileParser;
@@ -26,8 +26,8 @@ class AttributeInfo {
   virtual ~AttributeInfo()                       = default;
   virtual void readInfo(ClassFileParser& parser) = 0;
 
-  common::U2 name_index;
-  common::U4 length;
+  U2 name_index;
+  U4 length;
 
   std::string name;
 };
@@ -61,30 +61,30 @@ class AttributeTable {
 
 class GenericAttribute : public AttributeInfo {
  public:
-  void                    readInfo(ClassFileParser& parser) override;
-  std::vector<common::U1> info;
+  void            readInfo(ClassFileParser& parser) override;
+  std::vector<U1> info;
 };
 
 // The ConstantValueAttribute class
 class ConstantValueAttribute : public AttributeInfo {
  public:
-  void       readInfo(ClassFileParser& parser) override;
-  common::U2 value;
+  void readInfo(ClassFileParser& parser) override;
+  U2   value;
 };
 
 // The ExceptionsAttribute class
 class ExceptionsAttribute : public AttributeInfo {
  public:
-  void                    readInfo(ClassFileParser& parser) override;
-  common::U2              num_exceptions;
-  std::vector<common::U2> exceptions;
+  void            readInfo(ClassFileParser& parser) override;
+  U2              num_exceptions;
+  std::vector<U2> exceptions;
 };
 
 // The BootstrapMethodsAttribute class
 struct BootstrapMethod {
-  common::U2              method_ref;
-  common::U2              num_arguments;
-  std::vector<common::U2> arguments;
+  U2              method_ref;
+  U2              num_arguments;
+  std::vector<U2> arguments;
 };
 
 class BootstrapMethodsAttribute : public AttributeInfo {
@@ -92,15 +92,15 @@ class BootstrapMethodsAttribute : public AttributeInfo {
   void                         readInfo(ClassFileParser& parser) override;
   std::vector<BootstrapMethod> bootstrap_methods;
 
-  common::U2 num_bootstrap_methods;
+  U2 num_bootstrap_methods;
 };
 
 // The CodeAttribute class
 struct ExceptionTableEntry {
-  common::U2 start_pc;
-  common::U2 end_pc;
-  common::U2 handler_pc;
-  common::U2 catch_type;
+  U2 start_pc;
+  U2 end_pc;
+  U2 handler_pc;
+  U2 catch_type;
 };
 
 class CodeAttribute : public AttributeInfo {
@@ -108,19 +108,19 @@ class CodeAttribute : public AttributeInfo {
   void readInfo(ClassFileParser& parser) override;
 
   // --- Member Variables ---
-  common::U2 max_stack;   // Maximum depth of the operand stack
-  common::U2 max_locals;  // Number of local variables
+  U2 max_stack;   // Maximum depth of the operand stack
+  U2 max_locals;  // Number of local variables
 
   // The actual bytecode
-  common::U4              code_length;
-  std::vector<common::U1> code;
+  U4              code_length;
+  std::vector<U1> code;
 
   // The exception handler table
-  common::U2                       num_exception_table;
+  U2                               num_exception_table;
   std::vector<ExceptionTableEntry> exception_table;
 
   // Nested attributes
   AttributeTable attributes;
 };
 
-}  // namespace class_loader
+}  // namespace jvm::class_loader
