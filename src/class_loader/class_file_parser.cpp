@@ -8,6 +8,7 @@ std::unique_ptr<ClassFile> ClassFileParser::parse() {
   parseMagic();
   auto version           = parseVersion();
   auto constant_pool     = parseConstantPool();
+  constant_pool_ref_     = &constant_pool;
   auto access_flags      = parseAccessFlags();
   auto this_class_index  = reader_.read<U2>();
   auto super_class_index = reader_.read<U2>();
@@ -120,6 +121,38 @@ std::unique_ptr<ConstantInfo> ClassFileParser::createConstantInfo() {
 AccessFlags<flags::Class> ClassFileParser::parseAccessFlags() {
   U2 flags = reader_.read<U2>();
   return AccessFlags<flags::Class>(flags);
+}
+
+AttributeTable ClassFileParser::parseAttributes() {
+  U2                                          count = reader_.read<U2>();
+  std::vector<std::unique_ptr<AttributeInfo>> attributes;
+  for (auto i = 0; i < count; i++) {
+    attributes.push_back(createAttributeInfo());
+  }
+  return AttributeTable(std::move(attributes));
+}
+
+std::unique_ptr<AttributeInfo> ClassFileParser::createAttributeInfo() {
+  auto                           name_index = reader_.read<U2>();
+  auto                           length     = reader_.read<U4>();
+  std::string                    attr_name  = constant_pool_ref_->getUtf8String(name_index);
+  std::unique_ptr<AttributeInfo> info;
+  if (attr_name == "ConstantValue") {
+    info = std::make_unique<ConstantValueAttribute>();
+  } else if (attr_name == "Exceptions") {
+    info = std::make_unique<ExceptionsAttribute>();
+  } else if (attr_name == "Code") {
+    info = std::make_unique<CodeAttribute>();
+  } else if (attr_name == "BootstrapMethods") {
+    info = std::make_unique<BootstrapMethodsAttribute>();
+  } else {
+    info = std::make_unique<GenericAttribute>();
+  }
+  info->name_index = name_index;
+  info->length     = length;
+  info->name       = attr_name;
+  info->readInfo(*this);
+  return info;
 }
 
 }  // namespace class_loader

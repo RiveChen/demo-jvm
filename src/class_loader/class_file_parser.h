@@ -23,7 +23,8 @@ class ClassFileParser {
    * @brief Construct a new ClassFileParser object
    * @param data Data to parse, not owned by the ClassFileParser
    */
-  explicit ClassFileParser(std::span<common::U1> data) : reader_(data) {}
+  explicit ClassFileParser(std::span<common::U1> data)
+    : reader_(data), constant_pool_ref_(nullptr) {}
 
   /**
    * @brief A factory method to parse the class file
@@ -38,11 +39,18 @@ class ClassFileParser {
   Version                                   parseVersion();
   ConstantPool                              parseConstantPool();
   common::AccessFlags<common::flags::Class> parseAccessFlags();
+  AttributeTable                            parseAttributes();
 
-  std::unique_ptr<ConstantInfo> createConstantInfo();
+  std::unique_ptr<ConstantInfo>  createConstantInfo();
+  std::unique_ptr<AttributeInfo> createAttributeInfo();
 
   // stateful parsing
   ByteReader reader_;
+  // holding a ref to the constant pool to access the constant pool entries
+  const ConstantPool* constant_pool_ref_;
+
+  // the following classes need parsing of nested attributes
+  friend class CodeAttribute;
 };
 
 }  // namespace class_loader
