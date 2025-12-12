@@ -18,10 +18,10 @@ std::unique_ptr<ClassFile> ClassFileParser::parse() {
   for (U2 i = 0; i < interfaces_count; ++i) {
     interfaces[i] = reader_.read<U2>();
   }
-  return std::make_unique<ClassFile>(std::move(version), std::move(constant_pool),
-                                     std::move(access_flags), this_class_index, super_class_index,
-                                     interfaces_count, std::move(interfaces), std::move(fields),
-                                     std::move(methods), std::move(attributes));
+  return std::make_unique<ClassFile>(std::move(version), std::move(constant_pool), access_flags,
+                                     this_class_index, super_class_index, interfaces_count,
+                                     std::move(interfaces), std::move(fields), std::move(methods),
+                                     std::move(attributes));
 }
 
 void ClassFileParser::parseMagic() {
@@ -126,19 +126,19 @@ AccessFlags<flags::Class> ClassFileParser::parseAccessFlags() {
 }
 
 MemberTable ClassFileParser::parseFields() {
-  U2                                       count = reader_.read<U2>();
-  std::vector<std::unique_ptr<MemberInfo>> fields;
+  U2   count  = reader_.read<U2>();
+  auto fields = std::vector<std::unique_ptr<MemberInfo>>(count);
   for (auto i = 0; i < count; i++) {
-    fields.push_back(createFieldInfo());
+    fields[i] = createFieldInfo();
   }
   return MemberTable(std::move(fields));
 }
 
 MemberTable ClassFileParser::parseMethods() {
-  U2                                       count = reader_.read<U2>();
-  std::vector<std::unique_ptr<MemberInfo>> methods;
+  U2   count   = reader_.read<U2>();
+  auto methods = std::vector<std::unique_ptr<MemberInfo>>(count);
   for (auto i = 0; i < count; i++) {
-    methods.push_back(createMethodInfo());
+    methods[i] = createMethodInfo();
   }
   return MemberTable(std::move(methods));
 }
@@ -156,8 +156,8 @@ std::unique_ptr<MethodInfo> ClassFileParser::createMethodInfo() {
 }
 
 AttributeTable ClassFileParser::parseAttributes() {
-  U2                                          count = reader_.read<U2>();
-  std::vector<std::unique_ptr<AttributeInfo>> attributes;
+  U2   count      = reader_.read<U2>();
+  auto attributes = std::vector<std::unique_ptr<AttributeInfo>>(count);
   for (auto i = 0; i < count; i++) {
     attributes.push_back(createAttributeInfo());
   }

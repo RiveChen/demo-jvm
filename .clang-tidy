@@ -1,42 +1,57 @@
-# .clang-tidy
+FormatStyle: file
 
-# InheritParentConfig: true allows inheriting or overriding config in subdirectories, suitable for large projects
-InheritParentConfig: true
-
-# Checks: Specify which checks to enable or disable.
-# Wildcard * makes it easy to enable a whole group of checks.
-# Prepend - to disable a specific check.
+# --- Check Rules ---
+# Core Strategies:
+# 1. Enable cppcoreguidelines-* (C++ Core Guidelines)
+# 2. Enable hicpp-* (High Integrity C++)
+# 3. Enable cert-* (CERT Security Standard)
+# 4. Enable concurrency-* (Concurrency checks)
+# 5. Disable specific platform rules (android, fuchsia, zircon, darwin) to avoid false positives
 Checks: >
-  # Enable all clang-analyzer-* checks, which can find many serious logic errors
-  clang-analyzer-*,
-
-  # Enable most bugprone-* checks to help avoid common pitfalls
+  -*,
   bugprone-*,
-  -bugprone-easily-swappable-parameters, # Sometimes noisy, can be disabled by default
-
-  # Enable most performance-* checks to discover potential performance issues
-  performance-*,
-
-  # Enable modernize-* checks to help migrate code to modern C++ (e.g., use nullptr, override, etc.)
+  -bugprone-easily-swappable-parameters,
+  cert-*,
+  clang-analyzer-*,
+  concurrency-*,
+  cppcoreguidelines-*,
+  hicpp-*,
+  misc-*,
+  -misc-non-private-member-variables-in-classes,
   modernize-*,
-  -modernize-use-trailing-return-type, # Trailing return types are personal style; can disable
-
-  # Enable readability-* checks to improve code readability
+  -modernize-use-trailing-return-type,
+  performance-*,
+  portability-*,
   readability-*,
-  -readability-identifier-naming # We'll define naming conventions ourselves; tool disabled to avoid conflict
+  -google-*,
+  -llvmlibc-*,
+  -fuchsia-*,
+  -android-*,
+  -zircon-*,
+  -abseil-*,
+  -darwin-*,
+  -objc-*,
 
-# LineLength: Sets the allowed maximum line length (e.g., 120 characters); warnings if exceeded
-LineLength: 256
+# --- Zero Tolerance Policy ---
+# Treat all warnings as errors.
+# Any non-conforming naming or potential risk will cause the build to fail.
+WarningsAsErrors: "*"
 
-# HeaderFilterRegex: Defines which header files to analyze.
-# Set to '.*' to analyze all included headers, useful in initial cleanup.
-HeaderFilterRegex: '.*'
+# --- Strict Header File Filtering ---
+# Ensure all files under the source directories are checked
+HeaderFilterRegex: "src/.*|include/.*"
 
-# CheckOptions: Provide additional configuration for specific checks
+# --- Rule Fine-tuning ---
 CheckOptions:
-  # For example, configure your own naming style for identifier checks (if enabled)
-  # - key: readability-identifier-naming.NamespaceCase
-  #   value: lower_case
-  # - key: readability-identifier-naming.ClassCase
-  #   value: CamelCase
-  # ... and so on
+  # Enforce: All member variables must be initialized on declaration
+  - key: cppcoreguidelines-pro-type-member-init.IgnoreArrays
+    value: 0
+  # Enforce: Single-argument constructors must be marked explicit
+  - key: google-explicit-constructor.SingleArgument
+    value: 1
+  # Limit function complexity (cyclomatic complexity no more than 15)
+  - key: readability-function-cognitive-complexity.Threshold
+    value: 15
+  # Limit function line count
+  - key: readability-function-size.LineThreshold
+    value: 80

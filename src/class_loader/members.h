@@ -11,11 +11,16 @@ class ByteReader;
 // Base class for fields and methods
 class MemberInfo {
  public:
+  MemberInfo()                                   = default;
+  MemberInfo(const MemberInfo&)                  = delete;
+  MemberInfo(MemberInfo&&)                       = default;
+  MemberInfo& operator=(const MemberInfo&)       = delete;
+  MemberInfo& operator=(MemberInfo&&)            = default;
   virtual ~MemberInfo()                          = default;
   virtual void readInfo(ClassFileParser& parser) = 0;
 
-  U2             name_index;
-  U2             descriptor_index;
+  U2             name_index{};
+  U2             descriptor_index{};
   AttributeTable attributes;
 
   std::string name;
@@ -39,7 +44,8 @@ class MethodInfo : public MemberInfo {
 
 class MemberTable {
  public:
-  MemberTable(std::vector<std::unique_ptr<MemberInfo>>&& members) : members(std::move(members)) {}
+  explicit MemberTable(std::vector<std::unique_ptr<MemberInfo>>&& members)
+    : members(std::move(members)) {}
   MemberTable(const MemberTable&)            = delete;
   MemberTable(MemberTable&&)                 = default;
   MemberTable& operator=(const MemberTable&) = delete;

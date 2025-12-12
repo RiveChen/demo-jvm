@@ -23,11 +23,16 @@ class ConstantPool;
 
 class AttributeInfo {
  public:
+  AttributeInfo()                                = default;
+  AttributeInfo(const AttributeInfo&)            = default;
+  AttributeInfo(AttributeInfo&&)                 = default;
+  AttributeInfo& operator=(const AttributeInfo&) = default;
+  AttributeInfo& operator=(AttributeInfo&&)      = default;
   virtual ~AttributeInfo()                       = default;
   virtual void readInfo(ClassFileParser& parser) = 0;
 
-  U2 name_index;
-  U4 length;
+  U2 name_index{};
+  U4 length{};
 
   std::string name;
 };
@@ -35,7 +40,7 @@ class AttributeInfo {
 class AttributeTable {
  public:
   AttributeTable() = default;
-  AttributeTable(std::vector<std::unique_ptr<AttributeInfo>>&& attributes)
+  explicit AttributeTable(std::vector<std::unique_ptr<AttributeInfo>>&& attributes)
     : attributes(std::move(attributes)) {}
   AttributeTable(const AttributeTable&)            = delete;
   AttributeTable(AttributeTable&&)                 = default;

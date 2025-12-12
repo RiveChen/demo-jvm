@@ -29,7 +29,7 @@ class ClassFile {
             AttributeTable attributes)
     : version(std::move(version)),
       constant_pool(std::move(constant_pool)),
-      access_flags(std::move(access_flags)),
+      access_flags(access_flags),
       this_class_index(this_class_index),
       super_class_index(super_class_index),
       interfaces_count(interfaces_count),

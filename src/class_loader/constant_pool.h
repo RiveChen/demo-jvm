@@ -41,11 +41,16 @@ enum class ConstantTag : U1 {
 // Abstract base class for all constant pool entries
 class ConstantInfo {
  public:
-  virtual ~ConstantInfo() = default;
+  ConstantInfo()                               = default;
+  ConstantInfo(const ConstantInfo&)            = default;
+  ConstantInfo(ConstantInfo&&)                 = default;
+  ConstantInfo& operator=(const ConstantInfo&) = default;
+  ConstantInfo& operator=(ConstantInfo&&)      = default;
+  virtual ~ConstantInfo()                      = default;
   // Each concrete type must know how to read its own data from the stream
   virtual void readInfo(ByteReader& reader) = 0;
 
-  ConstantTag tag;
+  ConstantTag tag{};
 };
 
 // CONSTANT_Utf8_info
@@ -143,7 +148,8 @@ class InvokeDynamicInfo : public ConstantInfo {
 class ConstantPool {
  public:
   // Takes ownership of the parsed constant info vector
-  ConstantPool(std::vector<std::unique_ptr<ConstantInfo>>&& pool) : pool_(std::move(pool)) {}
+  explicit ConstantPool(std::vector<std::unique_ptr<ConstantInfo>>&& pool)
+    : pool_(std::move(pool)) {}
   ConstantPool(const ConstantPool&)            = delete;
   ConstantPool(ConstantPool&&)                 = default;
   ConstantPool& operator=(const ConstantPool&) = delete;

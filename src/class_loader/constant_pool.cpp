@@ -80,7 +80,7 @@ std::string ConstantPool::getUtf8String(U2 index) const {
   }
 
   const auto* utf8_info = dynamic_cast<const Utf8Info*>(getConstantInfo(index));
-  if (!utf8_info) {
+  if (utf8_info == nullptr) {
     throw std::runtime_error("Constant pool entry at index " + std::to_string(index) +
                              " is not a UTF-8 string");
   }
@@ -94,7 +94,7 @@ std::string ConstantPool::getClassName(U2 class_index) const {
   }
 
   const auto* class_info = dynamic_cast<const ClassInfo*>(getConstantInfo(class_index));
-  if (!class_info) {
+  if (class_info == nullptr) {
     throw std::runtime_error("Constant pool entry at index " + std::to_string(class_index) +
                              " is not a class reference");
   }
@@ -108,7 +108,7 @@ std::pair<std::string, std::string> ConstantPool::getNameAndType(U2 index) const
   }
 
   const auto* name_and_type_info = dynamic_cast<const NameAndTypeInfo*>(getConstantInfo(index));
-  if (!name_and_type_info) {
+  if (name_and_type_info == nullptr) {
     throw std::runtime_error("Constant pool entry at index " + std::to_string(index) +
                              " is not a name and type");
   }
