@@ -8,7 +8,9 @@ std::unique_ptr<ClassFile> ClassFileParser::parse() {
   parseMagic();
   auto version       = parseVersion();
   auto constant_pool = parseConstantPool();
-  return std::make_unique<ClassFile>(std::move(version), std::move(constant_pool));
+  auto access_flags  = parseAccessFlags();
+  return std::make_unique<ClassFile>(std::move(version), std::move(constant_pool),
+                                     std::move(access_flags));
 }
 
 void ClassFileParser::parseMagic() {
@@ -105,6 +107,11 @@ std::unique_ptr<ConstantInfo> ClassFileParser::createConstantInfo() {
   info->readInfo(reader_);  // Delegate parsing of specific data to the object itself
 
   return info;
+}
+
+AccessFlags<flags::Class> ClassFileParser::parseAccessFlags() {
+  U2 flags = reader_.read<U2>();
+  return AccessFlags<flags::Class>(flags);
 }
 
 }  // namespace class_loader

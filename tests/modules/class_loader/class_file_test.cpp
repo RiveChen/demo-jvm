@@ -54,3 +54,11 @@ TEST_F(ClassFileTest, ParseConstantPool) {
   EXPECT_EQ(constant_pool.getClassName(2), "java/lang/Object");
   EXPECT_THROW(constant_pool.getConstantInfo(0), std::invalid_argument);
 }
+
+TEST_F(ClassFileTest, ParseAccessFlags) {
+  auto class_file = parser_->parse();
+  EXPECT_EQ(class_file->access_flags.getFlags(), 0x0021);
+  EXPECT_TRUE(class_file->access_flags.has(common::flags::Class::PUBLIC));
+  EXPECT_TRUE(class_file->access_flags.has(common::flags::Class::SUPER));
+  EXPECT_FALSE(class_file->access_flags.has(common::flags::Class::ABSTRACT));
+}
