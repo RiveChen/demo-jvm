@@ -21,7 +21,7 @@ class ByteReader {
    * @brief Construct a new ByteReader object
    * @param data Data to read from, not owned by the ByteReader
    */
-  explicit ByteReader(std::span<U1> data) : data_(data), pos_(0) {}
+  explicit ByteReader(std::span<U1> data) : data_(data) {}
 
   /**
    * @brief Read a value of type T
@@ -73,7 +73,7 @@ class ByteReader {
 
   // stateful parsing
   std::span<U1> data_;
-  size_t        pos_;
+  size_t        pos_{};
 };
 
 }  // namespace jvm::class_loader

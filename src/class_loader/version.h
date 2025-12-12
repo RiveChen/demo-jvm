@@ -19,9 +19,9 @@ namespace jvm::class_loader {
 class Version {
  public:
   Version(U2 major, U2 minor) : major_(major), minor_(minor) {}
-  Version(const Version&)            = default;
+  Version(const Version&)            = delete;
   Version(Version&&)                 = default;
-  Version& operator=(const Version&) = default;
+  Version& operator=(const Version&) = delete;
   Version& operator=(Version&&)      = default;
   ~Version()                         = default;
 

@@ -23,7 +23,7 @@ class ClassFileParser {
    * @brief Construct a new ClassFileParser object
    * @param data Data to parse, not owned by the ClassFileParser
    */
-  explicit ClassFileParser(std::span<U1> data) : reader_(data), constant_pool_ref_(nullptr) {}
+  explicit ClassFileParser(std::span<U1> data) : reader_(data) {}
 
   /**
    * @brief A factory method to parse the class file
@@ -51,7 +51,7 @@ class ClassFileParser {
   // stateful parsing
   ByteReader reader_;
   // holding a ref to the constant pool to access the constant pool entries
-  const ConstantPool* constant_pool_ref_;
+  const ConstantPool* constant_pool_ref_{nullptr};
 
   // the following classes need parsing of nested attributes
   friend class CodeAttribute;
