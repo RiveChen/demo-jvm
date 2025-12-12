@@ -1,0 +1,3 @@
+add_executable(test_runtime local_variables_test.cpp operand_stack_test.cpp)
+target_link_libraries(test_runtime PRIVATE jvm_runtime GTest::gtest_main)
+gtest_discover_tests(test_runtime)
