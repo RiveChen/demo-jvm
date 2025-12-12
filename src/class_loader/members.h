@@ -4,7 +4,7 @@
 #include "common/access_flags.hpp"
 #include "common/types.h"
 
-namespace class_loader {
+namespace jvm::class_loader {
 
 class ByteReader;
 
@@ -14,8 +14,8 @@ class MemberInfo {
   virtual ~MemberInfo()                          = default;
   virtual void readInfo(ClassFileParser& parser) = 0;
 
-  common::U2     name_index;
-  common::U2     descriptor_index;
+  U2             name_index;
+  U2             descriptor_index;
   AttributeTable attributes;
 
   std::string name;
@@ -24,7 +24,7 @@ class MemberInfo {
 class FieldInfo : public MemberInfo {
  public:
   // This holds flags specific to fields
-  common::AccessFlags<common::flags::Field> access_flags;
+  AccessFlags<flags::Field> access_flags;
 
   void readInfo(ClassFileParser& parser) override;
 };
@@ -32,7 +32,7 @@ class FieldInfo : public MemberInfo {
 class MethodInfo : public MemberInfo {
  public:
   // This holds flags specific to methods
-  common::AccessFlags<common::flags::Method> access_flags;
+  AccessFlags<flags::Method> access_flags;
 
   void readInfo(ClassFileParser& parser) override;
 };
@@ -51,4 +51,4 @@ class MemberTable {
   std::vector<std::unique_ptr<MemberInfo>> members;
 };
 
-}  // namespace class_loader
+}  // namespace jvm::class_loader

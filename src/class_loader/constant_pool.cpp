@@ -5,9 +5,7 @@
 #include "byte_reader.hpp"
 #include "common/types.h"
 
-using namespace common;
-
-namespace class_loader {
+namespace jvm::class_loader {
 
 // Utf8Info::readInfo() - reads a UTF-8 string
 void Utf8Info::readInfo(ByteReader& reader) {
@@ -129,4 +127,4 @@ const ConstantInfo* ConstantPool::getConstantInfo(U2 index) const {
   return pool_[index].get();
 }
 
-}  // namespace class_loader
+}  // namespace jvm::class_loader

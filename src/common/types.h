@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-namespace common {
+namespace jvm {
 
 // Aliases for JVM specification types
 using U1 = uint8_t;
@@ -21,4 +21,4 @@ using Jdouble  = double;
 using Jboolean = uint8_t;  // JVM often uses 8-bit int for booleans in arrays
 using Jref     = void*;    // Not implemented yet
 
-}  // namespace common
+}  // namespace jvm

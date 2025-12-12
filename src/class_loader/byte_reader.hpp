@@ -14,14 +14,14 @@
 
 #include "common/endian.hpp"
 
-namespace class_loader {
+namespace jvm::class_loader {
 class ByteReader {
  public:
   /**
    * @brief Construct a new ByteReader object
    * @param data Data to read from, not owned by the ByteReader
    */
-  explicit ByteReader(std::span<common::U1> data) : data_(data), pos_(0) {}
+  explicit ByteReader(std::span<U1> data) : data_(data), pos_(0) {}
 
   /**
    * @brief Read a value of type T
@@ -56,9 +56,9 @@ class ByteReader {
    * @param count Number of bytes to read
    * @return Vector of bytes
    */
-  std::vector<common::U1> readBytes(size_t count) {
+  std::vector<U1> readBytes(size_t count) {
     checkBounds(count);
-    std::vector<common::U1> buffer(count);
+    std::vector<U1> buffer(count);
     std::memcpy(buffer.data(), data_.data() + pos_, count);
     pos_ += count;
     return buffer;
@@ -72,8 +72,8 @@ class ByteReader {
   }
 
   // stateful parsing
-  std::span<common::U1> data_;
-  size_t                pos_;
+  std::span<U1> data_;
+  size_t        pos_;
 };
 
-}  // namespace class_loader
+}  // namespace jvm::class_loader

@@ -8,6 +8,8 @@
 
 #include "class_loader/class_file_parser.h"
 
+using namespace jvm;
+
 class ClassFileTest : public ::testing::Test {
  protected:
   std::unique_ptr<std::ifstream> getClassFileStream(const std::string& className) {
@@ -20,23 +22,22 @@ class ClassFileTest : public ::testing::Test {
   void SetUp() override {
     class_file_stream_ = getClassFileStream(class_file_name_);
     ASSERT_TRUE(class_file_stream_->is_open()) << "Failed to open " << class_file_name_ << ".class";
-    class_file_data_ =
-      std::vector<common::U1>(std::istreambuf_iterator<char>(*class_file_stream_), {});
-    parser_ = std::make_unique<class_loader::ClassFileParser>(class_file_data_);
+    class_file_data_ = std::vector<U1>(std::istreambuf_iterator<char>(*class_file_stream_), {});
+    parser_          = std::make_unique<class_loader::ClassFileParser>(class_file_data_);
   }
 
   std::string                                    class_file_name_ = "HelloWorld";
   std::unique_ptr<std::ifstream>                 class_file_stream_;
-  std::vector<common::U1>                        class_file_data_;
+  std::vector<U1>                                class_file_data_;
   std::unique_ptr<class_loader::ClassFileParser> parser_;
 };
 
 TEST_F(ClassFileTest, ParseMagic) {
-  EXPECT_EQ(parser_->getReader().read<common::U4>(), class_loader::kClassFileMagic);
+  EXPECT_EQ(parser_->getReader().read<U4>(), class_loader::kClassFileMagic);
 }
 
 TEST_F(ClassFileTest, InvalidMagic) {
-  std::vector<common::U1>       invalid_data = {0x00, 0x00, 0x00, 0x00};
+  std::vector<U1>               invalid_data = {0x00, 0x00, 0x00, 0x00};
   class_loader::ClassFileParser invalid_parser(invalid_data);
   EXPECT_THROW(invalid_parser.parse(), std::runtime_error);
 }
@@ -58,9 +59,9 @@ TEST_F(ClassFileTest, ParseConstantPool) {
 TEST_F(ClassFileTest, ParseAccessFlags) {
   auto class_file = parser_->parse();
   EXPECT_EQ(class_file->access_flags.getFlags(), 0x0021);
-  EXPECT_TRUE(class_file->access_flags.has(common::flags::Class::PUBLIC));
-  EXPECT_TRUE(class_file->access_flags.has(common::flags::Class::SUPER));
-  EXPECT_FALSE(class_file->access_flags.has(common::flags::Class::ABSTRACT));
+  EXPECT_TRUE(class_file->access_flags.has(flags::Class::PUBLIC));
+  EXPECT_TRUE(class_file->access_flags.has(flags::Class::SUPER));
+  EXPECT_FALSE(class_file->access_flags.has(flags::Class::ABSTRACT));
 }
 
 TEST_F(ClassFileTest, ParseClassIndex) {
@@ -80,7 +81,7 @@ TEST_F(ClassFileTest, ParseSuperClassIndex) {
 TEST_F(ClassFileTest, ParseInterfaces) {
   auto class_file = parser_->parse();
   EXPECT_EQ(class_file->interfaces_count, 0);
-  EXPECT_EQ(class_file->interfaces, std::vector<common::U2>());
+  EXPECT_EQ(class_file->interfaces, std::vector<U2>());
 }
 
 TEST_F(ClassFileTest, ParseFields) {

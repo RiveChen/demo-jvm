@@ -36,7 +36,8 @@ inline U8 BSWAP64(U8 val) {
 }
 #endif
 
-namespace common {
+// C++17 nested namespace
+namespace jvm::common {
 
 // C++17 'if constexpr' allows compile-time dispatch based on type size.
 // This template provides a clean interface for swapping byte order.
@@ -62,4 +63,4 @@ T swapEndian(T value) {
 // swap the bytes. A full implementation would check the host's endianness.
 // For our learning project on x86/ARM, this assumption is safe.
 
-}  // namespace common
+}  // namespace jvm::common

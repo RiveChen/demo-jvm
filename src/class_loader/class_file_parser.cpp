@@ -1,8 +1,6 @@
 #include "class_file_parser.h"
 
-using namespace common;
-
-namespace class_loader {
+namespace jvm::class_loader {
 
 std::unique_ptr<ClassFile> ClassFileParser::parse() {
   parseMagic();
@@ -13,11 +11,11 @@ std::unique_ptr<ClassFile> ClassFileParser::parse() {
   auto this_class_index  = reader_.read<U2>();
   auto super_class_index = reader_.read<U2>();
   auto interfaces_count  = reader_.read<U2>();
-  auto interfaces        = std::vector<common::U2>(interfaces_count);
+  auto interfaces        = std::vector<U2>(interfaces_count);
   auto fields            = parseFields();
   auto methods           = parseMethods();
   auto attributes        = parseAttributes();
-  for (common::U2 i = 0; i < interfaces_count; ++i) {
+  for (U2 i = 0; i < interfaces_count; ++i) {
     interfaces[i] = reader_.read<U2>();
   }
   return std::make_unique<ClassFile>(std::move(version), std::move(constant_pool),
@@ -49,7 +47,7 @@ ConstantPool ClassFileParser::parseConstantPool() {
   // We create a vector with a null placeholder at index 0 for convenience.
   pool.resize(count);
 
-  for (common::U2 i = 1; i < count; ++i) {
+  for (U2 i = 1; i < count; ++i) {
     pool[i] = createConstantInfo();
 
     // Special case: Long and Double constants take up two slots in the pool.
@@ -189,4 +187,4 @@ std::unique_ptr<AttributeInfo> ClassFileParser::createAttributeInfo() {
   return info;
 }
 
-}  // namespace class_loader
+}  // namespace jvm::class_loader

@@ -15,7 +15,7 @@
 #include "byte_reader.hpp"
 #include "class_file.h"
 
-namespace class_loader {
+namespace jvm::class_loader {
 
 class ClassFileParser {
  public:
@@ -23,8 +23,7 @@ class ClassFileParser {
    * @brief Construct a new ClassFileParser object
    * @param data Data to parse, not owned by the ClassFileParser
    */
-  explicit ClassFileParser(std::span<common::U1> data)
-    : reader_(data), constant_pool_ref_(nullptr) {}
+  explicit ClassFileParser(std::span<U1> data) : reader_(data), constant_pool_ref_(nullptr) {}
 
   /**
    * @brief A factory method to parse the class file
@@ -36,13 +35,13 @@ class ClassFileParser {
   const ConstantPool& getConstantPool() { return *constant_pool_ref_; }
 
  private:
-  void                                      parseMagic();
-  Version                                   parseVersion();
-  ConstantPool                              parseConstantPool();
-  common::AccessFlags<common::flags::Class> parseAccessFlags();
-  MemberTable                               parseFields();
-  MemberTable                               parseMethods();
-  AttributeTable                            parseAttributes();
+  void                      parseMagic();
+  Version                   parseVersion();
+  ConstantPool              parseConstantPool();
+  AccessFlags<flags::Class> parseAccessFlags();
+  MemberTable               parseFields();
+  MemberTable               parseMethods();
+  AttributeTable            parseAttributes();
 
   std::unique_ptr<ConstantInfo>  createConstantInfo();
   std::unique_ptr<AttributeInfo> createAttributeInfo();
@@ -60,4 +59,4 @@ class ClassFileParser {
   friend class MethodInfo;
 };
 
-}  // namespace class_loader
+}  // namespace jvm::class_loader

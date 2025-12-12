@@ -12,7 +12,7 @@
 
 #include "types.h"
 
-namespace common {
+namespace jvm {
 
 namespace flags {
 
@@ -74,4 +74,4 @@ class AccessFlags {
   U2 flags_;
 };
 
-}  // namespace common
+}  // namespace jvm

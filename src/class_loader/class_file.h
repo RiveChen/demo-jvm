@@ -17,16 +17,15 @@
 #include "members.h"
 #include "version.h"
 
-namespace class_loader {
+namespace jvm::class_loader {
 
-constexpr common::U4 kClassFileMagic = 0xCAFEBABE;
+constexpr U4 kClassFileMagic = 0xCAFEBABE;
 
 class ClassFile {
  public:
-  ClassFile(Version version, ConstantPool constant_pool,
-            common::AccessFlags<common::flags::Class> access_flags, common::U2 this_class_index,
-            common::U2 super_class_index, common::U2 interfaces_count,
-            std::vector<common::U2> interfaces, MemberTable fields, MemberTable methods,
+  ClassFile(Version version, ConstantPool constant_pool, AccessFlags<flags::Class> access_flags,
+            U2 this_class_index, U2 super_class_index, U2 interfaces_count,
+            std::vector<U2> interfaces, MemberTable fields, MemberTable methods,
             AttributeTable attributes)
     : version(std::move(version)),
       constant_pool(std::move(constant_pool)),
@@ -44,16 +43,16 @@ class ClassFile {
   ClassFile& operator=(ClassFile&&)      = default;
   ~ClassFile()                           = default;
 
-  Version                                   version;
-  ConstantPool                              constant_pool;
-  common::AccessFlags<common::flags::Class> access_flags;
-  common::U2                                this_class_index;
-  common::U2                                super_class_index;
-  common::U2                                interfaces_count;
-  std::vector<common::U2>                   interfaces;
-  MemberTable                               fields;
-  MemberTable                               methods;
-  AttributeTable                            attributes;
+  Version                   version;
+  ConstantPool              constant_pool;
+  AccessFlags<flags::Class> access_flags;
+  U2                        this_class_index;
+  U2                        super_class_index;
+  U2                        interfaces_count;
+  std::vector<U2>           interfaces;
+  MemberTable               fields;
+  MemberTable               methods;
+  AttributeTable            attributes;
 };
 
-}  // namespace class_loader
+}  // namespace jvm::class_loader

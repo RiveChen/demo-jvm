@@ -4,25 +4,27 @@
 
 #include "common/types.h"
 
+using namespace jvm;
+
 class ByteReaderTest : public ::testing::Test {
  protected:
   void SetUp() override { reader_ = std::make_unique<class_loader::ByteReader>(dummy_bytes_); }
 
   void TearDown() override {}
 
-  std::vector<common::U1> dummy_bytes_ = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08};
+  std::vector<U1> dummy_bytes_ = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08};
   std::unique_ptr<class_loader::ByteReader> reader_;
 };
 
 TEST_F(ByteReaderTest, ReadU2AndU1) {
-  common::U2 val2 = reader_->read<common::U2>();
-  common::U1 val1 = reader_->read<common::U1>();
+  U2 val2 = reader_->read<U2>();
+  U1 val1 = reader_->read<U1>();
   EXPECT_EQ(val2, 0x0102);
   EXPECT_EQ(val1, 0x03);
 }
 
 TEST_F(ByteReaderTest, ReadBytesVector) {
-  std::vector<common::U1> out = reader_->readBytes(4);
+  std::vector<U1> out = reader_->readBytes(4);
   ASSERT_EQ(out.size(), 4);
   EXPECT_EQ(out[0], 0x01);
 }
