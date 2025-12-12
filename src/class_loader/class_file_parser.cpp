@@ -6,11 +6,19 @@ namespace class_loader {
 
 std::unique_ptr<ClassFile> ClassFileParser::parse() {
   parseMagic();
-  auto version       = parseVersion();
-  auto constant_pool = parseConstantPool();
-  auto access_flags  = parseAccessFlags();
+  auto version           = parseVersion();
+  auto constant_pool     = parseConstantPool();
+  auto access_flags      = parseAccessFlags();
+  auto this_class_index  = reader_.read<U2>();
+  auto super_class_index = reader_.read<U2>();
+  auto interfaces_count  = reader_.read<U2>();
+  auto interfaces        = std::vector<common::U2>(interfaces_count);
+  for (common::U2 i = 0; i < interfaces_count; ++i) {
+    interfaces[i] = reader_.read<U2>();
+  }
   return std::make_unique<ClassFile>(std::move(version), std::move(constant_pool),
-                                     std::move(access_flags));
+                                     std::move(access_flags), this_class_index, super_class_index,
+                                     interfaces_count, std::move(interfaces));
 }
 
 void ClassFileParser::parseMagic() {
