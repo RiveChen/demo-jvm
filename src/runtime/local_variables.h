@@ -18,6 +18,7 @@ namespace jvm::runtime {
 
 class LocalVariables {
  public:
+  LocalVariables() = default;
   explicit LocalVariables(U2 size) : variables_(size) {}
   LocalVariables(const LocalVariables&)            = delete;
   LocalVariables(LocalVariables&&)                 = delete;
