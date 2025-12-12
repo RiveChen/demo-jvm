@@ -62,3 +62,23 @@ TEST_F(ClassFileTest, ParseAccessFlags) {
   EXPECT_TRUE(class_file->access_flags.has(common::flags::Class::SUPER));
   EXPECT_FALSE(class_file->access_flags.has(common::flags::Class::ABSTRACT));
 }
+
+TEST_F(ClassFileTest, ParseClassIndex) {
+  auto class_file = parser_->parse();
+  EXPECT_EQ(class_file->this_class_index, 21);
+  EXPECT_EQ(class_file->constant_pool.getClassName(class_file->this_class_index),
+            "tests/data/java/HelloWorld");
+}
+
+TEST_F(ClassFileTest, ParseSuperClassIndex) {
+  auto class_file = parser_->parse();
+  EXPECT_EQ(class_file->super_class_index, 2);
+  EXPECT_EQ(class_file->constant_pool.getClassName(class_file->super_class_index),
+            "java/lang/Object");
+}
+
+TEST_F(ClassFileTest, ParseInterfaces) {
+  auto class_file = parser_->parse();
+  EXPECT_EQ(class_file->interfaces_count, 0);
+  EXPECT_EQ(class_file->interfaces, std::vector<common::U2>());
+}
