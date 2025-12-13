@@ -21,9 +21,9 @@ class LocalVariables {
   LocalVariables() = default;
   explicit LocalVariables(U2 size) : variables_(size) {}
   LocalVariables(const LocalVariables&)            = delete;
-  LocalVariables(LocalVariables&&)                 = delete;
+  LocalVariables(LocalVariables&&)                 = default;
   LocalVariables& operator=(const LocalVariables&) = delete;
-  LocalVariables& operator=(LocalVariables&&)      = delete;
+  LocalVariables& operator=(LocalVariables&&)      = default;
   ~LocalVariables()                                = default;
 
   void setInt(U2 index, Jint value) {
