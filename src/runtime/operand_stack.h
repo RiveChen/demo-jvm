@@ -20,9 +20,9 @@ class OperandStack {
  public:
   OperandStack()                               = default;
   OperandStack(const OperandStack&)            = delete;
-  OperandStack(OperandStack&&)                 = delete;
+  OperandStack(OperandStack&&)                 = default;
   OperandStack& operator=(const OperandStack&) = delete;
-  OperandStack& operator=(OperandStack&&)      = delete;
+  OperandStack& operator=(OperandStack&&)      = default;
   ~OperandStack()                              = default;
 
   void pushSlot(Slot value) { stack_.push(value); }

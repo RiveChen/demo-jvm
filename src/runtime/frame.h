@@ -11,9 +11,9 @@ class Frame {
  public:
   Frame()                        = default;
   Frame(const Frame&)            = delete;
-  Frame(Frame&&)                 = delete;
+  Frame(Frame&&)                 = default;
   Frame& operator=(const Frame&) = delete;
-  Frame& operator=(Frame&&)      = delete;
+  Frame& operator=(Frame&&)      = default;
   ~Frame()                       = default;
 
   LocalVariables& getLocalVariables() { return local_variables_; }

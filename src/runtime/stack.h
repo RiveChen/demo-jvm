@@ -10,9 +10,9 @@ class Stack {
  public:
   Stack()                        = default;
   Stack(const Stack&)            = delete;
-  Stack(Stack&&)                 = delete;
+  Stack(Stack&&)                 = default;
   Stack& operator=(const Stack&) = delete;
-  Stack& operator=(Stack&&)      = delete;
+  Stack& operator=(Stack&&)      = default;
   ~Stack()                       = default;
 
   void   push(Frame frame) { frames_.push(frame); }
