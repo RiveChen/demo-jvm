@@ -5,11 +5,11 @@
 
 namespace jvm::runtime {
 
-// class Method; // Not implemented yet
+class Method;  // avoid circular dependency
 
 class Frame {
  public:
-  Frame()                        = default;
+  explicit Frame(Method* method) : method_(method) {}
   Frame(const Frame&)            = delete;
   Frame(Frame&&)                 = default;
   Frame& operator=(const Frame&) = delete;
@@ -18,12 +18,12 @@ class Frame {
 
   LocalVariables& getLocalVariables() { return local_variables_; }
   OperandStack&   getOperandStack() { return operand_stack_; }
-  // Method*         getMethod() { return method_; }
+  Method*         getMethod() { return method_; }
 
  private:
   LocalVariables local_variables_;
   OperandStack   operand_stack_;
-  // Method*        method_;  // points to method area
+  Method*        method_;  // points to method area
 };
 
 }  // namespace jvm::runtime
