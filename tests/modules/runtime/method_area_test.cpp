@@ -18,6 +18,8 @@ class MethodAreaTest : public ::testing::Test {
     test_classpath_ = TEST_CLASS_PATH;
     classpath_list_ = {test_classpath_};
     loader_         = std::make_unique<class_loader::ClassLoader>(nullptr, classpath_list_);
+    // Reset method area because it is a global singleton
+    runtime::MethodArea::getInstance().reset();
   }
 
   void TearDown() override { loader_.reset(); }

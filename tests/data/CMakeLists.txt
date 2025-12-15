@@ -7,7 +7,8 @@ set(JAVA_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/java)
 set(CLASS_OUTPUT_DIR ${CMAKE_BINARY_DIR}/test_classes) # output directory for compiled classes
 
 # 3. collect all .java files
-file(GLOB JAVA_SOURCES "${JAVA_SRC_DIR}/*.java")
+# CONFIGURE_DEPENDS makes CMake check for new files during build time
+file(GLOB JAVA_SOURCES CONFIGURE_DEPENDS "${JAVA_SRC_DIR}/*.java")
 
 # 4. define compiler flags using Java 8
 # source: 8, target: 8, generate debug information: none, encoding: UTF-8
