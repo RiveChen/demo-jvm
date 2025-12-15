@@ -15,10 +15,20 @@ class Stack {
   Stack& operator=(Stack&&)      = default;
   ~Stack()                       = default;
 
-  void   push(Frame frame) { frames_.push(frame); }
-  void   pop() { frames_.pop(); }
-  Frame& top() { return frames_.top(); }
-  bool   empty() { return frames_.empty(); }
+  void push(Frame&& frame) { frames_.push(std::move(frame)); }
+  void pop() {
+    if (frames_.empty()) {
+      throw std::runtime_error("Stack is empty");
+    }
+    frames_.pop();
+  }
+  Frame& top() {
+    if (frames_.empty()) {
+      throw std::runtime_error("Stack is empty");
+    }
+    return frames_.top();
+  }
+  bool empty() { return frames_.empty(); }
 
  private:
   std::stack<Frame> frames_;

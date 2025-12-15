@@ -26,6 +26,8 @@ class LocalVariables {
   LocalVariables& operator=(LocalVariables&&)      = default;
   ~LocalVariables()                                = default;
 
+  U2 getSize() const { return variables_.size(); }
+
   void setInt(U2 index, Jint value) {
     checkBounds(index);
     variables_[index].i = value;
@@ -72,7 +74,7 @@ class LocalVariables {
 
   void checkBounds(U2 index) {
     if (index >= variables_.size()) {
-      throw std::out_of_range("Index out of bounds");
+      throw std::out_of_range("Index out of bounds in local variables: " + std::to_string(index));
     }
   }
 };
