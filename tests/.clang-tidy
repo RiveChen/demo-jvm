@@ -2,3 +2,5 @@ InheritParentConfig: false
 
 Checks: >
   bugprone-*
+
+# about testing, only bugprone is enough
