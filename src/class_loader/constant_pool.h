@@ -185,6 +185,10 @@ class ConstantPool {
    */
   const ConstantInfo* getConstantInfo(U2 index) const;
 
+  /**
+   * @brief Get the size of the constant pool, including the placeholder at index 0
+   * @return size_t
+   */
   size_t size() const { return pool_.size(); }
 
  private:
