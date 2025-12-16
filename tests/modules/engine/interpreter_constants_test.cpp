@@ -136,6 +136,7 @@ TEST_F(InterpreterConstantsTest, ACONST_NULL) {
   engine::Interpreter interpreter;
 
   runtime::Frame caller_frame(method);
+  caller_frame.setCallerPC(method->getCode().size());
   thread.pushFrame(std::move(caller_frame));
   thread.setPC(method->getCode().size());
 

@@ -47,6 +47,7 @@ class InterpreterTestBase : public ::testing::Test {
 
     // Create caller frame to receive return value
     runtime::Frame caller_frame(method);
+    caller_frame.setCallerPC(method->getCode().size());
     thread.pushFrame(std::move(caller_frame));
     thread.setPC(method->getCode().size());
 
@@ -84,11 +85,14 @@ class InterpreterTestBase : public ::testing::Test {
     engine::Interpreter interpreter;
 
     runtime::Frame caller_frame(method);
+    caller_frame.setCallerPC(method->getCode().size());
     thread.pushFrame(std::move(caller_frame));
+    thread.setPC(method->getCode().size());
 
     runtime::Frame callee_frame(method);
     callee_frame.getLocalVariables().setInt(0, arg);
     thread.pushFrame(std::move(callee_frame));
+    thread.setPC(0);
 
     interpreter.interpret(&thread);
 
@@ -117,12 +121,15 @@ class InterpreterTestBase : public ::testing::Test {
     engine::Interpreter interpreter;
 
     runtime::Frame caller_frame(method);
+    caller_frame.setCallerPC(method->getCode().size());
     thread.pushFrame(std::move(caller_frame));
+    thread.setPC(method->getCode().size());
 
     runtime::Frame callee_frame(method);
     callee_frame.getLocalVariables().setLong(0, arg1);
     callee_frame.getLocalVariables().setLong(2, arg2);  // long takes 2 slots
     thread.pushFrame(std::move(callee_frame));
+    thread.setPC(0);
 
     interpreter.interpret(&thread);
 
@@ -151,11 +158,14 @@ class InterpreterTestBase : public ::testing::Test {
     engine::Interpreter interpreter;
 
     runtime::Frame caller_frame(method);
+    caller_frame.setCallerPC(method->getCode().size());
     thread.pushFrame(std::move(caller_frame));
+    thread.setPC(method->getCode().size());
 
     runtime::Frame callee_frame(method);
     callee_frame.getLocalVariables().setLong(0, arg);
     thread.pushFrame(std::move(callee_frame));
+    thread.setPC(0);
 
     interpreter.interpret(&thread);
 
@@ -184,12 +194,15 @@ class InterpreterTestBase : public ::testing::Test {
     engine::Interpreter interpreter;
 
     runtime::Frame caller_frame(method);
+    caller_frame.setCallerPC(method->getCode().size());
     thread.pushFrame(std::move(caller_frame));
+    thread.setPC(method->getCode().size());
 
     runtime::Frame callee_frame(method);
     callee_frame.getLocalVariables().setFloat(0, arg1);
     callee_frame.getLocalVariables().setFloat(1, arg2);
     thread.pushFrame(std::move(callee_frame));
+    thread.setPC(0);
 
     interpreter.interpret(&thread);
 
@@ -218,11 +231,14 @@ class InterpreterTestBase : public ::testing::Test {
     engine::Interpreter interpreter;
 
     runtime::Frame caller_frame(method);
+    caller_frame.setCallerPC(method->getCode().size());
     thread.pushFrame(std::move(caller_frame));
+    thread.setPC(method->getCode().size());
 
     runtime::Frame callee_frame(method);
     callee_frame.getLocalVariables().setFloat(0, arg);
     thread.pushFrame(std::move(callee_frame));
+    thread.setPC(0);
 
     interpreter.interpret(&thread);
 
@@ -251,12 +267,15 @@ class InterpreterTestBase : public ::testing::Test {
     engine::Interpreter interpreter;
 
     runtime::Frame caller_frame(method);
+    caller_frame.setCallerPC(method->getCode().size());
     thread.pushFrame(std::move(caller_frame));
+    thread.setPC(method->getCode().size());
 
     runtime::Frame callee_frame(method);
     callee_frame.getLocalVariables().setDouble(0, arg1);
     callee_frame.getLocalVariables().setDouble(2, arg2);  // double takes 2 slots
     thread.pushFrame(std::move(callee_frame));
+    thread.setPC(0);
 
     interpreter.interpret(&thread);
 
@@ -285,11 +304,14 @@ class InterpreterTestBase : public ::testing::Test {
     engine::Interpreter interpreter;
 
     runtime::Frame caller_frame(method);
+    caller_frame.setCallerPC(method->getCode().size());
     thread.pushFrame(std::move(caller_frame));
+    thread.setPC(method->getCode().size());
 
     runtime::Frame callee_frame(method);
     callee_frame.getLocalVariables().setDouble(0, arg);
     thread.pushFrame(std::move(callee_frame));
+    thread.setPC(0);
 
     interpreter.interpret(&thread);
 
@@ -318,6 +340,7 @@ class InterpreterTestBase : public ::testing::Test {
     engine::Interpreter interpreter;
 
     runtime::Frame caller_frame(method);
+    caller_frame.setCallerPC(method->getCode().size());
     thread.pushFrame(std::move(caller_frame));
     thread.setPC(method->getCode().size());
 
@@ -352,6 +375,7 @@ class InterpreterTestBase : public ::testing::Test {
     engine::Interpreter interpreter;
 
     runtime::Frame caller_frame(method);
+    caller_frame.setCallerPC(method->getCode().size());
     thread.pushFrame(std::move(caller_frame));
     thread.setPC(method->getCode().size());
 
@@ -386,6 +410,7 @@ class InterpreterTestBase : public ::testing::Test {
     engine::Interpreter interpreter;
 
     runtime::Frame caller_frame(method);
+    caller_frame.setCallerPC(method->getCode().size());
     thread.pushFrame(std::move(caller_frame));
     thread.setPC(method->getCode().size());
 
@@ -420,6 +445,7 @@ class InterpreterTestBase : public ::testing::Test {
     engine::Interpreter interpreter;
 
     runtime::Frame caller_frame(method);
+    caller_frame.setCallerPC(method->getCode().size());
     thread.pushFrame(std::move(caller_frame));
     thread.setPC(method->getCode().size());
 
@@ -454,6 +480,7 @@ class InterpreterTestBase : public ::testing::Test {
     engine::Interpreter interpreter;
 
     runtime::Frame caller_frame(method);
+    caller_frame.setCallerPC(method->getCode().size());
     thread.pushFrame(std::move(caller_frame));
     thread.setPC(method->getCode().size());
 

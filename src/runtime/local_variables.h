@@ -69,6 +69,15 @@ class LocalVariables {
     return variables_[index].r;
   }
 
+  void setSlot(U2 index, Slot value) {
+    checkBounds(index);
+    variables_[index] = value;
+  }
+  Slot getSlot(U2 index) {
+    checkBounds(index);
+    return variables_[index];
+  }
+
  private:
   std::vector<Slot> variables_;
 
