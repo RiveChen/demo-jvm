@@ -11,7 +11,6 @@ add_executable(demo-jvm main.cpp)
 target_link_libraries(demo-jvm PRIVATE 
     jvm_common
     jvm_classloader
-    jvm_runtime
     jvm_engine
 )
 

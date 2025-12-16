@@ -6,30 +6,31 @@
 // Integer Load Tests
 // ============================================================================
 
-class InterpreterLoadStoreTest : public InterpreterTestBase {};
+class InterpreterLoadStoreTest : public InterpreterTestBase {
+ public:
+  static constexpr const char* kClassName = "tests.data.java.LoadStoreTest";
+};
 
 TEST_F(InterpreterLoadStoreTest, ILOAD_Basic) {
-  EXPECT_EQ(executeStaticMethod<Jint>("tests.data.java.LoadStoreTest", "testILOAD", 42), 42);
-  EXPECT_EQ(executeStaticMethod<Jint>("tests.data.java.LoadStoreTest", "testILOAD", -42), -42);
-  EXPECT_EQ(executeStaticMethod<Jint>("tests.data.java.LoadStoreTest", "testILOAD", 0), 0);
+  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testILOAD", 42), 42);
+  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testILOAD", -42), -42);
+  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testILOAD", 0), 0);
 }
 
 TEST_F(InterpreterLoadStoreTest, ILOAD_0) {
-  EXPECT_EQ(executeStaticMethod<Jint>("tests.data.java.LoadStoreTest", "testILOAD_0", 100), 100);
+  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testILOAD_0", 100), 100);
 }
 
 TEST_F(InterpreterLoadStoreTest, ILOAD_1) {
-  EXPECT_EQ(executeStaticMethod<Jint>("tests.data.java.LoadStoreTest", "testILOAD_1", 10, 20), 20);
+  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testILOAD_1", 10, 20), 20);
 }
 
 TEST_F(InterpreterLoadStoreTest, ILOAD_2) {
-  EXPECT_EQ(executeStaticMethod<Jint>("tests.data.java.LoadStoreTest", "testILOAD_2", 10, 20, 30),
-            30);
+  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testILOAD_2", 10, 20, 30), 30);
 }
 
 TEST_F(InterpreterLoadStoreTest, ILOAD_3) {
-  EXPECT_EQ(
-    executeStaticMethod<Jint>("tests.data.java.LoadStoreTest", "testILOAD_3", 10, 20, 30, 40), 40);
+  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testILOAD_3", 10, 20, 30, 40), 40);
 }
 
 // ============================================================================
@@ -37,15 +38,15 @@ TEST_F(InterpreterLoadStoreTest, ILOAD_3) {
 // ============================================================================
 
 TEST_F(InterpreterLoadStoreTest, ISTORE_Basic) {
-  EXPECT_EQ(executeStaticMethod<Jint>("tests.data.java.LoadStoreTest", "testISTORE", 42), 42);
+  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testISTORE", 42), 42);
 }
 
 TEST_F(InterpreterLoadStoreTest, ISTORE_0) {
-  EXPECT_EQ(executeStaticMethod<Jint>("tests.data.java.LoadStoreTest", "testISTORE_0", 100), 100);
+  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testISTORE_0", 100), 100);
 }
 
 TEST_F(InterpreterLoadStoreTest, ISTORE_1) {
-  EXPECT_EQ(executeStaticMethod<Jint>("tests.data.java.LoadStoreTest", "testISTORE_1", 10, 20), 20);
+  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testISTORE_1", 10, 20), 20);
 }
 
 // ============================================================================
@@ -53,21 +54,19 @@ TEST_F(InterpreterLoadStoreTest, ISTORE_1) {
 // ============================================================================
 
 TEST_F(InterpreterLoadStoreTest, LLOAD_Basic) {
-  EXPECT_EQ(executeStaticMethod<Jlong>("tests.data.java.LoadStoreTest", "testLLOAD", 42LL), 42LL);
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLLOAD", 42LL), 42LL);
 }
 
 TEST_F(InterpreterLoadStoreTest, LLOAD_0) {
-  EXPECT_EQ(executeStaticMethod<Jlong>("tests.data.java.LoadStoreTest", "testLLOAD_0", 100LL),
-            100LL);
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLLOAD_0", 100LL), 100LL);
 }
 
 TEST_F(InterpreterLoadStoreTest, LSTORE_Basic) {
-  EXPECT_EQ(executeStaticMethod<Jlong>("tests.data.java.LoadStoreTest", "testLSTORE", 42LL), 42LL);
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLSTORE", 42LL), 42LL);
 }
 
 TEST_F(InterpreterLoadStoreTest, LSTORE_0) {
-  EXPECT_EQ(executeStaticMethod<Jlong>("tests.data.java.LoadStoreTest", "testLSTORE_0", 100LL),
-            100LL);
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLSTORE_0", 100LL), 100LL);
 }
 
 // ============================================================================
@@ -75,23 +74,19 @@ TEST_F(InterpreterLoadStoreTest, LSTORE_0) {
 // ============================================================================
 
 TEST_F(InterpreterLoadStoreTest, FLOAD_Basic) {
-  EXPECT_FLOAT_EQ(executeStaticMethod<Jfloat>("tests.data.java.LoadStoreTest", "testFLOAD", 42.5F),
-                  42.5F);
+  EXPECT_FLOAT_EQ(executeStaticMethod<Jfloat>(kClassName, "testFLOAD", 42.5F), 42.5F);
 }
 
 TEST_F(InterpreterLoadStoreTest, FLOAD_0) {
-  EXPECT_FLOAT_EQ(
-    executeStaticMethod<Jfloat>("tests.data.java.LoadStoreTest", "testFLOAD_0", 100.0F), 100.0F);
+  EXPECT_FLOAT_EQ(executeStaticMethod<Jfloat>(kClassName, "testFLOAD_0", 100.0F), 100.0F);
 }
 
 TEST_F(InterpreterLoadStoreTest, FSTORE_Basic) {
-  EXPECT_FLOAT_EQ(executeStaticMethod<Jfloat>("tests.data.java.LoadStoreTest", "testFSTORE", 42.5F),
-                  42.5F);
+  EXPECT_FLOAT_EQ(executeStaticMethod<Jfloat>(kClassName, "testFSTORE", 42.5F), 42.5F);
 }
 
 TEST_F(InterpreterLoadStoreTest, FSTORE_0) {
-  EXPECT_FLOAT_EQ(
-    executeStaticMethod<Jfloat>("tests.data.java.LoadStoreTest", "testFSTORE_0", 100.0F), 100.0F);
+  EXPECT_FLOAT_EQ(executeStaticMethod<Jfloat>(kClassName, "testFSTORE_0", 100.0F), 100.0F);
 }
 
 // ============================================================================
@@ -99,23 +94,19 @@ TEST_F(InterpreterLoadStoreTest, FSTORE_0) {
 // ============================================================================
 
 TEST_F(InterpreterLoadStoreTest, DLOAD_Basic) {
-  EXPECT_DOUBLE_EQ(executeStaticMethod<Jdouble>("tests.data.java.LoadStoreTest", "testDLOAD", 42.5),
-                   42.5);
+  EXPECT_DOUBLE_EQ(executeStaticMethod<Jdouble>(kClassName, "testDLOAD", 42.5), 42.5);
 }
 
 TEST_F(InterpreterLoadStoreTest, DLOAD_0) {
-  EXPECT_DOUBLE_EQ(
-    executeStaticMethod<Jdouble>("tests.data.java.LoadStoreTest", "testDLOAD_0", 100.0), 100.0);
+  EXPECT_DOUBLE_EQ(executeStaticMethod<Jdouble>(kClassName, "testDLOAD_0", 100.0), 100.0);
 }
 
 TEST_F(InterpreterLoadStoreTest, DSTORE_Basic) {
-  EXPECT_DOUBLE_EQ(
-    executeStaticMethod<Jdouble>("tests.data.java.LoadStoreTest", "testDSTORE", 42.5), 42.5);
+  EXPECT_DOUBLE_EQ(executeStaticMethod<Jdouble>(kClassName, "testDSTORE", 42.5), 42.5);
 }
 
 TEST_F(InterpreterLoadStoreTest, DSTORE_0) {
-  EXPECT_DOUBLE_EQ(
-    executeStaticMethod<Jdouble>("tests.data.java.LoadStoreTest", "testDSTORE_0", 100.0), 100.0);
+  EXPECT_DOUBLE_EQ(executeStaticMethod<Jdouble>(kClassName, "testDSTORE_0", 100.0), 100.0);
 }
 
 // ============================================================================
@@ -123,7 +114,7 @@ TEST_F(InterpreterLoadStoreTest, DSTORE_0) {
 // ============================================================================
 
 TEST_F(InterpreterLoadStoreTest, ALOAD_Basic) {
-  auto* klass = loader_->loadClass("tests.data.java.LoadStoreTest");
+  auto* klass = loader_->loadClass(kClassName);
   ASSERT_NE(klass, nullptr);
 
   auto* method = klass->findMethod("testALOAD", "(Ljava/lang/Object;)Ljava/lang/Object;");
@@ -153,7 +144,7 @@ TEST_F(InterpreterLoadStoreTest, ALOAD_Basic) {
 }
 
 TEST_F(InterpreterLoadStoreTest, ALOAD_0) {
-  auto* klass = loader_->loadClass("tests.data.java.LoadStoreTest");
+  auto* klass = loader_->loadClass(kClassName);
   ASSERT_NE(klass, nullptr);
 
   auto* method = klass->findMethod("testALOAD_0", "(Ljava/lang/Object;)Ljava/lang/Object;");
@@ -183,7 +174,7 @@ TEST_F(InterpreterLoadStoreTest, ALOAD_0) {
 }
 
 TEST_F(InterpreterLoadStoreTest, ASTORE_Basic) {
-  auto* klass = loader_->loadClass("tests.data.java.LoadStoreTest");
+  auto* klass = loader_->loadClass(kClassName);
   ASSERT_NE(klass, nullptr);
 
   auto* method = klass->findMethod("testASTORE", "(Ljava/lang/Object;)Ljava/lang/Object;");
