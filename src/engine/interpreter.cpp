@@ -1,5 +1,7 @@
+
 #include "interpreter.h"
 
+#include <bit>
 #include <cmath>
 
 #include "common/types.h"
@@ -8,6 +10,13 @@
 #include "runtime/klass.h"
 #include "runtime/method.h"
 #include "runtime/thread.h"
+
+namespace {
+constexpr jvm::Jshort combine_bytes(jvm::U1 b1, jvm::U1 b2) {
+  // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
+  return static_cast<jvm::Jshort>((0xFFU & b1) | ((0xFFU & b2) << 8U));
+}
+}  // namespace
 
 namespace jvm::engine {
 
@@ -24,7 +33,6 @@ void Interpreter::interpret(runtime::Thread* thread) {
     auto& rt_cp      = method->getOwnerKlass()->getRuntimeConstantPool();
     auto  code       = method->getCode();
 
-    // fetch
     size_t pc = thread->getPC();
     if (pc >= code.size()) {
       // PC is beyond code length, method has finished executing
@@ -32,12 +40,19 @@ void Interpreter::interpret(runtime::Thread* thread) {
       // In a real JVM, this would be an error, but for testing we'll just pop the frame
       return;
     }
+
+    // fetch
     auto opcode = code[pc];
     thread->incrementPC();
 
+    // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
     switch (opcode) {
       case NOP:
         break;
+      /* #region Push constants */
+
+      // Function: Push constant values onto operand stack
+      // Components: op_stack
       case ACONST_NULL:
         op_stack.pushRef(nullptr);
         break;
@@ -83,15 +98,28 @@ void Interpreter::interpret(runtime::Thread* thread) {
       case DCONST_1:
         op_stack.pushDouble(1.0);
         break;
+      /* #endregion Push constants */
+
+      /* #region Push immediate values */
+
+      // Function: Push immediate byte/short values onto operand stack
+      // Components: op_stack, thread (PC)
       case BIPUSH: {
         op_stack.pushInt(code[pc]);
         thread->incrementPC();
       } break;
       case SIPUSH: {
-        op_stack.pushInt(code[pc] + (code[pc + 1] << 8));
+        auto value = combine_bytes(code[pc], code[pc + 1]);
+        op_stack.pushInt(value);
         thread->incrementPC();
         thread->incrementPC();
       } break;
+      /* #endregion Push immediate values */
+
+      /* #region Push from constant pool */
+
+      // Function: Load constants from runtime constant pool onto operand stack
+      // Components: rt_cp, op_stack, thread (PC)
       case LDC: {
         auto index = code[pc];
         thread->incrementPC();
@@ -107,7 +135,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         }
       } break;
       case LDC_W: {
-        auto index = code[pc] + (code[pc + 1] << 8);
+        auto index = combine_bytes(code[pc], code[pc + 1]);
         thread->incrementPC();
         thread->incrementPC();
         auto constant = rt_cp.getConstant(index);
@@ -122,7 +150,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         }
       } break;
       case LDC2_W: {
-        auto index = code[pc] + (code[pc + 1] << 8);
+        auto index = combine_bytes(code[pc], code[pc + 1]);
         thread->incrementPC();
         thread->incrementPC();
         auto constant = rt_cp.getConstant(index);
@@ -132,6 +160,12 @@ void Interpreter::interpret(runtime::Thread* thread) {
           op_stack.pushDouble(std::get<Jdouble>(constant));
         }
       } break;
+      /* #endregion Push from constant pool */
+
+      /* #region Loads */
+
+      // Function: Load values from local variables onto operand stack
+      // Components: local_vars, op_stack, thread (PC)
       case ILOAD: {
         auto index = code[pc];
         thread->incrementPC();
@@ -266,6 +300,12 @@ void Interpreter::interpret(runtime::Thread* thread) {
       case SALOAD:
         // TODO: implement saload
         break;
+      /* #endregion Loads */
+
+      /* #region Stores */
+
+      // Function: Store values from operand stack into local variables
+      // Components: op_stack, local_vars, thread (PC)
       case ISTORE: {
         auto index = code[pc];
         thread->incrementPC();
@@ -400,6 +440,12 @@ void Interpreter::interpret(runtime::Thread* thread) {
       case SASTORE:
         // TODO: implement sastore
         break;
+      /* #endregion Stores */
+
+      /* #region Stack */
+
+      // Function: Manipulate operand stack (pop, dup, swap operations)
+      // Components: op_stack
       case POP: {
         op_stack.popSlot();  // Pop one word (int, float, or reference)
       } break;
@@ -475,6 +521,12 @@ void Interpreter::interpret(runtime::Thread* thread) {
         op_stack.pushSlot(value1);         // Push first word
         op_stack.pushSlot(value2);         // Push second word (now on top)
       } break;
+      /* #endregion Stack */
+
+      /* #region Arithmetic */
+
+      // Function: Perform arithmetic operations on numeric values (add, subtract, multiply, divide,
+      // remainder, negate, shift, bitwise) Components: op_stack
       case IADD: {
         auto value2 = op_stack.popInt();
         auto value1 = op_stack.popInt();
@@ -605,37 +657,37 @@ void Interpreter::interpret(runtime::Thread* thread) {
       } break;
       case ISHL: {
         // Integer shift left: value1 << (value2 & 0x1f)
-        auto shift_count = op_stack.popInt() & 0x1f;  // Only use lower 5 bits
+        auto shift_count = op_stack.popInt() & 0x1F;  // Only use lower 5 bits
         auto value       = op_stack.popInt();
         op_stack.pushInt(value << shift_count);
       } break;
       case LSHL: {
         // Long shift left: value1 << (value2 & 0x3f)
-        auto shift_count = op_stack.popInt() & 0x3f;  // Only use lower 6 bits
+        auto shift_count = op_stack.popInt() & 0x3F;  // Only use lower 6 bits
         auto value       = op_stack.popLong();
         op_stack.pushLong(value << shift_count);
       } break;
       case ISHR: {
         // Integer arithmetic shift right: value1 >> (value2 & 0x1f)
-        auto shift_count = op_stack.popInt() & 0x1f;  // Only use lower 5 bits
+        auto shift_count = op_stack.popInt() & 0x1F;  // Only use lower 5 bits
         auto value       = op_stack.popInt();
         op_stack.pushInt(value >> shift_count);
       } break;
       case LSHR: {
         // Long arithmetic shift right: value1 >> (value2 & 0x3f)
-        auto shift_count = op_stack.popInt() & 0x3f;  // Only use lower 6 bits
+        auto shift_count = op_stack.popInt() & 0x3F;  // Only use lower 6 bits
         auto value       = op_stack.popLong();
         op_stack.pushLong(value >> shift_count);
       } break;
       case IUSHR: {
         // Integer logical shift right: (unsigned)value1 >>> (value2 & 0x1f)
-        auto shift_count = op_stack.popInt() & 0x1f;  // Only use lower 5 bits
+        auto shift_count = op_stack.popInt() & 0x1F;  // Only use lower 5 bits
         auto value       = op_stack.popInt();
         op_stack.pushInt(static_cast<Jint>(static_cast<U4>(value) >> shift_count));
       } break;
       case LUSHR: {
         // Long logical shift right: (unsigned)value1 >>> (value2 & 0x3f)
-        auto shift_count = op_stack.popInt() & 0x3f;  // Only use lower 6 bits
+        auto shift_count = op_stack.popInt() & 0x3F;  // Only use lower 6 bits
         auto value       = op_stack.popLong();
         op_stack.pushLong(static_cast<Jlong>(static_cast<U8>(value) >> shift_count));
       } break;
@@ -675,15 +727,26 @@ void Interpreter::interpret(runtime::Thread* thread) {
         auto value1 = op_stack.popLong();
         op_stack.pushLong(value1 ^ value2);
       } break;
+      /* #endregion Arithmetic */
+
+      /* #region IINC */
+
+      // Function: Increment local variable by an immediate value
+      // Components: local_vars, thread (PC)
       case IINC: {
-        // Increment local variable by constant
         auto index     = code[pc];
-        auto const_val = static_cast<Jint>(static_cast<Jbyte>(code[pc + 1]));
+        auto const_val = combine_bytes(code[pc + 1], code[pc + 2]);
         thread->incrementPC();
         thread->incrementPC();
         auto current_value = local_vars.getInt(index);
         local_vars.setInt(index, current_value + const_val);
       } break;
+      /* #endregion IINC */
+
+      /* #region Conversions */
+
+      // Function: Convert between different numeric types
+      // Components: op_stack
       case I2L: {
         // Convert int to long
         auto value = op_stack.popInt();
@@ -775,6 +838,12 @@ void Interpreter::interpret(runtime::Thread* thread) {
         auto value = op_stack.popInt();
         op_stack.pushInt(static_cast<Jint>(static_cast<Jshort>(value)));
       } break;
+      /* #endregion Conversions */
+
+      /* #region Comparisons */
+
+      // Function: Compare values and perform conditional branches
+      // Components: op_stack, thread (PC)
       case LCMP: {
         // Compare two longs: value1 - value2
         auto value2 = op_stack.popLong();
@@ -846,7 +915,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
       case IFEQ: {
         // Branch if int value equals 0
         auto value         = op_stack.popInt();
-        auto branch_offset = static_cast<Jshort>(code[pc] + (code[pc + 1] << 8));
+        auto branch_offset = combine_bytes(code[pc], code[pc + 1]);
         thread->incrementPC();
         thread->incrementPC();
         if (value == 0) {
@@ -856,7 +925,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
       case IFNE: {
         // Branch if int value not equal to 0
         auto value         = op_stack.popInt();
-        auto branch_offset = static_cast<Jshort>(code[pc] + (code[pc + 1] << 8));
+        auto branch_offset = combine_bytes(code[pc], code[pc + 1]);
         thread->incrementPC();
         thread->incrementPC();
         if (value != 0) {
@@ -866,7 +935,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
       case IFLT: {
         // Branch if int value less than 0
         auto value         = op_stack.popInt();
-        auto branch_offset = static_cast<Jshort>(code[pc] + (code[pc + 1] << 8));
+        auto branch_offset = combine_bytes(code[pc], code[pc + 1]);
         thread->incrementPC();
         thread->incrementPC();
         if (value < 0) {
@@ -876,7 +945,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
       case IFGE: {
         // Branch if int value greater than or equal to 0
         auto value         = op_stack.popInt();
-        auto branch_offset = static_cast<Jshort>(code[pc] + (code[pc + 1] << 8));
+        auto branch_offset = combine_bytes(code[pc], code[pc + 1]);
         thread->incrementPC();
         thread->incrementPC();
         if (value >= 0) {
@@ -886,7 +955,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
       case IFGT: {
         // Branch if int value greater than 0
         auto value         = op_stack.popInt();
-        auto branch_offset = static_cast<Jshort>(code[pc] + (code[pc + 1] << 8));
+        auto branch_offset = combine_bytes(code[pc], code[pc + 1]);
         thread->incrementPC();
         thread->incrementPC();
         if (value > 0) {
@@ -896,7 +965,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
       case IFLE: {
         // Branch if int value less than or equal to 0
         auto value         = op_stack.popInt();
-        auto branch_offset = static_cast<Jshort>(code[pc] + (code[pc + 1] << 8));
+        auto branch_offset = combine_bytes(code[pc], code[pc + 1]);
         thread->incrementPC();
         thread->incrementPC();
         if (value <= 0) {
@@ -907,7 +976,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         // Branch if two int values are equal
         auto value2        = op_stack.popInt();
         auto value1        = op_stack.popInt();
-        auto branch_offset = static_cast<Jshort>(code[pc] + (code[pc + 1] << 8));
+        auto branch_offset = combine_bytes(code[pc], code[pc + 1]);
         thread->incrementPC();
         thread->incrementPC();
         if (value1 == value2) {
@@ -918,7 +987,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         // Branch if two int values are not equal
         auto value2        = op_stack.popInt();
         auto value1        = op_stack.popInt();
-        auto branch_offset = static_cast<Jshort>(code[pc] + (code[pc + 1] << 8));
+        auto branch_offset = combine_bytes(code[pc], code[pc + 1]);
         thread->incrementPC();
         thread->incrementPC();
         if (value1 != value2) {
@@ -929,7 +998,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         // Branch if first int value less than second
         auto value2        = op_stack.popInt();
         auto value1        = op_stack.popInt();
-        auto branch_offset = static_cast<Jshort>(code[pc] + (code[pc + 1] << 8));
+        auto branch_offset = combine_bytes(code[pc], code[pc + 1]);
         thread->incrementPC();
         thread->incrementPC();
         if (value1 < value2) {
@@ -940,7 +1009,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         // Branch if first int value greater than or equal to second
         auto value2        = op_stack.popInt();
         auto value1        = op_stack.popInt();
-        auto branch_offset = static_cast<Jshort>(code[pc] + (code[pc + 1] << 8));
+        auto branch_offset = combine_bytes(code[pc], code[pc + 1]);
         thread->incrementPC();
         thread->incrementPC();
         if (value1 >= value2) {
@@ -951,7 +1020,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         // Branch if first int value greater than second
         auto value2        = op_stack.popInt();
         auto value1        = op_stack.popInt();
-        auto branch_offset = static_cast<Jshort>(code[pc] + (code[pc + 1] << 8));
+        auto branch_offset = combine_bytes(code[pc], code[pc + 1]);
         thread->incrementPC();
         thread->incrementPC();
         if (value1 > value2) {
@@ -962,7 +1031,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         // Branch if first int value less than or equal to second
         auto value2        = op_stack.popInt();
         auto value1        = op_stack.popInt();
-        auto branch_offset = static_cast<Jshort>(code[pc] + (code[pc + 1] << 8));
+        auto branch_offset = combine_bytes(code[pc], code[pc + 1]);
         thread->incrementPC();
         thread->incrementPC();
         if (value1 <= value2) {
@@ -973,7 +1042,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         // Branch if two reference values are equal
         auto value2        = op_stack.popRef();
         auto value1        = op_stack.popRef();
-        auto branch_offset = static_cast<Jshort>(code[pc] + (code[pc + 1] << 8));
+        auto branch_offset = combine_bytes(code[pc], code[pc + 1]);
         thread->incrementPC();
         thread->incrementPC();
         if (value1 == value2) {
@@ -984,13 +1053,39 @@ void Interpreter::interpret(runtime::Thread* thread) {
         // Branch if two reference values are not equal
         auto value2        = op_stack.popRef();
         auto value1        = op_stack.popRef();
-        auto branch_offset = static_cast<Jshort>(code[pc] + (code[pc + 1] << 8));
+        auto branch_offset = combine_bytes(code[pc], code[pc + 1]);
         thread->incrementPC();
         thread->incrementPC();
         if (value1 != value2) {
           thread->setPC(thread->getPC() + branch_offset - 2);
         }
       } break;
+      case IFNULL: {
+        // Branch if reference value is null
+        auto value         = op_stack.popRef();
+        auto branch_offset = combine_bytes(code[pc], code[pc + 1]);
+        thread->incrementPC();
+        thread->incrementPC();
+        if (value == nullptr) {
+          thread->setPC(thread->getPC() + branch_offset - 2);
+        }
+      } break;
+      case IFNONNULL: {
+        // Branch if reference value is not null
+        auto value         = op_stack.popRef();
+        auto branch_offset = combine_bytes(code[pc], code[pc + 1]);
+        thread->incrementPC();
+        thread->incrementPC();
+        if (value != nullptr) {
+          thread->setPC(thread->getPC() + branch_offset - 2);
+        }
+      } break;
+      /* #endregion Comparisons */
+
+      /* #region Control flow */
+
+      // Function: Unconditional branches and switch statements
+      // Components: thread (PC)
       case GOTO:
         // TODO: implement goto
         break;
@@ -1006,6 +1101,18 @@ void Interpreter::interpret(runtime::Thread* thread) {
       case LOOKUPSWITCH:
         // TODO: implement lookupswitch
         break;
+      case GOTO_W:
+        // TODO: implement goto_w
+        break;
+      case JSR_W:
+        // TODO: implement jsr_w
+        break;
+      /* #endregion Control flow */
+
+      /* #region Returns */
+
+      // Function: Return from method
+      // Components: thread, op_stack
       case IRETURN: {
         auto& callee_frame = thread->getCurrentFrame();
         Jint  ret          = callee_frame.getOperandStack().popInt();
@@ -1050,6 +1157,12 @@ void Interpreter::interpret(runtime::Thread* thread) {
       case RETURN: {
         thread->popFrame();
       } break;
+      /* #endregion Returns */
+
+      /* #region Fields */
+
+      // Function: Access static and instance fields
+      // Components: rt_cp, op_stack, thread (PC)
       case GETSTATIC: {
         auto index = static_cast<U2>(code[pc] + (code[pc + 1] << 8));
         thread->incrementPC();
@@ -1072,15 +1185,19 @@ void Interpreter::interpret(runtime::Thread* thread) {
       case PUTFIELD:
         // TODO: implement putfield
         break;
+      /* #endregion Fields */
+
+      /* #region Methods */
+
+      // Function: Invoke methods
+      // Components: rt_cp, thread (PC), op_stack
       case INVOKEVIRTUAL: {
         auto index = static_cast<U2>(code[pc] + (code[pc + 1] << 8));
         thread->incrementPC();
         thread->incrementPC();
         auto method = rt_cp.resolveMethod(index);
         // TODO: invoke virtual method
-      }
-
-      break;
+      } break;
       case INVOKESPECIAL:
         // TODO: implement invokespecial
         break;
@@ -1107,14 +1224,53 @@ void Interpreter::interpret(runtime::Thread* thread) {
       case INVOKEDYNAMIC:
         // TODO: implement invokedynamic
         break;
+      /* #endregion Methods */
+
+      /* #region Objects */
+
+      // Function: Object creation and type checking
+      // Components: rt_cp, op_stack, thread (PC)
       case NEW: {
-        auto index = static_cast<Jshort>(code[pc] + (code[pc + 1] << 8));
+        auto index = combine_bytes(code[pc], code[pc + 1]);
         thread->incrementPC();
         thread->incrementPC();
         runtime::Klass* klass = rt_cp.resolveClass(index);
         // Jref            obj_ref = heap_.newInstance(klass);
         // op_stack.pushRef(obj_ref);
       } break;
+      case CHECKCAST:
+        // TODO: implement checkcast
+        break;
+      case INSTANCEOF:
+        // TODO: implement instanceof
+        break;
+      /* #endregion Objects */
+
+      /* #region Exceptions */
+
+      // Function: Exception handling
+      // Components: op_stack
+      case ATHROW:
+        // TODO: implement athrow
+        break;
+      /* #endregion Exceptions */
+
+      /* #region Monitors */
+
+      // Function: Synchronization operations
+      // Components: op_stack
+      case MONITORENTER:
+        // TODO: implement monitorenter
+        break;
+      case MONITOREXIT:
+        // TODO: implement monitorexit
+        break;
+      /* #endregion Monitors */
+
+      /* #region Arrays */
+
+      // Function: Array operations (create arrays, get array length)
+      // Components: op_stack, rt_cp, thread (PC)
       case NEWARRAY:
         // TODO: implement newarray
         break;
@@ -1124,57 +1280,19 @@ void Interpreter::interpret(runtime::Thread* thread) {
       case ARRAYLENGTH:
         // TODO: implement arraylength
         break;
-      case ATHROW:
-        // TODO: implement athrow
-        break;
-      case CHECKCAST:
-        // TODO: implement checkcast
-        break;
-      case INSTANCEOF:
-        // TODO: implement instanceof
-        break;
-      case MONITORENTER:
-        // TODO: implement monitorenter
-        break;
-      case MONITOREXIT:
-        // TODO: implement monitorexit
-        break;
-      case WIDE:
-        // TODO: implement wide
-        break;
       case MULTIANEWARRAY:
         // TODO: implement multianewarray
         break;
-      case IFNULL: {
-        // Branch if reference value is null
-        auto value         = op_stack.popRef();
-        auto branch_offset = static_cast<Jshort>(code[pc] + (code[pc + 1] << 8));
-        thread->incrementPC();
-        thread->incrementPC();
-        if (value == nullptr) {
-          thread->setPC(thread->getPC() + branch_offset - 2);
-        }
-      } break;
-      case IFNONNULL: {
-        // Branch if reference value is not null
-        auto value         = op_stack.popRef();
-        auto branch_offset = static_cast<Jshort>(code[pc] + (code[pc + 1] << 8));
-        thread->incrementPC();
-        thread->incrementPC();
-        if (value != nullptr) {
-          thread->setPC(thread->getPC() + branch_offset - 2);
-        }
-      } break;
-      case GOTO_W:
-        // TODO: implement goto_w
-        break;
-      case JSR_W:
-        // TODO: implement jsr_w
+        /* #endregion Arrays */
+
+      case WIDE:
+        // TODO: implement wide
         break;
 
       default:
         throw std::runtime_error("Invalid opcode: " + std::to_string(opcode));
     }
+    // NOLINTEND(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
   }
 }
 
