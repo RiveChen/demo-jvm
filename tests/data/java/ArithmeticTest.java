@@ -100,4 +100,54 @@ public class ArithmeticTest {
     public static double testDNEG(double a) {
         return -a;
     }
+
+    // Integer bitwise operations
+    public static int testIAND(int a, int b) {
+        return a & b;
+    }
+
+    public static int testIOR(int a, int b) {
+        return a | b;
+    }
+
+    public static int testIXOR(int a, int b) {
+        return a ^ b;
+    }
+
+    public static int testISHL(int a, int b) {
+        return a << b;
+    }
+
+    public static int testISHR(int a, int b) {
+        return a >> b;
+    }
+
+    public static int testIUSHR(int a, int b) {
+        return a >>> b;
+    }
+
+    // Long bitwise operations
+    public static long testLAND(long a, long b) {
+        return a & b;
+    }
+
+    public static long testLOR(long a, long b) {
+        return a | b;
+    }
+
+    public static long testLXOR(long a, long b) {
+        return a ^ b;
+    }
+
+    public static long testLSHL(long a, int b) {
+        return a << b;
+    }
+
+    public static long testLSHR(long a, int b) {
+        return a >> b;
+    }
+
+    public static long testLUSHR(long a, int b) {
+        return a >>> b;
+    }
 }

@@ -33,15 +33,21 @@ jvm::U2 calculateArgSlotCount(const std::string& descriptor) {
     if (c == 'L') {
       // object reference: Ljava/lang/String;
       // skip until ';'
-      while (descriptor[i] != ';') i++;
+      while (descriptor[i] != ';') {
+        i++;
+      }
       slot_count++;
     } else if (c == '[') {
       // array: [[I or [Ljava/lang/String;
       // array reference only takes 1 slot, skip all '['
-      while (descriptor[i + 1] == '[') i++;
+      while (descriptor[i + 1] == '[') {
+        i++;
+      }
       if (descriptor[i + 1] == 'L') {
         i++;
-        while (descriptor[i] != ';') i++;
+        while (descriptor[i] != ';') {
+          i++;
+        }
       } else {
         i++;  // skip basic type characters
       }
