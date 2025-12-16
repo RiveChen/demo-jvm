@@ -35,6 +35,7 @@ TEST_F(InterpreterStackTest, DUP_X2_Basic) {
   engine::Interpreter interpreter;
 
   runtime::Frame caller_frame(method);
+  caller_frame.setCallerPC(method->getCode().size());
   thread.pushFrame(std::move(caller_frame));
   thread.setPC(method->getCode().size());
 

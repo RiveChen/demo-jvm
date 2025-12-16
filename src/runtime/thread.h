@@ -17,7 +17,7 @@ class Thread {
 
   size_t getPC() const { return pc_; }
   void   setPC(size_t pc) { pc_ = pc; }
-  void   incrementPC() { pc_++; }
+  void   incrementPC(size_t n = 1) { pc_ += n; }
 
   Stack& getStack() { return stack_; }
   void   pushFrame(Frame frame) { stack_.push(std::move(frame)); }

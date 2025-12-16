@@ -14,7 +14,47 @@
 namespace {
 constexpr jvm::Jshort combine_bytes(jvm::U1 b1, jvm::U1 b2) {
   // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
-  return static_cast<jvm::Jshort>((0xFFU & b1) | ((0xFFU & b2) << 8U));
+  return static_cast<jvm::Jshort>((0xFFU & b1) << 8U | (0xFFU & b2));
+}
+
+constexpr jvm::Jint combine_bytes(jvm::U1 b1, jvm::U1 b2, jvm::U1 b3, jvm::U1 b4) {
+  // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
+  return static_cast<jvm::Jint>((0xFFU & b1) << 24U | (0xFFU & b2) << 16U | (0xFFU & b3) << 8U |
+                                (0xFFU & b4));
+}
+
+jvm::U2 calculateArgSlotCount(const std::string& descriptor) {
+  jvm::U2 slot_count = 0;
+  for (size_t i = 1; i < descriptor.length(); ++i) {
+    char c = descriptor[i];
+    if (c == ')') {
+      break;
+    }
+    if (c == 'L') {
+      // object reference: Ljava/lang/String;
+      // skip until ';'
+      while (descriptor[i] != ';') i++;
+      slot_count++;
+    } else if (c == '[') {
+      // array: [[I or [Ljava/lang/String;
+      // array reference only takes 1 slot, skip all '['
+      while (descriptor[i + 1] == '[') i++;
+      if (descriptor[i + 1] == 'L') {
+        i++;
+        while (descriptor[i] != ';') i++;
+      } else {
+        i++;  // skip basic type characters
+      }
+      slot_count++;
+    } else if (c == 'J' || c == 'D') {
+      // long or double takes 2 slots
+      slot_count += 2;
+    } else {
+      // other basic types (I, F, B, C, S, Z) take 1 slot
+      slot_count++;
+    }
+  }
+  return slot_count;
 }
 }  // namespace
 
@@ -38,12 +78,15 @@ void Interpreter::interpret(runtime::Thread* thread) {
       // PC is beyond code length, method has finished executing
       // This typically means the method ended without an explicit RETURN
       // In a real JVM, this would be an error, but for testing we'll just pop the frame
+      // If there's a return value on the stack, it means IRETURN/LRETURN/etc
+      // just executed - return now so the test helper can read the value
       return;
     }
 
     // fetch
     auto opcode = code[pc];
     thread->incrementPC();
+    pc = thread->getPC();
 
     // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
     switch (opcode) {
@@ -105,10 +148,12 @@ void Interpreter::interpret(runtime::Thread* thread) {
       // Function: Push immediate byte/short values onto operand stack
       // Components: op_stack, thread (PC)
       case BIPUSH: {
+        // byte integer push
         op_stack.pushInt(code[pc]);
         thread->incrementPC();
       } break;
       case SIPUSH: {
+        // short integer push
         auto value = combine_bytes(code[pc], code[pc + 1]);
         op_stack.pushInt(value);
         thread->incrementPC();
@@ -129,9 +174,10 @@ void Interpreter::interpret(runtime::Thread* thread) {
         } else if (std::holds_alternative<Jfloat>(constant)) {
           op_stack.pushFloat(std::get<Jfloat>(constant));
         } else if (std::holds_alternative<std::string>(constant)) {
-          // For now, push null reference for string literals
+          // For now, push char* for string literals
           // TODO: implement proper string object creation
-          op_stack.pushRef(nullptr);
+          op_stack.pushRef(
+            static_cast<Jref>(const_cast<char*>(std::get<std::string>(constant).c_str())));
         }
       } break;
       case LDC_W: {
@@ -1086,27 +1132,77 @@ void Interpreter::interpret(runtime::Thread* thread) {
 
       // Function: Unconditional branches and switch statements
       // Components: thread (PC)
-      case GOTO:
-        // TODO: implement goto
-        break;
+      case GOTO: {
+        auto branch_offset = combine_bytes(code[pc], code[pc + 1]);
+        thread->setPC(thread->getPC() + branch_offset);
+      } break;
+      case GOTO_W: {
+        auto branch_offset = combine_bytes(code[pc], code[pc + 1], code[pc + 2], code[pc + 3]);
+        thread->setPC(thread->getPC() + branch_offset);
+      } break;
       case JSR:
-        // TODO: implement jsr
-        break;
-      case RET:
-        // TODO: implement ret
-        break;
-      case TABLESWITCH:
-        // TODO: implement tableswitch
-        break;
-      case LOOKUPSWITCH:
-        // TODO: implement lookupswitch
-        break;
-      case GOTO_W:
-        // TODO: implement goto_w
+        // not used in Java SE 8
         break;
       case JSR_W:
-        // TODO: implement jsr_w
+        // not used in Java SE 8
         break;
+      case RET:
+        // not used in Java SE 8
+        break;
+      case TABLESWITCH: {
+        auto bass_addr = thread->getPC();
+        // skip padding to make sure the defaultOffset' address in bytecode is always 4-byte aligned
+        thread->incrementPC(thread->getPC() % 4);
+        // defaultOffset
+        auto default_offset = combine_bytes(code[pc], code[pc + 1], code[pc + 2], code[pc + 3]);
+        thread->incrementPC(4);
+        // low
+        auto low_bytes = combine_bytes(code[pc], code[pc + 1], code[pc + 2], code[pc + 3]);
+        thread->incrementPC(4);
+        // high
+        auto high_bytes = combine_bytes(code[pc], code[pc + 1], code[pc + 2], code[pc + 3]);
+        thread->incrementPC(4);
+        // jump_offsets
+        auto jump_offsets = std::vector<Jint>(high_bytes - low_bytes + 1);
+        for (size_t i = 0; i < jump_offsets.size(); i++) {
+          jump_offsets[i] = combine_bytes(code[pc], code[pc + 1], code[pc + 2], code[pc + 3]);
+          thread->incrementPC(4);
+        }
+        // pop index from operand stack
+        auto index = op_stack.popInt();
+        if (index < low_bytes || index > high_bytes) {
+          thread->setPC(bass_addr + default_offset);
+        } else {
+          thread->setPC(bass_addr + jump_offsets[index - low_bytes]);
+        }
+      } break;
+      case LOOKUPSWITCH: {
+        auto bass_addr = thread->getPC();
+        // skip padding to make sure 4-byte alignment
+        thread->incrementPC(thread->getPC() % 4);
+        auto default_bytes = combine_bytes(code[pc], code[pc + 1], code[pc + 2], code[pc + 3]);
+        thread->incrementPC(4);
+        auto npairs_count = combine_bytes(code[pc], code[pc + 1], code[pc + 2], code[pc + 3]);
+        thread->incrementPC(4);
+        auto jump_offsets = std::vector<std::pair<Jint, Jint>>(npairs_count);
+        for (size_t i = 0; i < jump_offsets.size(); i++) {
+          jump_offsets[i].first = combine_bytes(code[pc], code[pc + 1], code[pc + 2], code[pc + 3]);
+          thread->incrementPC(4);
+          jump_offsets[i].second =
+            combine_bytes(code[pc], code[pc + 1], code[pc + 2], code[pc + 3]);
+          thread->incrementPC(4);
+        }
+        // pop key from operand stack
+        auto key = op_stack.popInt();
+        for (size_t i = 0; i < jump_offsets.size(); i++) {
+          if (key == jump_offsets[i].first) {
+            thread->setPC(bass_addr + jump_offsets[i].second);
+            break;
+          }
+        }
+        thread->setPC(bass_addr + default_bytes);
+      } break;
+
       /* #endregion Control flow */
 
       /* #region Returns */
@@ -1119,7 +1215,9 @@ void Interpreter::interpret(runtime::Thread* thread) {
         thread->popFrame();
         if (!thread->isStackEmpty()) {
           // push ret into caller frame's operand stack
-          thread->getCurrentFrame().getOperandStack().pushInt(ret);
+          auto& caller_frame = thread->getCurrentFrame();
+          caller_frame.getOperandStack().pushInt(ret);
+          thread->setPC(caller_frame.getCallerPC());
         }
       } break;
       case LRETURN: {
@@ -1127,7 +1225,9 @@ void Interpreter::interpret(runtime::Thread* thread) {
         Jlong ret          = callee_frame.getOperandStack().popLong();
         thread->popFrame();
         if (!thread->isStackEmpty()) {
-          thread->getCurrentFrame().getOperandStack().pushLong(ret);
+          auto& caller_frame = thread->getCurrentFrame();
+          caller_frame.getOperandStack().pushLong(ret);
+          thread->setPC(caller_frame.getCallerPC());
         }
       } break;
       case FRETURN: {
@@ -1135,7 +1235,9 @@ void Interpreter::interpret(runtime::Thread* thread) {
         Jfloat ret          = callee_frame.getOperandStack().popFloat();
         thread->popFrame();
         if (!thread->isStackEmpty()) {
-          thread->getCurrentFrame().getOperandStack().pushFloat(ret);
+          auto& caller_frame = thread->getCurrentFrame();
+          caller_frame.getOperandStack().pushFloat(ret);
+          thread->setPC(caller_frame.getCallerPC());
         }
       } break;
       case DRETURN: {
@@ -1143,7 +1245,9 @@ void Interpreter::interpret(runtime::Thread* thread) {
         Jdouble ret          = callee_frame.getOperandStack().popDouble();
         thread->popFrame();
         if (!thread->isStackEmpty()) {
-          thread->getCurrentFrame().getOperandStack().pushDouble(ret);
+          auto& caller_frame = thread->getCurrentFrame();
+          caller_frame.getOperandStack().pushDouble(ret);
+          thread->setPC(caller_frame.getCallerPC());
         }
       } break;
       case ARETURN: {
@@ -1151,11 +1255,19 @@ void Interpreter::interpret(runtime::Thread* thread) {
         Jref  ret          = callee_frame.getOperandStack().popRef();
         thread->popFrame();
         if (!thread->isStackEmpty()) {
-          thread->getCurrentFrame().getOperandStack().pushRef(ret);
+          auto& caller_frame = thread->getCurrentFrame();
+          caller_frame.getOperandStack().pushRef(ret);
+          thread->setPC(caller_frame.getCallerPC());
         }
       } break;
       case RETURN: {
         thread->popFrame();
+        if (!thread->isStackEmpty()) {
+          size_t return_pc = thread->getCurrentFrame().getCallerPC();
+          thread->setPC(return_pc);
+        } else {
+          return;
+        }
       } break;
       /* #endregion Returns */
 
@@ -1164,26 +1276,24 @@ void Interpreter::interpret(runtime::Thread* thread) {
       // Function: Access static and instance fields
       // Components: rt_cp, op_stack, thread (PC)
       case GETSTATIC: {
-        auto index = static_cast<U2>(code[pc] + (code[pc + 1] << 8));
-        thread->incrementPC();
-        thread->incrementPC();
+        auto index = combine_bytes(code[pc], code[pc + 1]);
+        thread->incrementPC(2);
         auto field = rt_cp.resolveField(index);
         auto slot  = field->getOwnerKlass()->getStaticSlot(field->getSlotIndex());
         op_stack.pushSlot(slot);
       } break;
       case PUTSTATIC: {
-        auto index = static_cast<U2>(code[pc] + (code[pc + 1] << 8));
-        thread->incrementPC();
-        thread->incrementPC();
+        auto index = combine_bytes(code[pc], code[pc + 1]);
+        thread->incrementPC(2);
         auto field = rt_cp.resolveField(index);
         // TODO: check compatibility
         field->getOwnerKlass()->getStaticSlot(field->getSlotIndex()) = op_stack.popSlot();
       } break;
       case GETFIELD:
-        // TODO: implement getfield
+        // TODO: implement getfield, Object module are needed
         break;
       case PUTFIELD:
-        // TODO: implement putfield
+        // TODO: implement putfield, Object module are needed
         break;
       /* #endregion Fields */
 
@@ -1192,30 +1302,40 @@ void Interpreter::interpret(runtime::Thread* thread) {
       // Function: Invoke methods
       // Components: rt_cp, thread (PC), op_stack
       case INVOKEVIRTUAL: {
-        auto index = static_cast<U2>(code[pc] + (code[pc + 1] << 8));
-        thread->incrementPC();
-        thread->incrementPC();
-        auto method = rt_cp.resolveMethod(index);
         // TODO: invoke virtual method
       } break;
       case INVOKESPECIAL:
         // TODO: implement invokespecial
         break;
       case INVOKESTATIC: {
-        auto index = static_cast<U2>(code[pc] + (code[pc + 1] << 8));
-        thread->incrementPC();
-        thread->incrementPC();
+        auto index = combine_bytes(code[pc], code[pc + 1]);
+        thread->incrementPC(2);
 
-        auto method = rt_cp.resolveMethod(index);
+        auto* method = rt_cp.resolveMethod(index);
 
         if (!method->isStatic()) {
           throw std::runtime_error("Cannot invoke non-static method as static");
         }
 
-        runtime::Frame next_frame(method);
-        auto&          next_local_vars = next_frame.getLocalVariables();
+        U2 arg_slot_count = calculateArgSlotCount(method->getDescriptor());
 
-        // push the method's arguments to next frame's local variables
+        runtime::Frame next_frame(method);
+
+        auto& current_op_stack = op_stack;  // 当前栈帧的操作数栈
+        auto& next_local_vars  = next_frame.getLocalVariables();
+
+        if (arg_slot_count > 0) {
+          // must use int instead of U2, because the loop may decrement to negative numbers
+          for (int i = arg_slot_count - 1; i >= 0; i--) {
+            runtime::Slot val = current_op_stack.popSlot();
+            next_local_vars.setSlot(i, val);
+          }
+        }
+
+        thread->getCurrentFrame().setCallerPC(thread->getPC());
+
+        thread->pushFrame(std::move(next_frame));
+        thread->setPC(0);
 
       } break;
       case INVOKEINTERFACE:
@@ -1231,10 +1351,10 @@ void Interpreter::interpret(runtime::Thread* thread) {
       // Function: Object creation and type checking
       // Components: rt_cp, op_stack, thread (PC)
       case NEW: {
-        auto index = combine_bytes(code[pc], code[pc + 1]);
-        thread->incrementPC();
-        thread->incrementPC();
-        runtime::Klass* klass = rt_cp.resolveClass(index);
+        // auto index = combine_bytes(code[pc], code[pc + 1]);
+        // thread->incrementPC();
+        // thread->incrementPC();
+        // runtime::Klass* klass = rt_cp.resolveClass(index);
         // Jref            obj_ref = heap_.newInstance(klass);
         // op_stack.pushRef(obj_ref);
       } break;

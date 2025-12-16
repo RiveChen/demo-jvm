@@ -45,6 +45,7 @@ class InterpreterArithmeticTest : public ::testing::Test {
     // Create a caller frame to receive the return value
     // IRETURN will pop the callee frame and push the return value to caller's stack
     runtime::Frame caller_frame(method);
+    caller_frame.setCallerPC(method->getCode().size());
     thread.pushFrame(std::move(caller_frame));
     // Set PC to end of code so interpreter will immediately pop this frame
     thread.setPC(method->getCode().size());
@@ -91,12 +92,15 @@ class InterpreterArithmeticTest : public ::testing::Test {
 
     // Create caller frame to receive return value
     runtime::Frame caller_frame(method);
+    caller_frame.setCallerPC(method->getCode().size());
     thread.pushFrame(std::move(caller_frame));
+    thread.setPC(method->getCode().size());
 
     // Create callee frame
     runtime::Frame callee_frame(method);
     callee_frame.getLocalVariables().setInt(0, arg);
     thread.pushFrame(std::move(callee_frame));
+    thread.setPC(0);
 
     interpreter.interpret(&thread);
 
@@ -124,13 +128,16 @@ class InterpreterArithmeticTest : public ::testing::Test {
 
     // Create caller frame to receive return value
     runtime::Frame caller_frame(method);
+    caller_frame.setCallerPC(method->getCode().size());
     thread.pushFrame(std::move(caller_frame));
+    thread.setPC(method->getCode().size());
 
     // Create callee frame
     runtime::Frame callee_frame(method);
     callee_frame.getLocalVariables().setLong(0, arg1);
     callee_frame.getLocalVariables().setLong(2, arg2);  // long takes 2 slots
     thread.pushFrame(std::move(callee_frame));
+    thread.setPC(0);
 
     interpreter.interpret(&thread);
 
@@ -158,12 +165,15 @@ class InterpreterArithmeticTest : public ::testing::Test {
 
     // Create caller frame to receive return value
     runtime::Frame caller_frame(method);
+    caller_frame.setCallerPC(method->getCode().size());
     thread.pushFrame(std::move(caller_frame));
+    thread.setPC(method->getCode().size());
 
     // Create callee frame
     runtime::Frame callee_frame(method);
     callee_frame.getLocalVariables().setLong(0, arg);
     thread.pushFrame(std::move(callee_frame));
+    thread.setPC(0);
 
     interpreter.interpret(&thread);
 
@@ -191,13 +201,16 @@ class InterpreterArithmeticTest : public ::testing::Test {
 
     // Create caller frame to receive return value
     runtime::Frame caller_frame(method);
+    caller_frame.setCallerPC(method->getCode().size());
     thread.pushFrame(std::move(caller_frame));
+    thread.setPC(method->getCode().size());
 
     // Create callee frame
     runtime::Frame callee_frame(method);
     callee_frame.getLocalVariables().setFloat(0, arg1);
     callee_frame.getLocalVariables().setFloat(1, arg2);
     thread.pushFrame(std::move(callee_frame));
+    thread.setPC(0);
 
     interpreter.interpret(&thread);
 
@@ -225,12 +238,15 @@ class InterpreterArithmeticTest : public ::testing::Test {
 
     // Create caller frame to receive return value
     runtime::Frame caller_frame(method);
+    caller_frame.setCallerPC(method->getCode().size());
     thread.pushFrame(std::move(caller_frame));
+    thread.setPC(method->getCode().size());
 
     // Create callee frame
     runtime::Frame callee_frame(method);
     callee_frame.getLocalVariables().setFloat(0, arg);
     thread.pushFrame(std::move(callee_frame));
+    thread.setPC(0);
 
     interpreter.interpret(&thread);
 
@@ -258,13 +274,16 @@ class InterpreterArithmeticTest : public ::testing::Test {
 
     // Create caller frame to receive return value
     runtime::Frame caller_frame(method);
+    caller_frame.setCallerPC(method->getCode().size());
     thread.pushFrame(std::move(caller_frame));
+    thread.setPC(method->getCode().size());
 
     // Create callee frame
     runtime::Frame callee_frame(method);
     callee_frame.getLocalVariables().setDouble(0, arg1);
     callee_frame.getLocalVariables().setDouble(2, arg2);  // double takes 2 slots
     thread.pushFrame(std::move(callee_frame));
+    thread.setPC(0);
 
     interpreter.interpret(&thread);
 
@@ -292,12 +311,15 @@ class InterpreterArithmeticTest : public ::testing::Test {
 
     // Create caller frame to receive return value
     runtime::Frame caller_frame(method);
+    caller_frame.setCallerPC(method->getCode().size());
     thread.pushFrame(std::move(caller_frame));
+    thread.setPC(method->getCode().size());
 
     // Create callee frame
     runtime::Frame callee_frame(method);
     callee_frame.getLocalVariables().setDouble(0, arg);
     thread.pushFrame(std::move(callee_frame));
+    thread.setPC(0);
 
     interpreter.interpret(&thread);
 

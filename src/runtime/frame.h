@@ -19,10 +19,15 @@ class Frame {
   OperandStack&   getOperandStack() { return operand_stack_; }
   Method*         getMethod() { return method_; }
 
+  size_t getCallerPC() const { return caller_pc_; }
+  void   setCallerPC(size_t pc) { caller_pc_ = pc; }
+
  private:
   Method*        method_;  // points to method area
   LocalVariables local_variables_;
   OperandStack   operand_stack_;
+
+  size_t caller_pc_{0};
 };
 
 }  // namespace jvm::runtime
