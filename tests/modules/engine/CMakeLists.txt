@@ -51,3 +51,23 @@ target_compile_definitions(test_interpreter_conversion PRIVATE
 )
 gtest_discover_tests(test_interpreter_conversion)
 
+# Control flow tests
+add_executable(test_interpreter_control_flow interpreter_control_flow_test.cpp)
+target_link_libraries(test_interpreter_control_flow PRIVATE jvm_engine jvm_classloader GTest::gtest_main)
+target_include_directories(test_interpreter_control_flow PRIVATE ${TEST_BASE_DIR})
+add_dependencies(test_interpreter_control_flow compile_test_classes)
+target_compile_definitions(test_interpreter_control_flow PRIVATE
+    TEST_CLASS_PATH="${CMAKE_BINARY_DIR}/test_classes"
+)
+gtest_discover_tests(test_interpreter_control_flow)
+
+# Method invocation tests
+add_executable(test_interpreter_method_invocation interpreter_method_invocation_test.cpp)
+target_link_libraries(test_interpreter_method_invocation PRIVATE jvm_engine jvm_classloader GTest::gtest_main)
+target_include_directories(test_interpreter_method_invocation PRIVATE ${TEST_BASE_DIR})
+add_dependencies(test_interpreter_method_invocation compile_test_classes)
+target_compile_definitions(test_interpreter_method_invocation PRIVATE
+    TEST_CLASS_PATH="${CMAKE_BINARY_DIR}/test_classes"
+)
+gtest_discover_tests(test_interpreter_method_invocation)
+
