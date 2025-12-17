@@ -1249,14 +1249,55 @@ void Interpreter::interpret(runtime::Thread* thread) {
       case GETSTATIC: {
         auto  index = reader.readU2();
         auto* field = rt_cp.resolveField(index);
-        auto  slot  = field->getOwnerKlass()->getStaticSlot(field->getSlotIndex());
-        op_stack.pushSlot(slot);
+        auto& slot  = field->getOwnerKlass()->getStaticSlot(field->getSlotIndex());
+        // Use the field descriptor to determine the type (not the slot tag, which may be
+        // uninitialized)
+        auto descriptor = field->getDescriptor();
+        if (descriptor == "J") {
+          // Long type - ensure slot is initialized
+          if (slot.tag != runtime::SlotType::LONG) {
+            slot.tag = runtime::SlotType::LONG;
+            slot.l   = 0;
+          }
+          op_stack.pushLong(slot.l);
+        } else if (descriptor == "D") {
+          // Double type - ensure slot is initialized
+          if (slot.tag != runtime::SlotType::DOUBLE) {
+            slot.tag = runtime::SlotType::DOUBLE;
+            slot.d   = 0.0;
+          }
+          op_stack.pushDouble(slot.d);
+        } else {
+          // For other types (int, float, ref), ensure slot is initialized
+          if (slot.tag == runtime::SlotType::INVALID) {
+            if (descriptor == "I") {
+              slot.tag = runtime::SlotType::INT;
+              slot.i   = 0;
+            } else if (descriptor == "F") {
+              slot.tag = runtime::SlotType::FLOAT;
+              slot.f   = 0.0F;
+            }
+            // Note: REF types would need different handling if needed
+          }
+          op_stack.pushSlot(slot);
+        }
       } break;
       case PUTSTATIC: {
         auto  index = reader.readU2();
         auto* field = rt_cp.resolveField(index);
-        // compatibility checking is needed here, but not implemented yet
-        field->getOwnerKlass()->getStaticSlot(field->getSlotIndex()) = op_stack.popSlot();
+        auto& slot  = field->getOwnerKlass()->getStaticSlot(field->getSlotIndex());
+        // Use the field descriptor to determine the type (not the slot tag, which may be
+        // uninitialized)
+        auto descriptor = field->getDescriptor();
+        if (descriptor == "J") {
+          slot.tag = runtime::SlotType::LONG;
+          slot.l   = op_stack.popLong();
+        } else if (descriptor == "D") {
+          slot.tag = runtime::SlotType::DOUBLE;
+          slot.d   = op_stack.popDouble();
+        } else {
+          slot = op_stack.popSlot();
+        }
       } break;
       case GETFIELD:
         // TODO: implement getfield, Object module are needed

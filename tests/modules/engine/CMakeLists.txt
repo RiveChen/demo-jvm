@@ -71,3 +71,13 @@ target_compile_definitions(test_interpreter_method_invocation PRIVATE
 )
 gtest_discover_tests(test_interpreter_method_invocation)
 
+# Fields tests (GETSTATIC, PUTSTATIC)
+add_executable(test_interpreter_fields interpreter_fields_test.cpp)
+target_link_libraries(test_interpreter_fields PRIVATE jvm_engine jvm_classloader GTest::gtest_main)
+target_include_directories(test_interpreter_fields PRIVATE ${TEST_BASE_DIR})
+add_dependencies(test_interpreter_fields compile_test_classes)
+target_compile_definitions(test_interpreter_fields PRIVATE
+    TEST_CLASS_PATH="${CMAKE_BINARY_DIR}/test_classes"
+)
+gtest_discover_tests(test_interpreter_fields)
+

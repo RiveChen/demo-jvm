@@ -170,6 +170,8 @@ void Klass::prepareFieldsAndStatics(class_loader::ClassFile* class_file) {
   }
   instance_slot_count_ = instance_slot_count;
   static_slot_count_   = static_slot_count;
+  // Initialize the statics vector with the correct size
+  statics_.resize(static_slot_count);
 }
 
 // void Klass::linkNativeMethods(runtime::Method* method) {
