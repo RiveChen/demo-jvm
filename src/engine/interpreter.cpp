@@ -1,9 +1,9 @@
 
 #include "interpreter.h"
 
-#include <bit>
 #include <cmath>
 
+#include "bytecode_reader.h"
 #include "common/types.h"
 #include "opcode.h"
 #include "runtime/frame.h"
@@ -12,17 +12,8 @@
 #include "runtime/thread.h"
 
 namespace {
-constexpr jvm::Jshort combine_bytes(jvm::U1 b1, jvm::U1 b2) {
-  // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
-  return static_cast<jvm::Jshort>((0xFFU & b1) << 8U | (0xFFU & b2));
-}
 
-constexpr jvm::Jint combine_bytes(jvm::U1 b1, jvm::U1 b2, jvm::U1 b3, jvm::U1 b4) {
-  // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
-  return static_cast<jvm::Jint>((0xFFU & b1) << 24U | (0xFFU & b2) << 16U | (0xFFU & b3) << 8U |
-                                (0xFFU & b4));
-}
-
+// NOLINTBEGIN(readability-function-cognitive-complexity)
 jvm::U2 calculateArgSlotCount(const std::string& descriptor) {
   jvm::U2 slot_count = 0;
   for (size_t i = 1; i < descriptor.length(); ++i) {
@@ -62,24 +53,31 @@ jvm::U2 calculateArgSlotCount(const std::string& descriptor) {
   }
   return slot_count;
 }
+// NOLINTEND(readability-function-cognitive-complexity)
 }  // namespace
 
 namespace jvm::engine {
 
+// (readability-function-size, hicpp-function-size, readability-function-cognitive-complexity)
+// NOLINTNEXTLINE
 void Interpreter::interpret(runtime::Thread* thread) {
+  // cache pc to avoid fetching it from thread every time
+  // for thread-pc, we only use it when the frame is popped or pushed
+  size_t pc = 0;
+
   while (true) {
     if (thread->isStackEmpty()) {
       return;
     }
 
-    auto& frame      = thread->getCurrentFrame();
-    auto* method     = frame.getMethod();
-    auto& local_vars = frame.getLocalVariables();
-    auto& op_stack   = frame.getOperandStack();
-    auto& rt_cp      = method->getOwnerKlass()->getRuntimeConstantPool();
-    auto  code       = method->getCode();
+    auto&       frame      = thread->getCurrentFrame();
+    auto*       method     = frame.getMethod();
+    auto&       local_vars = frame.getLocalVariables();
+    auto&       op_stack   = frame.getOperandStack();
+    auto&       rt_cp      = method->getOwnerKlass()->getRuntimeConstantPool();
+    const auto& code       = method->getCode();
 
-    size_t pc = thread->getPC();
+    // size_t pc = thread->getPC();
     if (pc >= code.size()) {
       // PC is beyond code length, method has finished executing
       // This typically means the method ended without an explicit RETURN
@@ -89,11 +87,11 @@ void Interpreter::interpret(runtime::Thread* thread) {
       return;
     }
 
-    // fetch
-    auto opcode = code[pc];
-    thread->incrementPC();
-    pc = thread->getPC();
+    // fetch opcode
+    BytecodeReader reader(code, pc);          // note we pass pc by ref here
+    auto           opcode = reader.readU1();  // note pc incremented by 1 here
 
+    // NOLINTBEGIN(bugprone-branch-clone)
     // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
     switch (opcode) {
       case NOP:
@@ -155,15 +153,11 @@ void Interpreter::interpret(runtime::Thread* thread) {
       // Components: op_stack, thread (PC)
       case BIPUSH: {
         // byte integer push
-        op_stack.pushInt(code[pc]);
-        thread->incrementPC();
+        op_stack.pushInt(reader.readU1());
       } break;
       case SIPUSH: {
         // short integer push
-        auto value = combine_bytes(code[pc], code[pc + 1]);
-        op_stack.pushInt(value);
-        thread->incrementPC();
-        thread->incrementPC();
+        op_stack.pushInt(reader.readU2());
       } break;
       /* #endregion Push immediate values */
 
@@ -172,8 +166,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
       // Function: Load constants from runtime constant pool onto operand stack
       // Components: rt_cp, op_stack, thread (PC)
       case LDC: {
-        auto index = code[pc];
-        thread->incrementPC();
+        auto index    = reader.readU1();
         auto constant = rt_cp.getConstant(index);
         if (std::holds_alternative<Jint>(constant)) {
           op_stack.pushInt(std::get<Jint>(constant));
@@ -187,9 +180,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         }
       } break;
       case LDC_W: {
-        auto index = combine_bytes(code[pc], code[pc + 1]);
-        thread->incrementPC();
-        thread->incrementPC();
+        auto index    = reader.readU2();
         auto constant = rt_cp.getConstant(index);
         if (std::holds_alternative<Jint>(constant)) {
           op_stack.pushInt(std::get<Jint>(constant));
@@ -202,9 +193,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         }
       } break;
       case LDC2_W: {
-        auto index = combine_bytes(code[pc], code[pc + 1]);
-        thread->incrementPC();
-        thread->incrementPC();
+        auto index    = reader.readU2();
         auto constant = rt_cp.getConstant(index);
         if (std::holds_alternative<Jlong>(constant)) {
           op_stack.pushLong(std::get<Jlong>(constant));
@@ -219,33 +208,28 @@ void Interpreter::interpret(runtime::Thread* thread) {
       // Function: Load values from local variables onto operand stack
       // Components: local_vars, op_stack, thread (PC)
       case ILOAD: {
-        auto index = code[pc];
-        thread->incrementPC();
+        auto index = reader.readU1();
         auto value = local_vars.getInt(index);
         op_stack.pushInt(value);
       } break;
       case LLOAD: {
-        auto index = code[pc];
-        thread->incrementPC();
+        auto index = reader.readU1();
         auto value = local_vars.getLong(index);
         op_stack.pushLong(value);
       } break;
       case FLOAD: {
-        auto index = code[pc];
-        thread->incrementPC();
+        auto index = reader.readU1();
         auto value = local_vars.getFloat(index);
         op_stack.pushFloat(value);
       } break;
       case DLOAD: {
-        auto index = code[pc];
-        thread->incrementPC();
+        auto index = reader.readU1();
         auto value = local_vars.getDouble(index);
         op_stack.pushDouble(value);
       } break;
       case ALOAD: {
-        auto index = code[pc];
-        thread->incrementPC();
-        auto value = local_vars.getRef(index);
+        auto  index = reader.readU1();
+        auto* value = local_vars.getRef(index);
         op_stack.pushRef(value);
       } break;
       case ILOAD_0: {
@@ -313,19 +297,19 @@ void Interpreter::interpret(runtime::Thread* thread) {
         op_stack.pushDouble(value);
       } break;
       case ALOAD_0: {
-        auto value = local_vars.getRef(0);
+        auto* value = local_vars.getRef(0);
         op_stack.pushRef(value);
       } break;
       case ALOAD_1: {
-        auto value = local_vars.getRef(1);
+        auto* value = local_vars.getRef(1);
         op_stack.pushRef(value);
       } break;
       case ALOAD_2: {
-        auto value = local_vars.getRef(2);
+        auto* value = local_vars.getRef(2);
         op_stack.pushRef(value);
       } break;
       case ALOAD_3: {
-        auto value = local_vars.getRef(3);
+        auto* value = local_vars.getRef(3);
         op_stack.pushRef(value);
       } break;
       case IALOAD:
@@ -359,33 +343,28 @@ void Interpreter::interpret(runtime::Thread* thread) {
       // Function: Store values from operand stack into local variables
       // Components: op_stack, local_vars, thread (PC)
       case ISTORE: {
-        auto index = code[pc];
-        thread->incrementPC();
+        auto index = reader.readU1();
         auto value = op_stack.popInt();
         local_vars.setInt(index, value);
       } break;
       case LSTORE: {
-        auto index = code[pc];
-        thread->incrementPC();
+        auto index = reader.readU1();
         auto value = op_stack.popLong();
         local_vars.setLong(index, value);
       } break;
       case FSTORE: {
-        auto index = code[pc];
-        thread->incrementPC();
+        auto index = reader.readU1();
         auto value = op_stack.popFloat();
         local_vars.setFloat(index, value);
       } break;
       case DSTORE: {
-        auto index = code[pc];
-        thread->incrementPC();
+        auto index = reader.readU1();
         auto value = op_stack.popDouble();
         local_vars.setDouble(index, value);
       } break;
       case ASTORE: {
-        auto index = code[pc];
-        thread->incrementPC();
-        auto value = op_stack.popRef();
+        auto  index = reader.readU1();
+        auto* value = op_stack.popRef();
         local_vars.setRef(index, value);
       } break;
       case ISTORE_0: {
@@ -453,19 +432,19 @@ void Interpreter::interpret(runtime::Thread* thread) {
         local_vars.setDouble(3, value);
       } break;
       case ASTORE_0: {
-        auto value = op_stack.popRef();
+        auto* value = op_stack.popRef();
         local_vars.setRef(0, value);
       } break;
       case ASTORE_1: {
-        auto value = op_stack.popRef();
+        auto* value = op_stack.popRef();
         local_vars.setRef(1, value);
       } break;
       case ASTORE_2: {
-        auto value = op_stack.popRef();
+        auto* value = op_stack.popRef();
         local_vars.setRef(2, value);
       } break;
       case ASTORE_3: {
-        auto value = op_stack.popRef();
+        auto* value = op_stack.popRef();
         local_vars.setRef(3, value);
       } break;
       case IASTORE:
@@ -709,75 +688,77 @@ void Interpreter::interpret(runtime::Thread* thread) {
       } break;
       case ISHL: {
         // Integer shift left: value1 << (value2 & 0x1f)
-        auto shift_count = op_stack.popInt() & 0x1F;  // Only use lower 5 bits
-        auto value       = op_stack.popInt();
-        op_stack.pushInt(value << shift_count);
+        auto shift_count = static_cast<U4>(op_stack.popInt()) & 0x1FU;  // Only use lower 5 bits
+        auto value       = static_cast<U4>(op_stack.popInt());
+        op_stack.pushInt(static_cast<Jint>(value << shift_count));
       } break;
       case LSHL: {
         // Long shift left: value1 << (value2 & 0x3f)
-        auto shift_count = op_stack.popInt() & 0x3F;  // Only use lower 6 bits
-        auto value       = op_stack.popLong();
-        op_stack.pushLong(value << shift_count);
+        auto shift_count = static_cast<U4>(op_stack.popInt()) & 0x3FU;  // Only use lower 6 bits
+        auto value       = static_cast<U8>(op_stack.popLong());
+        op_stack.pushLong(static_cast<Jlong>(value << shift_count));
       } break;
       case ISHR: {
         // Integer arithmetic shift right: value1 >> (value2 & 0x1f)
-        auto shift_count = op_stack.popInt() & 0x1F;  // Only use lower 5 bits
+        auto shift_count = static_cast<U4>(op_stack.popInt()) & 0x1FU;  // Only use lower 5 bits
         auto value       = op_stack.popInt();
+        // NOLINTNEXTLINE(hicpp-signed-bitwise) yes we want to shift the sign bit
         op_stack.pushInt(value >> shift_count);
       } break;
       case LSHR: {
         // Long arithmetic shift right: value1 >> (value2 & 0x3f)
-        auto shift_count = op_stack.popInt() & 0x3F;  // Only use lower 6 bits
+        auto shift_count = static_cast<U4>(op_stack.popInt()) & 0x3FU;  // Only use lower 6 bits
         auto value       = op_stack.popLong();
+        // NOLINTNEXTLINE(hicpp-signed-bitwise) yes we want to shift the sign bit
         op_stack.pushLong(value >> shift_count);
       } break;
       case IUSHR: {
         // Integer logical shift right: (unsigned)value1 >>> (value2 & 0x1f)
-        auto shift_count = op_stack.popInt() & 0x1F;  // Only use lower 5 bits
-        auto value       = op_stack.popInt();
-        op_stack.pushInt(static_cast<Jint>(static_cast<U4>(value) >> shift_count));
+        auto shift_count = static_cast<U4>(op_stack.popInt()) & 0x1FU;  // Only use lower 5 bits
+        auto value       = static_cast<U4>(op_stack.popInt());
+        op_stack.pushInt(static_cast<Jint>(value >> shift_count));
       } break;
       case LUSHR: {
         // Long logical shift right: (unsigned)value1 >>> (value2 & 0x3f)
-        auto shift_count = op_stack.popInt() & 0x3F;  // Only use lower 6 bits
-        auto value       = op_stack.popLong();
-        op_stack.pushLong(static_cast<Jlong>(static_cast<U8>(value) >> shift_count));
+        auto shift_count = static_cast<U4>(op_stack.popInt()) & 0x3FU;  // Only use lower 6 bits
+        auto value       = static_cast<U8>(op_stack.popLong());
+        op_stack.pushLong(static_cast<Jlong>(value >> shift_count));
       } break;
       case IAND: {
         // Integer bitwise AND
-        auto value2 = op_stack.popInt();
-        auto value1 = op_stack.popInt();
-        op_stack.pushInt(value1 & value2);
+        auto value2 = static_cast<U4>(op_stack.popInt());
+        auto value1 = static_cast<U4>(op_stack.popInt());
+        op_stack.pushInt(static_cast<Jint>(value1 & value2));
       } break;
       case LAND: {
         // Long bitwise AND
-        auto value2 = op_stack.popLong();
-        auto value1 = op_stack.popLong();
-        op_stack.pushLong(value1 & value2);
+        auto value2 = static_cast<U8>(op_stack.popLong());
+        auto value1 = static_cast<U8>(op_stack.popLong());
+        op_stack.pushLong(static_cast<Jlong>(value1 & value2));
       } break;
       case IOR: {
         // Integer bitwise OR
-        auto value2 = op_stack.popInt();
-        auto value1 = op_stack.popInt();
-        op_stack.pushInt(value1 | value2);
+        auto value2 = static_cast<U4>(op_stack.popInt());
+        auto value1 = static_cast<U4>(op_stack.popInt());
+        op_stack.pushInt(static_cast<Jint>(value1 | value2));
       } break;
       case LOR: {
         // Long bitwise OR
-        auto value2 = op_stack.popLong();
-        auto value1 = op_stack.popLong();
-        op_stack.pushLong(value1 | value2);
+        auto value2 = static_cast<U8>(op_stack.popLong());
+        auto value1 = static_cast<U8>(op_stack.popLong());
+        op_stack.pushLong(static_cast<Jlong>(value1 | value2));
       } break;
       case IXOR: {
         // Integer bitwise XOR
-        auto value2 = op_stack.popInt();
-        auto value1 = op_stack.popInt();
-        op_stack.pushInt(value1 ^ value2);
+        auto value2 = static_cast<U4>(op_stack.popInt());
+        auto value1 = static_cast<U4>(op_stack.popInt());
+        op_stack.pushInt(static_cast<Jint>(value1 ^ value2));
       } break;
       case LXOR: {
         // Long bitwise XOR
-        auto value2 = op_stack.popLong();
-        auto value1 = op_stack.popLong();
-        op_stack.pushLong(value1 ^ value2);
+        auto value2 = static_cast<U8>(op_stack.popLong());
+        auto value1 = static_cast<U8>(op_stack.popLong());
+        op_stack.pushLong(static_cast<Jlong>(value1 ^ value2));
       } break;
       /* #endregion Arithmetic */
 
@@ -786,10 +767,8 @@ void Interpreter::interpret(runtime::Thread* thread) {
       // Function: Increment local variable by an immediate value
       // Components: local_vars, thread (PC)
       case IINC: {
-        auto index     = code[pc];
-        auto const_val = combine_bytes(code[pc + 1], code[pc + 2]);
-        thread->incrementPC();
-        thread->incrementPC();
+        auto index         = reader.readU1();
+        auto const_val     = reader.readSU1();
         auto current_value = local_vars.getInt(index);
         local_vars.setInt(index, current_value + const_val);
       } break;
@@ -966,170 +945,154 @@ void Interpreter::interpret(runtime::Thread* thread) {
       } break;
       case IFEQ: {
         // Branch if int value equals 0
+        auto bass_addr     = pc - 1;
         auto value         = op_stack.popInt();
-        auto branch_offset = combine_bytes(code[pc], code[pc + 1]);
-        thread->incrementPC();
-        thread->incrementPC();
+        auto branch_offset = reader.readSU2();
         if (value == 0) {
-          thread->setPC(thread->getPC() + branch_offset - 2);
+          pc = bass_addr + branch_offset;
         }
       } break;
       case IFNE: {
         // Branch if int value not equal to 0
+        auto bass_addr     = pc - 1;
         auto value         = op_stack.popInt();
-        auto branch_offset = combine_bytes(code[pc], code[pc + 1]);
-        thread->incrementPC();
-        thread->incrementPC();
+        auto branch_offset = reader.readSU2();
         if (value != 0) {
-          thread->setPC(thread->getPC() + branch_offset - 2);
+          pc = bass_addr + branch_offset;
         }
       } break;
       case IFLT: {
         // Branch if int value less than 0
+        auto bass_addr     = pc - 1;
         auto value         = op_stack.popInt();
-        auto branch_offset = combine_bytes(code[pc], code[pc + 1]);
-        thread->incrementPC();
-        thread->incrementPC();
+        auto branch_offset = reader.readSU2();
         if (value < 0) {
-          thread->setPC(thread->getPC() + branch_offset - 2);
+          pc = bass_addr + branch_offset;
         }
       } break;
       case IFGE: {
         // Branch if int value greater than or equal to 0
+        auto bass_addr     = pc - 1;
         auto value         = op_stack.popInt();
-        auto branch_offset = combine_bytes(code[pc], code[pc + 1]);
-        thread->incrementPC();
-        thread->incrementPC();
+        auto branch_offset = reader.readSU2();
         if (value >= 0) {
-          thread->setPC(thread->getPC() + branch_offset - 2);
+          pc = bass_addr + branch_offset;
         }
       } break;
       case IFGT: {
         // Branch if int value greater than 0
+        auto bass_addr     = pc - 1;
         auto value         = op_stack.popInt();
-        auto branch_offset = combine_bytes(code[pc], code[pc + 1]);
-        thread->incrementPC();
-        thread->incrementPC();
+        auto branch_offset = reader.readSU2();
         if (value > 0) {
-          thread->setPC(thread->getPC() + branch_offset - 2);
+          pc = bass_addr + branch_offset;
         }
       } break;
       case IFLE: {
         // Branch if int value less than or equal to 0
+        auto bass_addr     = pc - 1;
         auto value         = op_stack.popInt();
-        auto branch_offset = combine_bytes(code[pc], code[pc + 1]);
-        thread->incrementPC();
-        thread->incrementPC();
+        auto branch_offset = reader.readSU2();
         if (value <= 0) {
-          thread->setPC(thread->getPC() + branch_offset - 2);
+          pc = bass_addr + branch_offset;
         }
       } break;
       case IF_ICMPEQ: {
         // Branch if two int values are equal
+        auto bass_addr     = pc - 1;
         auto value2        = op_stack.popInt();
         auto value1        = op_stack.popInt();
-        auto branch_offset = combine_bytes(code[pc], code[pc + 1]);
-        thread->incrementPC();
-        thread->incrementPC();
+        auto branch_offset = reader.readSU2();
         if (value1 == value2) {
-          thread->setPC(thread->getPC() + branch_offset - 2);
+          pc = bass_addr + branch_offset;
         }
       } break;
       case IF_ICMPNE: {
         // Branch if two int values are not equal
+        auto bass_addr     = pc - 1;
         auto value2        = op_stack.popInt();
         auto value1        = op_stack.popInt();
-        auto branch_offset = combine_bytes(code[pc], code[pc + 1]);
-        thread->incrementPC();
-        thread->incrementPC();
+        auto branch_offset = reader.readSU2();
         if (value1 != value2) {
-          thread->setPC(thread->getPC() + branch_offset - 2);
+          pc = bass_addr + branch_offset;
         }
       } break;
       case IF_ICMPLT: {
         // Branch if first int value less than second
+        auto bass_addr     = pc - 1;
         auto value2        = op_stack.popInt();
         auto value1        = op_stack.popInt();
-        auto branch_offset = combine_bytes(code[pc], code[pc + 1]);
-        thread->incrementPC();
-        thread->incrementPC();
+        auto branch_offset = reader.readSU2();
         if (value1 < value2) {
-          thread->setPC(thread->getPC() + branch_offset - 2);
+          pc = bass_addr + branch_offset;
         }
       } break;
       case IF_ICMPGE: {
         // Branch if first int value greater than or equal to second
+        auto bass_addr     = pc - 1;
         auto value2        = op_stack.popInt();
         auto value1        = op_stack.popInt();
-        auto branch_offset = combine_bytes(code[pc], code[pc + 1]);
-        thread->incrementPC();
-        thread->incrementPC();
+        auto branch_offset = reader.readSU2();
         if (value1 >= value2) {
-          thread->setPC(thread->getPC() + branch_offset - 2);
+          pc = bass_addr + branch_offset;
         }
       } break;
       case IF_ICMPGT: {
         // Branch if first int value greater than second
+        auto bass_addr     = pc - 1;
         auto value2        = op_stack.popInt();
         auto value1        = op_stack.popInt();
-        auto branch_offset = combine_bytes(code[pc], code[pc + 1]);
-        thread->incrementPC();
-        thread->incrementPC();
+        auto branch_offset = reader.readSU2();
         if (value1 > value2) {
-          thread->setPC(thread->getPC() + branch_offset - 2);
+          pc = bass_addr + branch_offset;
         }
       } break;
       case IF_ICMPLE: {
         // Branch if first int value less than or equal to second
+        auto bass_addr     = pc - 1;
         auto value2        = op_stack.popInt();
         auto value1        = op_stack.popInt();
-        auto branch_offset = combine_bytes(code[pc], code[pc + 1]);
-        thread->incrementPC();
-        thread->incrementPC();
+        auto branch_offset = reader.readSU2();
         if (value1 <= value2) {
-          thread->setPC(thread->getPC() + branch_offset - 2);
+          pc = bass_addr + branch_offset;
         }
       } break;
       case IF_ACMPEQ: {
         // Branch if two reference values are equal
-        auto value2        = op_stack.popRef();
-        auto value1        = op_stack.popRef();
-        auto branch_offset = combine_bytes(code[pc], code[pc + 1]);
-        thread->incrementPC();
-        thread->incrementPC();
+        auto  bass_addr     = pc - 1;
+        auto* value2        = op_stack.popRef();
+        auto* value1        = op_stack.popRef();
+        auto  branch_offset = reader.readSU2();
         if (value1 == value2) {
-          thread->setPC(thread->getPC() + branch_offset - 2);
+          pc = bass_addr + branch_offset;
         }
       } break;
       case IF_ACMPNE: {
         // Branch if two reference values are not equal
-        auto value2        = op_stack.popRef();
-        auto value1        = op_stack.popRef();
-        auto branch_offset = combine_bytes(code[pc], code[pc + 1]);
-        thread->incrementPC();
-        thread->incrementPC();
+        auto  bass_addr     = pc - 1;
+        auto* value2        = op_stack.popRef();
+        auto* value1        = op_stack.popRef();
+        auto  branch_offset = reader.readSU2();
         if (value1 != value2) {
-          thread->setPC(thread->getPC() + branch_offset - 2);
+          pc = bass_addr + branch_offset;
         }
       } break;
       case IFNULL: {
         // Branch if reference value is null
-        auto value         = op_stack.popRef();
-        auto branch_offset = combine_bytes(code[pc], code[pc + 1]);
-        thread->incrementPC();
-        thread->incrementPC();
+        auto  bass_addr     = pc - 1;
+        auto* value         = op_stack.popRef();
+        auto  branch_offset = reader.readSU2();
         if (value == nullptr) {
-          thread->setPC(thread->getPC() + branch_offset - 2);
+          pc = bass_addr + branch_offset;
         }
       } break;
       case IFNONNULL: {
         // Branch if reference value is not null
-        auto value         = op_stack.popRef();
-        auto branch_offset = combine_bytes(code[pc], code[pc + 1]);
-        thread->incrementPC();
-        thread->incrementPC();
+        auto  bass_addr     = pc - 1;
+        auto* value         = op_stack.popRef();
+        auto  branch_offset = reader.readSU2();
         if (value != nullptr) {
-          thread->setPC(thread->getPC() + branch_offset - 2);
+          pc = bass_addr + branch_offset;
         }
       } break;
       /* #endregion Comparisons */
@@ -1139,12 +1102,14 @@ void Interpreter::interpret(runtime::Thread* thread) {
       // Function: Unconditional branches and switch statements
       // Components: thread (PC)
       case GOTO: {
-        auto branch_offset = combine_bytes(code[pc], code[pc + 1]);
-        thread->setPC(thread->getPC() + branch_offset);
+        auto bass_addr     = pc - 1;
+        auto branch_offset = reader.readSU2();
+        pc                 = bass_addr + branch_offset;
       } break;
       case GOTO_W: {
-        auto branch_offset = combine_bytes(code[pc], code[pc + 1], code[pc + 2], code[pc + 3]);
-        thread->setPC(thread->getPC() + branch_offset);
+        auto bass_addr     = pc - 1;
+        auto branch_offset = reader.readSU4();
+        pc                 = bass_addr + branch_offset;
       } break;
       case JSR:
         // not used in Java SE 8
@@ -1156,57 +1121,52 @@ void Interpreter::interpret(runtime::Thread* thread) {
         // not used in Java SE 8
         break;
       case TABLESWITCH: {
-        auto bass_addr = thread->getPC();
+        auto bass_addr = pc - 1;
         // skip padding to make sure the defaultOffset' address in bytecode is always 4-byte aligned
-        thread->incrementPC(thread->getPC() % 4);
-        // defaultOffset
-        auto default_offset = combine_bytes(code[pc], code[pc + 1], code[pc + 2], code[pc + 3]);
-        thread->incrementPC(4);
-        // low
-        auto low_bytes = combine_bytes(code[pc], code[pc + 1], code[pc + 2], code[pc + 3]);
-        thread->incrementPC(4);
-        // high
-        auto high_bytes = combine_bytes(code[pc], code[pc + 1], code[pc + 2], code[pc + 3]);
-        thread->incrementPC(4);
+        reader.align4();
+        // defaultOffset, signed
+        auto default_offset = reader.readSU4();
+        // low, signed
+        auto low_bytes = reader.readSU4();
+        // high, signed
+        auto high_bytes = reader.readSU4();
         // jump_offsets
         auto jump_offsets = std::vector<Jint>(high_bytes - low_bytes + 1);
         for (size_t i = 0; i < jump_offsets.size(); i++) {
-          jump_offsets[i] = combine_bytes(code[pc], code[pc + 1], code[pc + 2], code[pc + 3]);
-          thread->incrementPC(4);
+          jump_offsets[i] = reader.readSU4();
         }
         // pop index from operand stack
         auto index = op_stack.popInt();
         if (index < low_bytes || index > high_bytes) {
-          thread->setPC(bass_addr + default_offset);
+          pc = bass_addr + default_offset;
         } else {
-          thread->setPC(bass_addr + jump_offsets[index - low_bytes]);
+          pc = bass_addr + jump_offsets[index - low_bytes];
         }
       } break;
       case LOOKUPSWITCH: {
-        auto bass_addr = thread->getPC();
+        auto bass_addr = pc - 1;
         // skip padding to make sure 4-byte alignment
-        thread->incrementPC(thread->getPC() % 4);
-        auto default_bytes = combine_bytes(code[pc], code[pc + 1], code[pc + 2], code[pc + 3]);
-        thread->incrementPC(4);
-        auto npairs_count = combine_bytes(code[pc], code[pc + 1], code[pc + 2], code[pc + 3]);
-        thread->incrementPC(4);
-        auto jump_offsets = std::vector<std::pair<Jint, Jint>>(npairs_count);
+        reader.align4();
+        auto default_bytes = reader.readSU4();
+        auto npairs_count  = reader.readSU4();
+        auto jump_offsets  = std::vector<std::pair<Jint, Jint>>(npairs_count);
         for (size_t i = 0; i < jump_offsets.size(); i++) {
-          jump_offsets[i].first = combine_bytes(code[pc], code[pc + 1], code[pc + 2], code[pc + 3]);
-          thread->incrementPC(4);
-          jump_offsets[i].second =
-            combine_bytes(code[pc], code[pc + 1], code[pc + 2], code[pc + 3]);
-          thread->incrementPC(4);
+          jump_offsets[i].first  = reader.readSU4();
+          jump_offsets[i].second = reader.readSU4();
         }
         // pop key from operand stack
-        auto key = op_stack.popInt();
+        auto key   = op_stack.popInt();
+        bool found = false;
         for (size_t i = 0; i < jump_offsets.size(); i++) {
           if (key == jump_offsets[i].first) {
-            thread->setPC(bass_addr + jump_offsets[i].second);
+            pc    = bass_addr + jump_offsets[i].second;
+            found = true;
             break;
           }
         }
-        thread->setPC(bass_addr + default_bytes);
+        if (!found) {
+          pc = bass_addr + default_bytes;
+        }
       } break;
 
       /* #endregion Control flow */
@@ -1223,7 +1183,8 @@ void Interpreter::interpret(runtime::Thread* thread) {
           // push ret into caller frame's operand stack
           auto& caller_frame = thread->getCurrentFrame();
           caller_frame.getOperandStack().pushInt(ret);
-          thread->setPC(caller_frame.getCallerPC());
+          pc = caller_frame.getCallerPC();
+          thread->setPC(pc);
         }
       } break;
       case LRETURN: {
@@ -1233,7 +1194,8 @@ void Interpreter::interpret(runtime::Thread* thread) {
         if (!thread->isStackEmpty()) {
           auto& caller_frame = thread->getCurrentFrame();
           caller_frame.getOperandStack().pushLong(ret);
-          thread->setPC(caller_frame.getCallerPC());
+          pc = caller_frame.getCallerPC();
+          thread->setPC(pc);
         }
       } break;
       case FRETURN: {
@@ -1243,7 +1205,8 @@ void Interpreter::interpret(runtime::Thread* thread) {
         if (!thread->isStackEmpty()) {
           auto& caller_frame = thread->getCurrentFrame();
           caller_frame.getOperandStack().pushFloat(ret);
-          thread->setPC(caller_frame.getCallerPC());
+          pc = caller_frame.getCallerPC();
+          thread->setPC(pc);
         }
       } break;
       case DRETURN: {
@@ -1253,7 +1216,8 @@ void Interpreter::interpret(runtime::Thread* thread) {
         if (!thread->isStackEmpty()) {
           auto& caller_frame = thread->getCurrentFrame();
           caller_frame.getOperandStack().pushDouble(ret);
-          thread->setPC(caller_frame.getCallerPC());
+          pc = caller_frame.getCallerPC();
+          thread->setPC(pc);
         }
       } break;
       case ARETURN: {
@@ -1263,14 +1227,15 @@ void Interpreter::interpret(runtime::Thread* thread) {
         if (!thread->isStackEmpty()) {
           auto& caller_frame = thread->getCurrentFrame();
           caller_frame.getOperandStack().pushRef(ret);
-          thread->setPC(caller_frame.getCallerPC());
+          pc = caller_frame.getCallerPC();
+          thread->setPC(pc);
         }
       } break;
       case RETURN: {
         thread->popFrame();
         if (!thread->isStackEmpty()) {
-          size_t return_pc = thread->getCurrentFrame().getCallerPC();
-          thread->setPC(return_pc);
+          pc = thread->getCurrentFrame().getCallerPC();
+          thread->setPC(pc);
         } else {
           return;
         }
@@ -1282,17 +1247,15 @@ void Interpreter::interpret(runtime::Thread* thread) {
       // Function: Access static and instance fields
       // Components: rt_cp, op_stack, thread (PC)
       case GETSTATIC: {
-        auto index = combine_bytes(code[pc], code[pc + 1]);
-        thread->incrementPC(2);
-        auto field = rt_cp.resolveField(index);
-        auto slot  = field->getOwnerKlass()->getStaticSlot(field->getSlotIndex());
+        auto  index = reader.readU2();
+        auto* field = rt_cp.resolveField(index);
+        auto  slot  = field->getOwnerKlass()->getStaticSlot(field->getSlotIndex());
         op_stack.pushSlot(slot);
       } break;
       case PUTSTATIC: {
-        auto index = combine_bytes(code[pc], code[pc + 1]);
-        thread->incrementPC(2);
-        auto field = rt_cp.resolveField(index);
-        // TODO: check compatibility
+        auto  index = reader.readU2();
+        auto* field = rt_cp.resolveField(index);
+        // compatibility checking is needed here, but not implemented yet
         field->getOwnerKlass()->getStaticSlot(field->getSlotIndex()) = op_stack.popSlot();
       } break;
       case GETFIELD:
@@ -1314,8 +1277,8 @@ void Interpreter::interpret(runtime::Thread* thread) {
         // TODO: implement invokespecial
         break;
       case INVOKESTATIC: {
-        auto index = combine_bytes(code[pc], code[pc + 1]);
-        thread->incrementPC(2);
+        // calling static method
+        auto index = reader.readU2();
 
         auto* method = rt_cp.resolveMethod(index);
 
@@ -1327,7 +1290,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
 
         runtime::Frame next_frame(method);
 
-        auto& current_op_stack = op_stack;  // 当前栈帧的操作数栈
+        auto& current_op_stack = op_stack;  // current frame's operand stack
         auto& next_local_vars  = next_frame.getLocalVariables();
 
         if (arg_slot_count > 0) {
@@ -1338,10 +1301,13 @@ void Interpreter::interpret(runtime::Thread* thread) {
           }
         }
 
-        thread->getCurrentFrame().setCallerPC(thread->getPC());
+        thread->getCurrentFrame().setCallerPC(pc);
 
         thread->pushFrame(std::move(next_frame));
-        thread->setPC(0);
+
+        // reset pc to 0 for the next frame
+        pc = 0;
+        thread->setPC(pc);
 
       } break;
       case INVOKEINTERFACE:
@@ -1357,7 +1323,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
       // Function: Object creation and type checking
       // Components: rt_cp, op_stack, thread (PC)
       case NEW: {
-        // auto index = combine_bytes(code[pc], code[pc + 1]);
+        // auto index = reader.readU2()
         // thread->incrementPC();
         // thread->incrementPC();
         // runtime::Klass* klass = rt_cp.resolveClass(index);
@@ -1419,6 +1385,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         throw std::runtime_error("Invalid opcode: " + std::to_string(opcode));
     }
     // NOLINTEND(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
+    // NOLINTEND(bugprone-branch-clone)
   }
 }
 
