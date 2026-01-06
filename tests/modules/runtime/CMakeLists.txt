@@ -1,5 +1,5 @@
 add_executable(test_runtime local_variables_test.cpp operand_stack_test.cpp method_area_test.cpp klass_test.cpp constant_pool_test.cpp)
-target_link_libraries(test_runtime PRIVATE jvm_runtime jvm_classloader GTest::gtest_main)
+target_link_libraries(test_runtime PRIVATE jvm_runtime jvm_classfile GTest::gtest_main)
 
 # compile testing .java files to .class files
 add_dependencies(test_runtime compile_test_classes)

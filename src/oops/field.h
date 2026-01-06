@@ -2,9 +2,9 @@
 
 #include <string>
 
-#include "common/access_flags.hpp"
+#include "utilities/access_flags.hpp"
 
-namespace jvm::runtime {
+namespace jvm::oops {
 class Klass;
 
 class Field {
@@ -34,4 +34,4 @@ class Field {
   friend class Klass;
 };
 
-}  // namespace jvm::runtime
+}  // namespace jvm::oops

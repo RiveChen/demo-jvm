@@ -6,10 +6,10 @@
 #include <string>
 #include <vector>
 
-#include "class_loader/class_loader.h"
-#include "engine/interpreter.h"
+#include "classfile/class_loader.h"
+#include "interpreter/interpreter.h"
+#include "oops/method_area.h"
 #include "runtime/frame.h"
-#include "runtime/method_area.h"
 #include "runtime/thread.h"
 
 using namespace jvm;
@@ -83,7 +83,7 @@ class InterpreterTestBase : public ::testing::Test {
     test_classpath_ = TEST_CLASS_PATH;
     classpath_list_ = {test_classpath_};
     loader_         = std::make_unique<class_loader::ClassLoader>(nullptr, classpath_list_);
-    runtime::MethodArea::getInstance().reset();
+    oops::MethodArea::getInstance().reset();
   }
 
   void TearDown() override { loader_.reset(); }

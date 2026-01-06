@@ -1,11 +1,10 @@
 #include "constant_pool.h"
 
-#include <iostream>
-
-#include "class_loader/class_file.h"
-#include "class_loader/class_loader.h"
+#include "classfile/class_file.h"
+#include "classfile/class_loader.h"
 #include "klass.h"
-namespace jvm::runtime {
+
+namespace jvm::oops {
 
 Klass* RuntimeConstantPool::resolveClass(U2 index) {
   auto& slot = infos_[index];
@@ -86,4 +85,4 @@ std::pair<std::string, std::string> RuntimeConstantPool::resolveNameAndType(U2 i
   return std::make_pair(name, descriptor);
 }
 
-}  // namespace jvm::runtime
+}  // namespace jvm::oops

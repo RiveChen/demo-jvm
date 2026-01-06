@@ -1,4 +1,4 @@
-#include "runtime/constant_pool.h"
+#include "oops/constant_pool.h"
 
 #include <gtest/gtest.h>
 
@@ -8,11 +8,11 @@
 #include <variant>
 #include <vector>
 
-#include "class_loader/class_file.h"
-#include "class_loader/class_loader.h"
-#include "class_loader/constant_pool.h"
-#include "runtime/klass.h"
-#include "runtime/method_area.h"
+#include "classfile/class_file.h"
+#include "classfile/class_loader.h"
+#include "classfile/constant_pool.h"
+#include "oops/klass.h"
+#include "oops/method_area.h"
 
 using namespace jvm;
 
@@ -24,7 +24,7 @@ class ConstantPoolTest : public ::testing::Test {
     test_classpath_ = TEST_CLASS_PATH;
     classpath_list_ = {test_classpath_};
     loader_         = std::make_unique<class_loader::ClassLoader>(nullptr, classpath_list_);
-    runtime::MethodArea::getInstance().reset();
+    oops::MethodArea::getInstance().reset();
   }
 
   std::optional<U2> findNameAndTypeIndex(class_loader::ClassFile* class_file,
@@ -62,14 +62,14 @@ TEST_F(ConstantPoolTest, ResolveClassCachesResult) {
   ASSERT_NE(class_info, nullptr);
 
   auto& rcp = klass->getRuntimeConstantPool();
-  rcp.setConstant(1, runtime::SymRef_Class{.name_index = class_info->name_index});
+  rcp.setConstant(1, oops::SymRef_Class{.name_index = class_info->name_index});
 
   auto* resolved_first  = rcp.resolveClass(1);
   auto* resolved_second = rcp.resolveClass(1);
 
   EXPECT_EQ(resolved_first, klass);
   EXPECT_EQ(resolved_first, resolved_second);
-  EXPECT_TRUE(std::holds_alternative<runtime::Klass*>(rcp.getConstant(1)));
+  EXPECT_TRUE(std::holds_alternative<oops::Klass*>(rcp.getConstant(1)));
 }
 
 TEST_F(ConstantPoolTest, ResolveNameAndType) {
@@ -100,7 +100,7 @@ TEST_F(ConstantPoolTest, ResolveMethodAndCache) {
 
   auto& rcp = klass->getRuntimeConstantPool();
   rcp.setConstant(
-    2, runtime::SymRef_Method{.class_index = class_index, .name_and_type_index = nt_index.value()});
+    2, oops::SymRef_Method{.class_index = class_index, .name_and_type_index = nt_index.value()});
 
   auto* resolved_first  = rcp.resolveMethod(2);
   auto* resolved_second = rcp.resolveMethod(2);
@@ -110,7 +110,7 @@ TEST_F(ConstantPoolTest, ResolveMethodAndCache) {
   EXPECT_EQ(resolved_first->getDescriptor(), "(II)I");
   EXPECT_EQ(resolved_first->getOwnerKlass(), klass);
   EXPECT_EQ(resolved_first, resolved_second);
-  EXPECT_TRUE(std::holds_alternative<runtime::Method*>(rcp.getConstant(2)));
+  EXPECT_TRUE(std::holds_alternative<oops::Method*>(rcp.getConstant(2)));
 }
 
 TEST_F(ConstantPoolTest, ResolveFieldAndCache) {
@@ -127,7 +127,7 @@ TEST_F(ConstantPoolTest, ResolveFieldAndCache) {
 
   auto& rcp = klass->getRuntimeConstantPool();
   rcp.setConstant(
-    3, runtime::SymRef_Field{.class_index = class_index, .name_and_type_index = nt_index.value()});
+    3, oops::SymRef_Field{.class_index = class_index, .name_and_type_index = nt_index.value()});
 
   auto* resolved_first  = rcp.resolveField(3);
   auto* resolved_second = rcp.resolveField(3);
@@ -138,5 +138,5 @@ TEST_F(ConstantPoolTest, ResolveFieldAndCache) {
   EXPECT_TRUE(resolved_first->isStatic());
   EXPECT_EQ(resolved_first->getOwnerKlass(), klass);
   EXPECT_EQ(resolved_first, resolved_second);
-  EXPECT_TRUE(std::holds_alternative<runtime::Field*>(rcp.getConstant(3)));
+  EXPECT_TRUE(std::holds_alternative<oops::Field*>(rcp.getConstant(3)));
 }

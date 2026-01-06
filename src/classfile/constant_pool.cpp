@@ -3,7 +3,7 @@
 #include <bit>
 
 #include "byte_reader.hpp"
-#include "common/types.h"
+#include "utilities/types.h"
 
 namespace jvm::class_loader {
 

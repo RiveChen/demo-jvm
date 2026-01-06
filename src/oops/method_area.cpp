@@ -1,6 +1,6 @@
 #include "method_area.h"
 
-namespace jvm::runtime {
+namespace jvm::oops {
 
 void MethodArea::addClass(ClassIdentifier identifier, ClassData class_data) {
   classes_.emplace(std::move(identifier), std::move(class_data));
@@ -18,4 +18,4 @@ bool MethodArea::hasClass(const ClassIdentifier& identifier) const {
   return classes_.find(identifier) != classes_.end();
 }
 
-}  // namespace jvm::runtime
+}  // namespace jvm::oops

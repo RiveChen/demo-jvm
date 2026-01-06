@@ -1,9 +1,9 @@
 #include "klass.h"
 
-#include "class_loader/class_file.h"
-#include "runtime/constant_pool.h"
+#include "classfile/class_file.h"
+#include "constant_pool.h"
 
-namespace jvm::runtime {
+namespace jvm::oops {
 
 Klass::Klass(class_loader::ClassFile* class_file, class_loader::ClassLoader* loader)
   : loader_(loader),
@@ -103,11 +103,8 @@ void Klass::prepareRuntimeConstantPool(class_loader::ClassFile* class_file) {
 
       // TODO: dynamic language support
       case class_loader::ConstantTag::kMethodHandle:
-        break;
       case class_loader::ConstantTag::kMethodType:
-        break;
       case class_loader::ConstantTag::kInvokeDynamic:
-        break;
 
       // just ignore these constant pool entries
       case class_loader::ConstantTag::kNameAndType:
@@ -182,4 +179,4 @@ void Klass::prepareFieldsAndStatics(class_loader::ClassFile* class_file) {
 //   }
 // }
 
-}  // namespace jvm::runtime
+}  // namespace jvm::oops

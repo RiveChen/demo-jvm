@@ -1,4 +1,4 @@
-#include "runtime/klass.h"
+#include "oops/klass.h"
 
 #include <gtest/gtest.h>
 
@@ -6,8 +6,8 @@
 #include <string>
 #include <vector>
 
-#include "class_loader/class_loader.h"
-#include "runtime/method_area.h"
+#include "classfile/class_loader.h"
+#include "oops/method_area.h"
 
 using namespace jvm;
 
@@ -19,7 +19,7 @@ class KlassTest : public ::testing::Test {
     test_classpath_ = TEST_CLASS_PATH;
     classpath_list_ = {test_classpath_};
     loader_         = std::make_unique<class_loader::ClassLoader>(nullptr, classpath_list_);
-    runtime::MethodArea::getInstance().reset();
+    oops::MethodArea::getInstance().reset();
   }
 
   std::string                                test_classpath_;

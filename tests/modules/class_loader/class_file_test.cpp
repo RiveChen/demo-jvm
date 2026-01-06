@@ -1,4 +1,4 @@
-#include "class_loader/class_file.h"
+#include "classfile/class_file.h"
 
 #include <gtest/gtest.h>
 
@@ -6,7 +6,7 @@
 #include <memory>
 #include <string>
 
-#include "class_loader/class_file_parser.h"
+#include "classfile/class_file_parser.h"
 
 using namespace jvm;
 

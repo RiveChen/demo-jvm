@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "common/types.h"
+#include "utilities/types.h"
 
 namespace jvm::engine {
 class BytecodeReader {

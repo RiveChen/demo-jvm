@@ -12,7 +12,7 @@
 
 #include <span>
 
-#include "common/endian.hpp"
+#include "utilities/endian.hpp"
 
 namespace jvm::class_loader {
 class ByteReader {

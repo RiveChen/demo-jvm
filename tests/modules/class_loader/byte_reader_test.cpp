@@ -1,8 +1,8 @@
-#include "class_loader/byte_reader.hpp"
+#include "classfile/byte_reader.hpp"
 
 #include <gtest/gtest.h>
 
-#include "common/types.h"
+#include "utilities/types.h"
 
 using namespace jvm;
 

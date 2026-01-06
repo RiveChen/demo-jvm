@@ -3,13 +3,9 @@
 #include <string>
 #include <vector>
 
-#include "common/types.h"
+#include "utilities/types.h"
 
-namespace jvm::runtime {
-
-class Klass;
-class Method;
-class Field;
+namespace jvm::oops {
 
 // 4 types of symbol references, not resolved yet
 struct SymRef_Class {
@@ -27,6 +23,10 @@ struct SymRef_InterfaceMethod {
   U2 class_index;
   U2 name_and_type_index;
 };
+
+class Klass;
+class Method;
+class Field;
 
 using RtCpInfo = std::variant<std::monostate,                // empty
                               Jint, Jfloat, Jlong, Jdouble,  // literal
@@ -55,4 +55,4 @@ class RuntimeConstantPool {
   friend class Klass;
 };
 
-}  // namespace jvm::runtime
+}  // namespace jvm::oops

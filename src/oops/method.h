@@ -3,9 +3,9 @@
 #include <string>
 #include <vector>
 
-#include "common/access_flags.hpp"
+#include "utilities/access_flags.hpp"
 
-namespace jvm::runtime {
+namespace jvm::oops {
 
 class Frame;  // avoid circular dependency
 class Klass;
@@ -46,4 +46,4 @@ class Method {
   friend class Klass;
 };
 
-}  // namespace jvm::runtime
+}  // namespace jvm::oops

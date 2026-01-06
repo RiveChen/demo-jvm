@@ -2,11 +2,11 @@
 
 #include <vector>
 
-#include "common/access_flags.hpp"
 #include "constant_pool.h"
 #include "field.h"
 #include "method.h"
-#include "slot.h"
+#include "runtime/slot.h"
+#include "utilities/access_flags.hpp"
 
 namespace jvm::class_loader {
 class ClassLoader;
@@ -14,7 +14,7 @@ class ClassFile;
 class MethodInfo;
 }  // namespace jvm::class_loader
 
-namespace jvm::runtime {
+namespace jvm::oops {
 
 class Object;
 
@@ -42,8 +42,8 @@ class Klass {
   size_t                     getStaticSlotCount() const { return static_slot_count_; }
   Method*                    findMethod(const std::string& name, const std::string& descriptor);
   Field*                     findField(const std::string& name, const std::string& descriptor);
-  Slot&                      getStaticSlot(size_t index) {
-    if (statics_[index].tag == SlotType::PADDING) {
+  runtime::Slot&             getStaticSlot(size_t index) {
+    if (statics_[index].tag == runtime::SlotType::PADDING) {
       throw std::runtime_error("Static slot is padding");
     }
     // if (statics_[index].tag == SlotType::INVALID) {
@@ -57,14 +57,14 @@ class Klass {
   class_loader::ClassFile*
     class_file_;  // class_file should be initialized first for constant_pool to be valid
 
-  std::string               name_;
-  AccessFlags<flags::Class> access_flags_;
-  Klass*                    super_class_;
-  std::vector<Klass*>       interfaces_;
-  RuntimeConstantPool       constant_pool_;
-  std::vector<Method>       methods_;
-  std::vector<Field>        fields_;
-  std::vector<Slot>         statics_;
+  std::string                name_;
+  AccessFlags<flags::Class>  access_flags_;
+  Klass*                     super_class_;
+  std::vector<Klass*>        interfaces_;
+  RuntimeConstantPool        constant_pool_;
+  std::vector<Method>        methods_;
+  std::vector<Field>         fields_;
+  std::vector<runtime::Slot> statics_;
 
   size_t instance_slot_count_{};
   size_t static_slot_count_{};
@@ -80,4 +80,4 @@ class Klass {
   friend class class_loader::ClassLoader;
 };
 
-}  // namespace jvm::runtime
+}  // namespace jvm::oops

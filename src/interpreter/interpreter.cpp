@@ -4,12 +4,12 @@
 #include <cmath>
 
 #include "bytecode_reader.h"
-#include "common/types.h"
+#include "oops/klass.h"
+#include "oops/method.h"
 #include "opcode.h"
 #include "runtime/frame.h"
-#include "runtime/klass.h"
-#include "runtime/method.h"
 #include "runtime/thread.h"
+#include "utilities/types.h"
 
 namespace {
 

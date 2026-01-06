@@ -11,10 +11,10 @@
 #pragma once
 
 #include "attributes.hpp"
-#include "common/access_flags.hpp"
-#include "common/types.h"
 #include "constant_pool.h"
 #include "members.h"
+#include "utilities/access_flags.hpp"
+#include "utilities/types.h"
 #include "version.h"
 
 namespace jvm::class_loader {

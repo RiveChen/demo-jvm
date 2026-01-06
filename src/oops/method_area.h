@@ -4,8 +4,8 @@
 #include <string>
 #include <unordered_map>
 
-#include "class_loader/class_file.h"
-#include "class_loader/class_loader.h"
+#include "classfile/class_file.h"
+#include "classfile/class_loader.h"
 #include "klass.h"
 
 // namespace jvm::class_loader {
@@ -13,7 +13,7 @@
 // class ClassFile;
 // }  // namespace jvm::class_loader
 
-namespace jvm::runtime {
+namespace jvm::oops {
 
 struct ClassIdentifierHash {
   std::size_t operator()(const std::pair<class_loader::ClassLoader*, std::string>& p) const {
@@ -52,4 +52,4 @@ class MethodArea {
   std::unordered_map<ClassIdentifier, ClassData, ClassIdentifierHash> classes_;
 };
 
-}  // namespace jvm::runtime
+}  // namespace jvm::oops

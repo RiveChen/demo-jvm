@@ -1,4 +1,4 @@
-#include "runtime/method_area.h"
+#include "oops/method_area.h"
 
 #include <gtest/gtest.h>
 
@@ -6,8 +6,8 @@
 #include <string>
 #include <vector>
 
-#include "class_loader/class_loader.h"
-#include "runtime/klass.h"
+#include "classfile/class_loader.h"
+#include "oops/klass.h"
 
 using namespace jvm;
 
@@ -19,7 +19,7 @@ class MethodAreaTest : public ::testing::Test {
     classpath_list_ = {test_classpath_};
     loader_         = std::make_unique<class_loader::ClassLoader>(nullptr, classpath_list_);
     // Reset method area because it is a global singleton
-    runtime::MethodArea::getInstance().reset();
+    oops::MethodArea::getInstance().reset();
   }
 
   void TearDown() override { loader_.reset(); }
@@ -31,8 +31,8 @@ class MethodAreaTest : public ::testing::Test {
 
 TEST_F(MethodAreaTest, SingletonInstance) {
   // Test that getInstance returns the same instance
-  runtime::MethodArea& instance1 = runtime::MethodArea::getInstance();
-  runtime::MethodArea& instance2 = runtime::MethodArea::getInstance();
+  oops::MethodArea& instance1 = oops::MethodArea::getInstance();
+  oops::MethodArea& instance2 = oops::MethodArea::getInstance();
 
   EXPECT_EQ(&instance1, &instance2) << "MethodArea should be a singleton";
 }
@@ -44,8 +44,8 @@ TEST_F(MethodAreaTest, AddAndGetClass) {
 
   ASSERT_NE(klass, nullptr);
 
-  runtime::MethodArea&                 method_area = runtime::MethodArea::getInstance();
-  runtime::MethodArea::ClassIdentifier identifier  = std::make_pair(loader_.get(), class_name);
+  oops::MethodArea&                 method_area = oops::MethodArea::getInstance();
+  oops::MethodArea::ClassIdentifier identifier  = std::make_pair(loader_.get(), class_name);
 
   // Verify class is in method area
   EXPECT_TRUE(method_area.hasClass(identifier)) << "Class should be in method area";
@@ -56,10 +56,10 @@ TEST_F(MethodAreaTest, AddAndGetClass) {
 }
 
 TEST_F(MethodAreaTest, HasClass) {
-  runtime::MethodArea& method_area = runtime::MethodArea::getInstance();
+  oops::MethodArea& method_area = oops::MethodArea::getInstance();
 
   // Test with non-existent class
-  runtime::MethodArea::ClassIdentifier non_existent =
+  oops::MethodArea::ClassIdentifier non_existent =
     std::make_pair(loader_.get(), "NonExistentClass");
   EXPECT_FALSE(method_area.hasClass(non_existent)) << "Non-existent class should not be found";
 
@@ -68,14 +68,14 @@ TEST_F(MethodAreaTest, HasClass) {
   auto*       klass      = loader_->loadClass(class_name);
   ASSERT_NE(klass, nullptr);
 
-  runtime::MethodArea::ClassIdentifier identifier = std::make_pair(loader_.get(), class_name);
+  oops::MethodArea::ClassIdentifier identifier = std::make_pair(loader_.get(), class_name);
   EXPECT_TRUE(method_area.hasClass(identifier)) << "Loaded class should exist in method area";
 }
 
 TEST_F(MethodAreaTest, GetClassReturnsNullptrForNonExistent) {
-  runtime::MethodArea& method_area = runtime::MethodArea::getInstance();
+  oops::MethodArea& method_area = oops::MethodArea::getInstance();
 
-  runtime::MethodArea::ClassIdentifier non_existent =
+  oops::MethodArea::ClassIdentifier non_existent =
     std::make_pair(loader_.get(), "NonExistentClass");
 
   auto* klass = method_area.getClass(non_existent);
@@ -96,11 +96,11 @@ TEST_F(MethodAreaTest, DifferentClassLoadersSameClassName) {
   ASSERT_NE(klass1, nullptr);
   ASSERT_NE(klass2, nullptr);
 
-  runtime::MethodArea& method_area = runtime::MethodArea::getInstance();
+  oops::MethodArea& method_area = oops::MethodArea::getInstance();
 
   // They should be stored separately in method area
-  runtime::MethodArea::ClassIdentifier id1 = std::make_pair(loader1.get(), class_name);
-  runtime::MethodArea::ClassIdentifier id2 = std::make_pair(loader2.get(), class_name);
+  oops::MethodArea::ClassIdentifier id1 = std::make_pair(loader1.get(), class_name);
+  oops::MethodArea::ClassIdentifier id2 = std::make_pair(loader2.get(), class_name);
 
   EXPECT_TRUE(method_area.hasClass(id1));
   EXPECT_TRUE(method_area.hasClass(id2));

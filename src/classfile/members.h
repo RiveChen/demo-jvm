@@ -1,8 +1,8 @@
 #pragma once
 
 #include "attributes.hpp"
-#include "common/access_flags.hpp"
-#include "common/types.h"
+#include "utilities/access_flags.hpp"
+#include "utilities/types.h"
 
 namespace jvm::class_loader {
 

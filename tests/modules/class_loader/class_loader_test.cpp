@@ -1,12 +1,12 @@
-#include "class_loader/class_loader.h"
+#include "classfile/class_loader.h"
 
 #include <gtest/gtest.h>
 
 #include <string>
 #include <vector>
 
-#include "runtime/klass.h"
-#include "runtime/method_area.h"
+#include "oops/klass.h"
+#include "oops/method_area.h"
 
 using namespace jvm;
 
@@ -22,7 +22,7 @@ class ClassLoaderTest : public ::testing::Test {
     classpath_list_ = {test_classpath_};
     loader_         = std::make_unique<class_loader::ClassLoader>(nullptr, classpath_list_);
     // Reset method area
-    runtime::MethodArea::getInstance().reset();
+    oops::MethodArea::getInstance().reset();
   }
 
   void TearDown() override {
@@ -100,8 +100,8 @@ TEST_F(ClassLoaderTest, ClassRegisteredInMethodArea) {
   ASSERT_NE(klass, nullptr);
 
   // Check if class is registered in method area
-  runtime::MethodArea&                 method_area = runtime::MethodArea::getInstance();
-  runtime::MethodArea::ClassIdentifier identifier  = std::make_pair(loader_.get(), class_name);
+  oops::MethodArea&                 method_area = oops::MethodArea::getInstance();
+  oops::MethodArea::ClassIdentifier identifier  = std::make_pair(loader_.get(), class_name);
 
   EXPECT_TRUE(method_area.hasClass(identifier)) << "Class should be registered in method area";
 
