@@ -10,9 +10,9 @@
  */
 #pragma once
 
-#include "utilities/types.h"
+#include "types.h"
 
-namespace jvm::runtime {
+namespace jvm {
 
 // precise-GC's StackMap is too hard to implement, so we use a simple tag to identify the type of
 // the slot
@@ -33,4 +33,4 @@ struct Slot {
 };
 // returnAddress is nearly useless in Java SE 8, so we don't support it yet
 
-}  // namespace jvm::runtime
+}  // namespace jvm

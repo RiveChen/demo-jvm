@@ -12,7 +12,7 @@
 
 #include <stack>
 
-#include "runtime/slot.h"
+#include "utilities/slot.h"
 
 namespace jvm::runtime {
 

@@ -1255,26 +1255,26 @@ void Interpreter::interpret(runtime::Thread* thread) {
         auto descriptor = field->getDescriptor();
         if (descriptor == "J") {
           // Long type - ensure slot is initialized
-          if (slot.tag != runtime::SlotType::LONG) {
-            slot.tag = runtime::SlotType::LONG;
+          if (slot.tag != SlotType::LONG) {
+            slot.tag = SlotType::LONG;
             slot.l   = 0;
           }
           op_stack.pushLong(slot.l);
         } else if (descriptor == "D") {
           // Double type - ensure slot is initialized
-          if (slot.tag != runtime::SlotType::DOUBLE) {
-            slot.tag = runtime::SlotType::DOUBLE;
+          if (slot.tag != SlotType::DOUBLE) {
+            slot.tag = SlotType::DOUBLE;
             slot.d   = 0.0;
           }
           op_stack.pushDouble(slot.d);
         } else {
           // For other types (int, float, ref), ensure slot is initialized
-          if (slot.tag == runtime::SlotType::INVALID) {
+          if (slot.tag == SlotType::INVALID) {
             if (descriptor == "I") {
-              slot.tag = runtime::SlotType::INT;
+              slot.tag = SlotType::INT;
               slot.i   = 0;
             } else if (descriptor == "F") {
-              slot.tag = runtime::SlotType::FLOAT;
+              slot.tag = SlotType::FLOAT;
               slot.f   = 0.0F;
             }
             // Note: REF types would need different handling if needed
@@ -1290,10 +1290,10 @@ void Interpreter::interpret(runtime::Thread* thread) {
         // uninitialized)
         auto descriptor = field->getDescriptor();
         if (descriptor == "J") {
-          slot.tag = runtime::SlotType::LONG;
+          slot.tag = SlotType::LONG;
           slot.l   = op_stack.popLong();
         } else if (descriptor == "D") {
-          slot.tag = runtime::SlotType::DOUBLE;
+          slot.tag = SlotType::DOUBLE;
           slot.d   = op_stack.popDouble();
         } else {
           slot = op_stack.popSlot();
@@ -1337,7 +1337,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         if (arg_slot_count > 0) {
           // must use int instead of U2, because the loop may decrement to negative numbers
           for (int i = arg_slot_count - 1; i >= 0; i--) {
-            runtime::Slot val = current_op_stack.popSlot();
+            Slot val = current_op_stack.popSlot();
             next_local_vars.setSlot(i, val);
           }
         }
