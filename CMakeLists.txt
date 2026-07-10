@@ -6,6 +6,19 @@ project(demo_jvm
   LANGUAGES CXX
 )
 
+if("${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
+    message(FATAL_ERROR "
+    ###########################################################
+    Error: In-source builds are forbidden!
+    You must generate the build system in a separate directory.
+    
+    Step 1: Clean up the generated files (CMakeCache.txt, CMakeFiles/, etc.)
+    Step 2: Create a build directory (e.g., mkdir build)
+    Step 3: Run cmake from there (e.g., cd build && cmake ..)
+    ###########################################################
+    ")
+endif()
+
 # Modern CMake: Set C++ standard per target instead of globally
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -52,3 +65,11 @@ add_subdirectory(src)
 # Enable testing
 enable_testing()
 add_subdirectory(tests)
+
+# Add a custom target to run all tests
+add_custom_target(test_all
+    COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure --progress # --parallel 8
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    COMMENT "Running all tests (with output on failure)..."
+    USES_TERMINAL
+)
