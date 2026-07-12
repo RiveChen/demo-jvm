@@ -10,7 +10,7 @@ add_subdirectory(engine)
 
 add_executable(demo-jvm main.cpp)
 
-target_link_libraries(demo-jvm PRIVATE jvm_utilities jvm_classfile jvm_engine)
+target_link_libraries(demo-jvm PRIVATE jvm_classfile jvm_engine)
 
 # optional: smoking test if(BUILD_TESTING) add_test(NAME SmokeTest_RunMain
 # COMMAND java_cmd) endif()
