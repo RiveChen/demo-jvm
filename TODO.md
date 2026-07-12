@@ -55,8 +55,9 @@ _更新于 2026-07-12。`[x]` 已完成,`[ ]` 待办,引用处标注 `文件:行
 
 ### R. 先重构(在加更多特性前收拾干净)
 
-- [ ] **R1. 抽象符号拦截**(你想做的)—— 把散在 GETSTATIC/INVOKEVIRTUAL/INVOKESPECIAL 里的内联 `if (class_name=="..." && member=="...")` 收进一张**符号拦截表**:`{class,member,descriptor} → handler(op_stack)`,resolve 前统一查表命中即走 handler。可与 M3 的 native 注册表合并成一个"内建方法表"(注意 native 用斜杠 key、符号拦截用点 key,需统一)。Object.<init>/System.out/println 三处都归它。
-- [ ] **R2. `Klass::getName()` 的斜杠/点形式统一** —— 现在 `name_` 是斜杠形式,而 loader/resolve 用点形式;native key 与符号拦截 key 因此不一致(R1 会撞上)。定一种规范形式。
+- [ ] **R1. 抽象符号拦截**(你想做的)—— 把散在 GETSTATIC/INVOKEVIRTUAL/INVOKESPECIAL 里的内联 `if (class_name=="..." && member=="...")` 收进一张**独立的 `StubIntercepts` 表**:`{class(点),member,descriptor} → handler(op_stack)`,resolve 前查表命中即走 handler。**与 NativeRegistry 分开**(两者语义/生命周期相反:native 永久且正规、拦截是可烧毁的 workaround)。表顶维护 burn-down 列表(Object.<init>/System.out/println),随真类库/桩类到位逐条删除。
+- [x] **R2. 类名斜杠/点统一(斜杠为唯一内部规范)** —— `loadClass` 入口 `.`→`/` 归一化一次;删掉 super/interface/kClass 烘焙里散落的 `/`→`.`;`"java/lang/Object"` 判定、stub key、`symbolicKey`、native key 全斜杠;点只在 CLI/API 边界。
+- [ ] **(远期)NativeRegistry 向 JNI 演进** —— native fn 签名从裸 `OperandStack&` 走向 `JNIEnv*` + 参数编组,做到规范。独立于"删拦截"。
 - [ ] **C2. 拆解释器大 switch** — 单函数已很长;按指令组拆 TU、抽 invoke 建帧/return 退帧到 runtime。
 - [ ] **R3. 极简 `JVM_TRACE`** — `utilities/log.h` 一个 env 门控宏(`JVM_TRACE=1` 时输出到 `std::cerr`),先给解释器循环一条 opcode 执行轨迹(`pc`/op/栈深)+ 类加载/resolve/拦截命中几点。**不引框架、不分 level/category**;错误报告维持异常。VM 长大到多子系统后再演进成 `-Xlog` 式分类日志。
 - [ ] **`slotCount` 补 `return`**、**B5 debug tag**(小项,随时)。
@@ -75,7 +76,7 @@ _更新于 2026-07-12。`[x]` 已完成,`[ ]` 待办,引用处标注 `文件:行
 ## E. 工程
 
 - [x] **E2. 暂不迁移 Bazel** — 已决策;提速靠 ccache / Ninja / C2 的 TU 拆分。
-- [ ] **E3.(可选)`ARCHITECTURE.md`** — 记录分层、slot 选型(64 位裸 union)、引用模型、命名约定、pc 归属、边界检查策略。
+- [x] **E3. `ARCHITECTURE.md`** — 已记录分层、slot(64 位裸 union)、pc 归属、引用/堆、descriptor、常量池(C4)、类加载、native/拦截、String 桩、边界检查与索引类型、错误处理、已知限制。
 
 ---
 
