@@ -40,8 +40,8 @@ class RuntimeConstantPool {
  public:
   explicit RuntimeConstantPool(Klass* owner_klass) : owner_klass_(owner_klass) {}
 
-  void     setConstant(U2 index, RtCpInfo info) { infos_[index] = std::move(info); }
-  RtCpInfo getConstant(U2 index) { return infos_[index]; }
+  void     setConstant(U2 index, RtCpInfo info) { infos_.at(index) = std::move(info); }
+  RtCpInfo getConstant(U2 index) { return infos_.at(index); }
 
   Klass*                              resolveClass(U2 index);
   Field*                              resolveField(U2 index);

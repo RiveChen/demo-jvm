@@ -7,7 +7,7 @@
 namespace jvm::oops {
 
 Klass* RuntimeConstantPool::resolveClass(U2 index) {
-  auto& slot = infos_[index];
+  auto& slot = infos_.at(index);
 
   if (auto* klass = std::get_if<Klass*>(&slot)) {
     return *klass;
@@ -28,7 +28,7 @@ Klass* RuntimeConstantPool::resolveClass(U2 index) {
 }
 
 Field* RuntimeConstantPool::resolveField(U2 index) {
-  auto& slot = infos_[index];
+  auto& slot = infos_.at(index);
 
   if (auto* field = std::get_if<Field*>(&slot)) {
     // if is already resolved, return
@@ -51,7 +51,7 @@ Field* RuntimeConstantPool::resolveField(U2 index) {
 }
 
 Method* RuntimeConstantPool::resolveMethod(U2 index) {
-  auto& slot = infos_[index];
+  auto& slot = infos_.at(index);
 
   if (auto* method = std::get_if<Method*>(&slot)) {
     return *method;

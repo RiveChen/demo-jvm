@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdexcept>
 #include <vector>
 
 #include "utilities/types.h"
@@ -9,11 +10,17 @@ class BytecodeReader {
  public:
   BytecodeReader(const std::vector<U1>& code, size_t& pc) : code_(code), pc_(pc) {}
 
-  U1 readU1() { return code_[pc_++]; }
+  U1 readU1() {
+    if (pc_ >= code_.size()) {
+      throw std::out_of_range("BytecodeReader: read past end of code");
+    }
+    return code_[pc_++];
+  }
 
   U2 readU2() {
-    U1 high = code_[pc_++];
-    U1 low  = code_[pc_++];
+    // route through readU1 so the bounds check lives in one place (covers readU4 too)
+    U1 high = readU1();
+    U1 low  = readU1();
     // NOLINTNEXTLINE(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
     return static_cast<U2>(high << 8U) | low;
     // high << 8U will happen Integral Promotion

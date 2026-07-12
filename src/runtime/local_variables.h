@@ -50,7 +50,8 @@ class LocalVariables {
   }
 
   void setWide(U2 index, Slot value) {
-    checkBounds(index);
+    // a wide value occupies index and index+1; checking the higher one covers both
+    checkBounds(static_cast<size_t>(index) + 1);
     variables_[index]     = value;
     variables_[index + 1] = {.i = 0};
   }
@@ -62,7 +63,7 @@ class LocalVariables {
  private:
   std::vector<Slot> variables_;
 
-  void checkBounds(U2 index) {
+  void checkBounds(size_t index) {
     if (index >= variables_.size()) {
       throw std::out_of_range("Index out of bounds in local variables: " + std::to_string(index));
     }
