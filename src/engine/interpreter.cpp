@@ -1227,15 +1227,16 @@ void Interpreter::interpret(runtime::Thread* thread) {
         descriptor::isCategory2(signature) ? op_stack.pushWide(slot) : op_stack.pushSlot(slot);
       } break;
       case PUTFIELD: {
-        auto  index = reader.readU2();
-        auto* field = rt_cp.resolveField(index);
+        auto  index     = reader.readU2();
+        auto* field     = rt_cp.resolveField(index);
+        auto  signature = field->getSignature();
+        // stack: ..., objectref, value  (value on top) -> pop value first, then objectref
+        Slot  value = descriptor::isCategory2(signature) ? op_stack.popWide() : op_stack.popSlot();
         auto* obj   = static_cast<oops::Object*>(op_stack.popRef());
         if (obj == nullptr) {
           throw std::runtime_error("NPE");
         }
-        auto& slot      = obj->fieldSlot(field->getSlotIndex());
-        auto  signature = field->getSignature();
-        slot = descriptor::isCategory2(signature) ? op_stack.popWide() : op_stack.popSlot();
+        obj->fieldSlot(field->getSlotIndex()) = value;
       } break;
       /* #endregion Fields */
 
@@ -1246,9 +1247,45 @@ void Interpreter::interpret(runtime::Thread* thread) {
       case INVOKEVIRTUAL: {
         // TODO: invoke virtual method
       } break;
-      case INVOKESPECIAL:
-        // TODO: implement invokespecial
-        break;
+      case INVOKESPECIAL: {
+        auto index = reader.readU2();
+
+        // workaround stub for java.lang.Object.<init>()V
+        auto cp_entry = rt_cp.getConstant(index);
+        if (auto* mref = std::get_if<oops::SymRef_Method>(&cp_entry)) {
+          auto  cls_entry = rt_cp.getConstant(mref->class_cp_index);
+          auto* cref      = std::get_if<oops::SymRef_Class>(&cls_entry);
+          if (cref != nullptr && cref->class_name == "java.lang.Object" &&
+              mref->member_name == "<init>" && mref->descriptor == "()V") {
+            op_stack.popRef();
+            break;
+          }
+        }
+        // workaround end
+
+        auto* method = rt_cp.resolveMethod(index);
+
+        const auto&    signature = method->getSignature();
+        runtime::Frame next_frame(method);
+        auto&          current_op_stack = op_stack;  // current frame's operand stack
+        auto&          next_local_vars  = next_frame.getLocalVariables();
+
+        U2 pos = signature.arg_slot_count + 1;
+        for (int p = static_cast<int>(signature.params.size()) - 1; p >= 0; --p) {
+          if (descriptor::isCategory2(signature.params[p])) {
+            pos -= 2;
+            next_local_vars.setWide(pos, current_op_stack.popWide());
+          } else {
+            pos -= 1;
+            next_local_vars.setSlot(pos, current_op_stack.popSlot());
+          }
+        }
+        next_local_vars.setSlot(0, op_stack.popSlot());
+
+        thread->getCurrentFrame().setPC(pc);
+        thread->pushFrame(std::move(next_frame));
+        pc = 0;
+      } break;
       case INVOKESTATIC: {
         // calling static method
         auto index = reader.readU2();

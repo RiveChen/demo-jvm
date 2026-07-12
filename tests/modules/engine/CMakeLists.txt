@@ -91,3 +91,14 @@ target_compile_definitions(
   test_interpreter_fields
   PRIVATE TEST_CLASS_PATH="${CMAKE_BINARY_DIR}/test_classes")
 gtest_discover_tests(test_interpreter_fields)
+
+# Object tests (NEW, INVOKESPECIAL <init>, GETFIELD, PUTFIELD)
+add_executable(test_interpreter_object interpreter_object_test.cpp)
+target_link_libraries(test_interpreter_object PRIVATE jvm_engine jvm_classfile
+                                                      GTest::gtest_main)
+target_include_directories(test_interpreter_object PRIVATE ${TEST_BASE_DIR})
+add_dependencies(test_interpreter_object compile_test_classes)
+target_compile_definitions(
+  test_interpreter_object
+  PRIVATE TEST_CLASS_PATH="${CMAKE_BINARY_DIR}/test_classes")
+gtest_discover_tests(test_interpreter_object)
