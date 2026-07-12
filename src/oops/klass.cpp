@@ -2,9 +2,9 @@
 
 #include "classfile/class_file.h"
 #include "constant_pool.h"
+#include "utilities/descriptor.h"
 
 namespace jvm::oops {
-
 Klass::Klass(class_loader::ClassFile* class_file, class_loader::ClassLoader* loader)
   : loader_(loader),
     class_file_(class_file),

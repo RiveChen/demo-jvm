@@ -42,15 +42,7 @@ class Klass {
   size_t                     getStaticSlotCount() const { return static_slot_count_; }
   Method*                    findMethod(const std::string& name, const std::string& descriptor);
   Field*                     findField(const std::string& name, const std::string& descriptor);
-  Slot&                      getStaticSlot(size_t index) {
-    if (statics_[index].tag == SlotType::PADDING) {
-      throw std::runtime_error("Static slot is padding");
-    }
-    // if (statics_[index].tag == SlotType::INVALID) {
-    //   throw std::runtime_error("Static slot is invalid");
-    // }
-    return statics_[index];
-  }
+  Slot&                      getStaticSlot(size_t index) { return statics_[index]; }
 
  private:
   class_loader::ClassLoader* loader_;

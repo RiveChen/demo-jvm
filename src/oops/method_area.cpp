@@ -15,7 +15,7 @@ Klass* MethodArea::getClass(const ClassIdentifier& identifier) {
 }
 
 bool MethodArea::hasClass(const ClassIdentifier& identifier) const {
-  return classes_.find(identifier) != classes_.end();
+  return classes_.contains(identifier);
 }
 
 }  // namespace jvm::oops
