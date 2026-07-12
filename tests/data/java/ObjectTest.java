@@ -53,4 +53,11 @@ public class ObjectTest {
         Animal a = new Dog();  // static type Animal, dynamic type Dog
         return a.sound();      // INVOKEVIRTUAL Animal.sound -> Dog.sound (=2)
     }
+
+    // two LDCs of the same literal must intern to the same reference
+    public static int sameStringRef() {
+        String a = "interned";  // ldc "interned"
+        String b = "interned";  // ldc "interned"
+        return (a == b) ? 1 : 0;  // if_acmpeq: same interned ref -> 1
+    }
 }

@@ -10,6 +10,7 @@
 #include "oops/klass.h"
 #include "oops/method.h"
 #include "oops/object.h"
+#include "oops/string_pool.h"
 #include "opcode.h"
 #include "runtime/frame.h"
 #include "runtime/thread.h"
@@ -133,10 +134,9 @@ void Interpreter::interpret(runtime::Thread* thread) {
         } else if (std::holds_alternative<Jfloat>(constant)) {
           op_stack.pushFloat(std::get<Jfloat>(constant));
         } else if (std::holds_alternative<std::string>(constant)) {
-          // For now, push char* for string literals
-          // TODO: implement proper string object creation
-          op_stack.pushRef(
-            static_cast<Jref>(const_cast<char*>(std::get<std::string>(constant).c_str())));
+          const std::string* s =
+            oops::StringPool::getSingleton().intern(std::get<std::string>(constant));
+          op_stack.pushRef(const_cast<std::string*>(s));
         }
       } break;
       case LDC_W: {
@@ -147,9 +147,9 @@ void Interpreter::interpret(runtime::Thread* thread) {
         } else if (std::holds_alternative<Jfloat>(constant)) {
           op_stack.pushFloat(std::get<Jfloat>(constant));
         } else if (std::holds_alternative<std::string>(constant)) {
-          // For now, push null reference for string literals
-          // TODO: implement proper string object creation
-          op_stack.pushRef(nullptr);
+          const std::string* s =
+            oops::StringPool::getSingleton().intern(std::get<std::string>(constant));
+          op_stack.pushRef(const_cast<std::string*>(s));
         }
       } break;
       case LDC2_W: {

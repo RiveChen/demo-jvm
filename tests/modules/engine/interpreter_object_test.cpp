@@ -43,4 +43,10 @@ TEST_F(InterpreterObjectTest, InvokeVirtualDispatchesToOverride) {
   EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "callOverride"), 2);
 }
 
+// LDC string interning: two LDCs of the same literal yield the same reference.
+// (Before interning, LDC pushed a fresh dangling c_str() each time -> would be 0.)
+TEST_F(InterpreterObjectTest, LdcInternsStringLiterals) {
+  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "sameStringRef"), 1);
+}
+
 }  // namespace
