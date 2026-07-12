@@ -15,7 +15,7 @@
 
 #include "utilities/types.h"
 
-namespace jvm::class_loader {
+namespace jvm::classfile {
 
 class ByteReader;
 class ClassFileParser;
@@ -128,4 +128,4 @@ class CodeAttribute : public AttributeInfo {
   AttributeTable attributes;
 };
 
-}  // namespace jvm::class_loader
+}  // namespace jvm::classfile

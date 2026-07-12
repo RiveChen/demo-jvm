@@ -2,7 +2,7 @@
 
 #include "class_file_parser.h"
 
-namespace jvm::class_loader {
+namespace jvm::classfile {
 
 void GenericAttribute::readInfo(ClassFileParser& parser) {
   // Read the raw bytes based on the attribute_length set by the factory
@@ -56,4 +56,4 @@ void CodeAttribute::readInfo(ClassFileParser& parser) {
   attributes = parser.parseAttributes();
 }
 
-}  // namespace jvm::class_loader
+}  // namespace jvm::classfile

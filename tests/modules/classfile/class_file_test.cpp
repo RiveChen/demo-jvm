@@ -23,22 +23,22 @@ class ClassFileTest : public ::testing::Test {
     class_file_stream_ = getClassFileStream(class_file_name_);
     ASSERT_TRUE(class_file_stream_->is_open()) << "Failed to open " << class_file_name_ << ".class";
     class_file_data_ = std::vector<U1>(std::istreambuf_iterator<char>(*class_file_stream_), {});
-    parser_          = std::make_unique<class_loader::ClassFileParser>(class_file_data_);
+    parser_          = std::make_unique<classfile::ClassFileParser>(class_file_data_);
   }
 
-  std::string                                    class_file_name_ = "HelloWorld";
-  std::unique_ptr<std::ifstream>                 class_file_stream_;
-  std::vector<U1>                                class_file_data_;
-  std::unique_ptr<class_loader::ClassFileParser> parser_;
+  std::string                                 class_file_name_ = "HelloWorld";
+  std::unique_ptr<std::ifstream>              class_file_stream_;
+  std::vector<U1>                             class_file_data_;
+  std::unique_ptr<classfile::ClassFileParser> parser_;
 };
 
 TEST_F(ClassFileTest, ParseMagic) {
-  EXPECT_EQ(parser_->getReader().read<U4>(), class_loader::kClassFileMagic);
+  EXPECT_EQ(parser_->getReader().read<U4>(), classfile::kClassFileMagic);
 }
 
 TEST_F(ClassFileTest, InvalidMagic) {
-  std::vector<U1>               invalid_data = {0x00, 0x00, 0x00, 0x00};
-  class_loader::ClassFileParser invalid_parser(invalid_data);
+  std::vector<U1>            invalid_data = {0x00, 0x00, 0x00, 0x00};
+  classfile::ClassFileParser invalid_parser(invalid_data);
   EXPECT_THROW(invalid_parser.parse(), std::runtime_error);
 }
 

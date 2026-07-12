@@ -5,7 +5,7 @@
 #include "byte_reader.hpp"
 #include "utilities/types.h"
 
-namespace jvm::class_loader {
+namespace jvm::classfile {
 
 // Utf8Info::readInfo() - reads a UTF-8 string
 void Utf8Info::readInfo(ByteReader& reader) {
@@ -127,4 +127,4 @@ const ConstantInfo* ConstantPool::getConstantInfo(U2 index) const {
   return pool_[index].get();
 }
 
-}  // namespace jvm::class_loader
+}  // namespace jvm::classfile

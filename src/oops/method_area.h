@@ -8,15 +8,15 @@
 #include "classfile/class_loader.h"
 #include "klass.h"
 
-// namespace jvm::class_loader {
+// namespace jvm::classfile {
 // class ClassLoader;
 // class ClassFile;
-// }  // namespace jvm::class_loader
+// }  // namespace jvm::classfile
 
 namespace jvm::oops {
 
 struct ClassIdentifierHash {
-  std::size_t operator()(const std::pair<class_loader::ClassLoader*, std::string>& p) const {
+  std::size_t operator()(const std::pair<classfile::ClassLoader*, std::string>& p) const {
     return std::hash<void*>{}(p.first) ^ (std::hash<std::string>{}(p.second) << 1U);
   }
 };
@@ -24,8 +24,8 @@ struct ClassIdentifierHash {
 // Singleton
 class MethodArea {
  public:
-  using ClassIdentifier = std::pair<class_loader::ClassLoader*, std::string>;
-  using ClassData = std::pair<std::unique_ptr<Klass>, std::unique_ptr<class_loader::ClassFile>>;
+  using ClassIdentifier = std::pair<classfile::ClassLoader*, std::string>;
+  using ClassData       = std::pair<std::unique_ptr<Klass>, std::unique_ptr<classfile::ClassFile>>;
 
   // Meyer's singleton
   static MethodArea& getInstance() {

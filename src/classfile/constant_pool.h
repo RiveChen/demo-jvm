@@ -16,7 +16,7 @@
 
 #include "utilities/types.h"
 
-namespace jvm::class_loader {
+namespace jvm::classfile {
 
 class ByteReader;
 
@@ -195,4 +195,4 @@ class ConstantPool {
   std::vector<std::unique_ptr<ConstantInfo>> pool_;
 };
 
-}  // namespace jvm::class_loader
+}  // namespace jvm::classfile

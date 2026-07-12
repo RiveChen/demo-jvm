@@ -20,7 +20,7 @@ class ClassLoaderTest : public ::testing::Test {
     // Set up test classpath
     test_classpath_ = TEST_CLASS_PATH;
     classpath_list_ = {test_classpath_};
-    loader_         = std::make_unique<class_loader::ClassLoader>(nullptr, classpath_list_);
+    loader_         = std::make_unique<classfile::ClassLoader>(nullptr, classpath_list_);
     // Reset method area
     oops::MethodArea::getInstance().reset();
   }
@@ -30,9 +30,9 @@ class ClassLoaderTest : public ::testing::Test {
     loader_.reset();
   }
 
-  std::string                                test_classpath_;
-  std::vector<std::string>                   classpath_list_;
-  std::unique_ptr<class_loader::ClassLoader> loader_;
+  std::string                             test_classpath_;
+  std::vector<std::string>                classpath_list_;
+  std::unique_ptr<classfile::ClassLoader> loader_;
 };
 
 TEST_F(ClassLoaderTest, LoadExistingClass) {
@@ -85,9 +85,9 @@ TEST_F(ClassLoaderTest, MultipleClasspaths) {
     "/nonexistent/path"  // This path doesn't exist, but first one should work
   };
 
-  auto multi_loader = std::make_unique<class_loader::ClassLoader>(nullptr, multiple_classpaths);
-  std::string class_name = "tests.data.java.HelloWorld";
-  auto*       klass      = multi_loader->loadClass(class_name);
+  auto        multi_loader = std::make_unique<classfile::ClassLoader>(nullptr, multiple_classpaths);
+  std::string class_name   = "tests.data.java.HelloWorld";
+  auto*       klass        = multi_loader->loadClass(class_name);
 
   ASSERT_NE(klass, nullptr) << "Should find class in first classpath";
 }
@@ -111,9 +111,9 @@ TEST_F(ClassLoaderTest, ClassRegisteredInMethodArea) {
 
 TEST_F(ClassLoaderTest, ParentClassLoader) {
   // Test parent class loader
-  auto parent_loader = std::make_unique<class_loader::ClassLoader>(nullptr, classpath_list_);
+  auto parent_loader = std::make_unique<classfile::ClassLoader>(nullptr, classpath_list_);
   auto child_loader =
-    std::make_unique<class_loader::ClassLoader>(parent_loader.get(), classpath_list_);
+    std::make_unique<classfile::ClassLoader>(parent_loader.get(), classpath_list_);
 
   // Both should be able to load classes independently
   std::string class_name   = "tests.data.java.HelloWorld";
@@ -131,7 +131,7 @@ TEST_F(ClassLoaderTest, ParentClassLoader) {
 TEST_F(ClassLoaderTest, EmptyClasspath) {
   // Test with empty classpath
   std::vector<std::string> empty_classpath;
-  auto empty_loader = std::make_unique<class_loader::ClassLoader>(nullptr, empty_classpath);
+  auto empty_loader = std::make_unique<classfile::ClassLoader>(nullptr, empty_classpath);
 
   std::string class_name = "tests.data.java.HelloWorld";
   EXPECT_THROW(empty_loader->loadClass(class_name), std::runtime_error);
@@ -140,7 +140,7 @@ TEST_F(ClassLoaderTest, EmptyClasspath) {
 TEST_F(ClassLoaderTest, InvalidClasspath) {
   // Test with invalid classpath
   std::vector<std::string> invalid_classpath = {"/nonexistent/path/that/does/not/exist"};
-  auto invalid_loader = std::make_unique<class_loader::ClassLoader>(nullptr, invalid_classpath);
+  auto invalid_loader = std::make_unique<classfile::ClassLoader>(nullptr, invalid_classpath);
 
   std::string class_name = "tests.data.java.HelloWorld";
   EXPECT_THROW(invalid_loader->loadClass(class_name), std::runtime_error);

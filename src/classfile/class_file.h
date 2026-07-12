@@ -17,7 +17,7 @@
 #include "utilities/types.h"
 #include "version.h"
 
-namespace jvm::class_loader {
+namespace jvm::classfile {
 
 constexpr U4 kClassFileMagic = 0xCAFEBABE;
 
@@ -55,4 +55,4 @@ class ClassFile {
   AttributeTable            attributes;
 };
 
-}  // namespace jvm::class_loader
+}  // namespace jvm::classfile

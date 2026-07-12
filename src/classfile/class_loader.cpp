@@ -12,7 +12,7 @@
 #include "oops/klass.h"
 #include "oops/method_area.h"
 
-namespace jvm::class_loader {
+namespace jvm::classfile {
 
 /**
  * @brief Reads a class file from the classpath and returns its binary content
@@ -73,8 +73,8 @@ std::optional<std::vector<std::byte>> ClassLoader::readClassFile(const std::stri
  * @note The class is registered in the method area using a key of (ClassLoader*, name)
  */
 // NOLINTNEXTLINE(misc-no-recursion)
-oops::Klass* ClassLoader::defineClass(std::unique_ptr<class_loader::ClassFile> class_file,
-                                      const std::string&                       name) {
+oops::Klass* ClassLoader::defineClass(std::unique_ptr<classfile::ClassFile> class_file,
+                                      const std::string&                    name) {
   // Create new Klass object from the parsed class file
   auto         klass     = std::make_unique<oops::Klass>(class_file.get(), this);
   oops::Klass* klass_ptr = klass.get();
@@ -173,4 +173,4 @@ oops::Klass* ClassLoader::loadClass(const std::string& fully_qualified_name) {
   return klass;
 }
 
-}  // namespace jvm::class_loader
+}  // namespace jvm::classfile

@@ -11,7 +11,7 @@ namespace jvm::oops {
 class Klass;
 }  // namespace jvm::oops
 
-namespace jvm::class_loader {
+namespace jvm::classfile {
 
 // class ClassFile;
 
@@ -22,8 +22,7 @@ class ClassLoader {
   std::unordered_map<std::string, oops::Klass*> cache_;
 
   std::optional<std::vector<std::byte>> readClassFile(const std::string& name);
-  oops::Klass* defineClass(std::unique_ptr<class_loader::ClassFile> class_file,
-                           const std::string&                       name);
+  oops::Klass* defineClass(std::unique_ptr<ClassFile> class_file, const std::string& name);
   void         linkSuperClass(oops::Klass* klass);
   void         linkInterfaces(oops::Klass* klass);
 
@@ -34,4 +33,4 @@ class ClassLoader {
   oops::Klass* loadClass(const std::string& name);
 };
 
-}  // namespace jvm::class_loader
+}  // namespace jvm::classfile

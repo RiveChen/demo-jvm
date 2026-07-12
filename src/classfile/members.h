@@ -4,7 +4,7 @@
 #include "utilities/access_flags.hpp"
 #include "utilities/types.h"
 
-namespace jvm::class_loader {
+namespace jvm::classfile {
 
 class ByteReader;
 
@@ -57,4 +57,4 @@ class MemberTable {
   std::vector<std::unique_ptr<MemberInfo>> members;
 };
 
-}  // namespace jvm::class_loader
+}  // namespace jvm::classfile

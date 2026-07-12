@@ -74,7 +74,7 @@ Method* RuntimeConstantPool::resolveMethod(U2 index) {
 std::pair<std::string, std::string> RuntimeConstantPool::resolveNameAndType(U2 index) {
   const auto& cf_cp = owner_klass_->getClassFile()->constant_pool;
   const auto* nt_info =
-    dynamic_cast<const class_loader::NameAndTypeInfo*>(cf_cp.getConstantInfo(index));
+    dynamic_cast<const classfile::NameAndTypeInfo*>(cf_cp.getConstantInfo(index));
   if (nt_info == nullptr) {
     throw std::runtime_error("Invalid name and type info");
   }

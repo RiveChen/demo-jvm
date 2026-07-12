@@ -17,16 +17,16 @@ class MethodAreaTest : public ::testing::Test {
     // Set up test classpath
     test_classpath_ = TEST_CLASS_PATH;
     classpath_list_ = {test_classpath_};
-    loader_         = std::make_unique<class_loader::ClassLoader>(nullptr, classpath_list_);
+    loader_         = std::make_unique<classfile::ClassLoader>(nullptr, classpath_list_);
     // Reset method area because it is a global singleton
     oops::MethodArea::getInstance().reset();
   }
 
   void TearDown() override { loader_.reset(); }
 
-  std::string                                test_classpath_;
-  std::vector<std::string>                   classpath_list_;
-  std::unique_ptr<class_loader::ClassLoader> loader_;
+  std::string                             test_classpath_;
+  std::vector<std::string>                classpath_list_;
+  std::unique_ptr<classfile::ClassLoader> loader_;
 };
 
 TEST_F(MethodAreaTest, SingletonInstance) {
@@ -84,8 +84,8 @@ TEST_F(MethodAreaTest, GetClassReturnsNullptrForNonExistent) {
 
 TEST_F(MethodAreaTest, DifferentClassLoadersSameClassName) {
   // Create two different class loaders
-  auto loader1 = std::make_unique<class_loader::ClassLoader>(nullptr, classpath_list_);
-  auto loader2 = std::make_unique<class_loader::ClassLoader>(nullptr, classpath_list_);
+  auto loader1 = std::make_unique<classfile::ClassLoader>(nullptr, classpath_list_);
+  auto loader2 = std::make_unique<classfile::ClassLoader>(nullptr, classpath_list_);
 
   std::string class_name = "tests.data.java.HelloWorld";
 

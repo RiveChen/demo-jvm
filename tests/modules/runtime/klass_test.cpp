@@ -18,13 +18,13 @@ class KlassTest : public ::testing::Test {
   void SetUp() override {
     test_classpath_ = TEST_CLASS_PATH;
     classpath_list_ = {test_classpath_};
-    loader_         = std::make_unique<class_loader::ClassLoader>(nullptr, classpath_list_);
+    loader_         = std::make_unique<classfile::ClassLoader>(nullptr, classpath_list_);
     oops::MethodArea::getInstance().reset();
   }
 
-  std::string                                test_classpath_;
-  std::vector<std::string>                   classpath_list_;
-  std::unique_ptr<class_loader::ClassLoader> loader_;
+  std::string                             test_classpath_;
+  std::vector<std::string>                classpath_list_;
+  std::unique_ptr<classfile::ClassLoader> loader_;
 };
 
 }  // namespace

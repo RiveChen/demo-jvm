@@ -14,7 +14,7 @@
 
 #include "utilities/endian.hpp"
 
-namespace jvm::class_loader {
+namespace jvm::classfile {
 class ByteReader {
  public:
   /**
@@ -34,7 +34,7 @@ class ByteReader {
     T value;
     std::memcpy(&value, data_.data() + pos_, sizeof(T));
     pos_ += sizeof(T);
-    return common::swapEndian(value);
+    return swapEndian(value);
   }
 
   /**
@@ -76,4 +76,4 @@ class ByteReader {
   size_t        pos_{};
 };
 
-}  // namespace jvm::class_loader
+}  // namespace jvm::classfile

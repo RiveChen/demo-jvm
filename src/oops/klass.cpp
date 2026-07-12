@@ -5,7 +5,7 @@
 #include "utilities/descriptor.h"
 
 namespace jvm::oops {
-Klass::Klass(class_loader::ClassFile* class_file, class_loader::ClassLoader* loader)
+Klass::Klass(classfile::ClassFile* class_file, classfile::ClassLoader* loader)
   : loader_(loader),
     class_file_(class_file),
     name_(class_file->constant_pool.getClassName(class_file->this_class_index)),
@@ -41,7 +41,7 @@ Field* Klass::findField(const std::string& name, const std::string& descriptor) 
   return nullptr;
 }
 
-void Klass::prepareRuntimeConstantPool(class_loader::ClassFile* class_file) {
+void Klass::prepareRuntimeConstantPool(classfile::ClassFile* class_file) {
   // create runtime constant pool
   size_t cp_count = class_file->constant_pool.size();
   constant_pool_.infos_.resize(cp_count);
@@ -49,66 +49,66 @@ void Klass::prepareRuntimeConstantPool(class_loader::ClassFile* class_file) {
   for (size_t i = 1; i < cp_count; i++) {
     const auto* cpinfo = class_file->constant_pool.getConstantInfo(i);
     switch (cpinfo->tag) {
-      case class_loader::ConstantTag::kClass: {
-        const auto* info = dynamic_cast<const class_loader::ClassInfo*>(cpinfo);
+      case classfile::ConstantTag::kClass: {
+        const auto* info = dynamic_cast<const classfile::ClassInfo*>(cpinfo);
         constant_pool_.setConstant(i, SymRef_Class{.name_index = info->name_index});
       } break;
-      case class_loader::ConstantTag::kMethodref: {
-        const auto* info = dynamic_cast<const class_loader::MethodrefInfo*>(cpinfo);
+      case classfile::ConstantTag::kMethodref: {
+        const auto* info = dynamic_cast<const classfile::MethodrefInfo*>(cpinfo);
         constant_pool_.setConstant(i,
                                    SymRef_Method{.class_index         = info->class_index,
                                                  .name_and_type_index = info->name_and_type_index});
       } break;
-      case class_loader::ConstantTag::kFieldref: {
-        const auto* info = dynamic_cast<const class_loader::FieldrefInfo*>(cpinfo);
+      case classfile::ConstantTag::kFieldref: {
+        const auto* info = dynamic_cast<const classfile::FieldrefInfo*>(cpinfo);
         constant_pool_.setConstant(i,
                                    SymRef_Field{.class_index         = info->class_index,
                                                 .name_and_type_index = info->name_and_type_index});
       } break;
-      case class_loader::ConstantTag::kInterfaceMethodref: {
-        const auto* info = dynamic_cast<const class_loader::InterfaceMethodrefInfo*>(cpinfo);
+      case classfile::ConstantTag::kInterfaceMethodref: {
+        const auto* info = dynamic_cast<const classfile::InterfaceMethodrefInfo*>(cpinfo);
         constant_pool_.setConstant(
           i, SymRef_InterfaceMethod{.class_index         = info->class_index,
                                     .name_and_type_index = info->name_and_type_index});
       } break;
 
-      case class_loader::ConstantTag::kInteger: {
-        auto rt_cpinfo = dynamic_cast<const class_loader::IntegerInfo*>(cpinfo)->value;
+      case classfile::ConstantTag::kInteger: {
+        auto rt_cpinfo = dynamic_cast<const classfile::IntegerInfo*>(cpinfo)->value;
         constant_pool_.setConstant(i, rt_cpinfo);
       } break;
 
-      case class_loader::ConstantTag::kLong: {
-        auto rt_cpinfo = dynamic_cast<const class_loader::LongInfo*>(cpinfo)->value;
+      case classfile::ConstantTag::kLong: {
+        auto rt_cpinfo = dynamic_cast<const classfile::LongInfo*>(cpinfo)->value;
         constant_pool_.setConstant(i, rt_cpinfo);
         i++;
         constant_pool_.infos_[i] = std::monostate{};  // placeholder for the second slot
       } break;
-      case class_loader::ConstantTag::kFloat: {
-        auto rt_cpinfo = dynamic_cast<const class_loader::FloatInfo*>(cpinfo)->value;
+      case classfile::ConstantTag::kFloat: {
+        auto rt_cpinfo = dynamic_cast<const classfile::FloatInfo*>(cpinfo)->value;
         constant_pool_.setConstant(i, rt_cpinfo);
       } break;
-      case class_loader::ConstantTag::kDouble: {
-        auto rt_cpinfo = dynamic_cast<const class_loader::DoubleInfo*>(cpinfo)->value;
+      case classfile::ConstantTag::kDouble: {
+        auto rt_cpinfo = dynamic_cast<const classfile::DoubleInfo*>(cpinfo)->value;
         constant_pool_.setConstant(i, rt_cpinfo);
         i++;
         constant_pool_.infos_[i] = std::monostate{};  // placeholder for the second slot
       } break;
 
-      case class_loader::ConstantTag::kString: {
+      case classfile::ConstantTag::kString: {
         // TODO: string intern
-        auto index     = dynamic_cast<const class_loader::StringInfo*>(cpinfo)->string_index;
+        auto index     = dynamic_cast<const classfile::StringInfo*>(cpinfo)->string_index;
         auto rt_cpinfo = class_file->constant_pool.getUtf8String(index);
         constant_pool_.setConstant(i, rt_cpinfo);
       } break;
 
       // TODO: dynamic language support
-      case class_loader::ConstantTag::kMethodHandle:
-      case class_loader::ConstantTag::kMethodType:
-      case class_loader::ConstantTag::kInvokeDynamic:
+      case classfile::ConstantTag::kMethodHandle:
+      case classfile::ConstantTag::kMethodType:
+      case classfile::ConstantTag::kInvokeDynamic:
 
       // just ignore these constant pool entries
-      case class_loader::ConstantTag::kNameAndType:
-      case class_loader::ConstantTag::kUtf8:
+      case classfile::ConstantTag::kNameAndType:
+      case classfile::ConstantTag::kUtf8:
         break;
       default:
         throw std::runtime_error("Unknown constant pool tag: " +
@@ -117,10 +117,10 @@ void Klass::prepareRuntimeConstantPool(class_loader::ClassFile* class_file) {
   }
 }
 
-void Klass::prepareMethods(class_loader::ClassFile* class_file) {
+void Klass::prepareMethods(classfile::ClassFile* class_file) {
   // create methods
   for (auto& member_info : class_file->methods.getMembers()) {
-    auto* method_info  = dynamic_cast<class_loader::MethodInfo*>(member_info.get());
+    auto* method_info  = dynamic_cast<classfile::MethodInfo*>(member_info.get());
     auto  access_flags = method_info->access_flags;
     // optimize after string intern
     auto   name       = class_file->constant_pool.getUtf8String(method_info->name_index);
@@ -132,7 +132,7 @@ void Klass::prepareMethods(class_loader::ClassFile* class_file) {
     } else if (!access_flags.has(flags::Method::ABSTRACT)) {
       // if a method is not native and not abstract, it must have code
       // find Code attribute
-      auto* code_attribute = method_info->attributes.getAttribute<class_loader::CodeAttribute>();
+      auto* code_attribute = method_info->attributes.getAttribute<classfile::CodeAttribute>();
       if (code_attribute != nullptr) {
         method.max_stack_  = code_attribute->max_stack;
         method.max_locals_ = code_attribute->max_locals;
@@ -145,12 +145,12 @@ void Klass::prepareMethods(class_loader::ClassFile* class_file) {
   }
 }
 
-void Klass::prepareFieldsAndStatics(class_loader::ClassFile* class_file) {
+void Klass::prepareFieldsAndStatics(classfile::ClassFile* class_file) {
   // create fields
   size_t instance_slot_count = 0;
   size_t static_slot_count   = 0;
   for (auto& member_info : class_file->fields.getMembers()) {
-    auto* field_info   = dynamic_cast<class_loader::FieldInfo*>(member_info.get());
+    auto* field_info   = dynamic_cast<classfile::FieldInfo*>(member_info.get());
     auto  access_flags = field_info->access_flags;
     // optimize after string intern
     auto  name       = class_file->constant_pool.getUtf8String(field_info->name_index);

@@ -8,12 +8,12 @@ using namespace jvm;
 
 class ByteReaderTest : public ::testing::Test {
  protected:
-  void SetUp() override { reader_ = std::make_unique<class_loader::ByteReader>(dummy_bytes_); }
+  void SetUp() override { reader_ = std::make_unique<classfile::ByteReader>(dummy_bytes_); }
 
   void TearDown() override {}
 
   std::vector<U1> dummy_bytes_ = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08};
-  std::unique_ptr<class_loader::ByteReader> reader_;
+  std::unique_ptr<classfile::ByteReader> reader_;
 };
 
 TEST_F(ByteReaderTest, ReadU2AndU1) {

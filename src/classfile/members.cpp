@@ -2,7 +2,7 @@
 
 #include "class_file_parser.h"
 
-namespace jvm::class_loader {
+namespace jvm::classfile {
 
 void FieldInfo::readInfo(ClassFileParser& parser) {
   access_flags     = AccessFlags<flags::Field>(parser.getReader().read<U2>());
@@ -22,4 +22,4 @@ void MethodInfo::readInfo(ClassFileParser& parser) {
   name = parser.getConstantPool().getUtf8String(name_index);
 }
 
-}  // namespace jvm::class_loader
+}  // namespace jvm::classfile

@@ -15,7 +15,7 @@
 #include "byte_reader.hpp"
 #include "class_file.h"
 
-namespace jvm::class_loader {
+namespace jvm::classfile {
 
 class ClassFileParser {
  public:
@@ -59,4 +59,4 @@ class ClassFileParser {
   friend class MethodInfo;
 };
 
-}  // namespace jvm::class_loader
+}  // namespace jvm::classfile

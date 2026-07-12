@@ -8,11 +8,11 @@
 #include "utilities/access_flags.hpp"
 #include "utilities/slot.h"
 
-namespace jvm::class_loader {
+namespace jvm::classfile {
 class ClassLoader;
 class ClassFile;
 class MethodInfo;
-}  // namespace jvm::class_loader
+}  // namespace jvm::classfile
 
 namespace jvm::oops {
 
@@ -29,12 +29,12 @@ class Object;
 
 class Klass {
  public:
-  explicit Klass(class_loader::ClassFile* class_file, class_loader::ClassLoader* loader);
+  explicit Klass(classfile::ClassFile* class_file, classfile::ClassLoader* loader);
 
-  class_loader::ClassLoader* getClassLoader() const { return loader_; }
-  class_loader::ClassFile*   getClassFile() const { return class_file_; }
-  void                       setSuperClass(Klass* super_class) { super_class_ = super_class; }
-  Klass*                     getSuperClass() const { return super_class_; }
+  classfile::ClassLoader* getClassLoader() const { return loader_; }
+  classfile::ClassFile*   getClassFile() const { return class_file_; }
+  void                    setSuperClass(Klass* super_class) { super_class_ = super_class; }
+  Klass*                  getSuperClass() const { return super_class_; }
   void setInterface(U2 index, Klass* interface) { interfaces_[index] = interface; }
   const std::vector<Klass*>& getInterfaces() const { return interfaces_; }
   RuntimeConstantPool&       getRuntimeConstantPool() { return constant_pool_; }
@@ -45,8 +45,8 @@ class Klass {
   Slot&                      getStaticSlot(size_t index) { return statics_[index]; }
 
  private:
-  class_loader::ClassLoader* loader_;
-  class_loader::ClassFile*
+  classfile::ClassLoader* loader_;
+  classfile::ClassFile*
     class_file_;  // class_file should be initialized first for constant_pool to be valid
 
   std::string               name_;
@@ -64,12 +64,12 @@ class Klass {
   Object* mirror_class_object_;
 
   // define class
-  void prepareRuntimeConstantPool(class_loader::ClassFile* class_file);
-  void prepareMethods(class_loader::ClassFile* class_file);
-  void prepareFieldsAndStatics(class_loader::ClassFile* class_file);
+  void prepareRuntimeConstantPool(classfile::ClassFile* class_file);
+  void prepareMethods(classfile::ClassFile* class_file);
+  void prepareFieldsAndStatics(classfile::ClassFile* class_file);
   // void linkNativeMethods(Method* method);
 
-  friend class class_loader::ClassLoader;
+  friend class classfile::ClassLoader;
 };
 
 }  // namespace jvm::oops

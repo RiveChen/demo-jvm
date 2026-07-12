@@ -1,6 +1,6 @@
 #include "class_file_parser.h"
 
-namespace jvm::class_loader {
+namespace jvm::classfile {
 
 std::unique_ptr<ClassFile> ClassFileParser::parse() {
   parseMagic();
@@ -187,4 +187,4 @@ std::unique_ptr<AttributeInfo> ClassFileParser::createAttributeInfo() {
   return info;
 }
 
-}  // namespace jvm::class_loader
+}  // namespace jvm::classfile

@@ -23,15 +23,15 @@ class ConstantPoolTest : public ::testing::Test {
   void SetUp() override {
     test_classpath_ = TEST_CLASS_PATH;
     classpath_list_ = {test_classpath_};
-    loader_         = std::make_unique<class_loader::ClassLoader>(nullptr, classpath_list_);
+    loader_         = std::make_unique<classfile::ClassLoader>(nullptr, classpath_list_);
     oops::MethodArea::getInstance().reset();
   }
 
-  std::optional<U2> findNameAndTypeIndex(class_loader::ClassFile* class_file,
-                                         const std::string& name, const std::string& descriptor) {
+  std::optional<U2> findNameAndTypeIndex(classfile::ClassFile* class_file, const std::string& name,
+                                         const std::string& descriptor) {
     const auto& cp = class_file->constant_pool;
     for (size_t i = 1; i < cp.size(); i++) {
-      auto* info = dynamic_cast<const class_loader::NameAndTypeInfo*>(cp.getConstantInfo(i));
+      auto* info = dynamic_cast<const classfile::NameAndTypeInfo*>(cp.getConstantInfo(i));
       if (info == nullptr) {
         continue;
       }
@@ -45,9 +45,9 @@ class ConstantPoolTest : public ::testing::Test {
     return std::nullopt;
   }
 
-  std::string                                test_classpath_;
-  std::vector<std::string>                   classpath_list_;
-  std::unique_ptr<class_loader::ClassLoader> loader_;
+  std::string                             test_classpath_;
+  std::vector<std::string>                classpath_list_;
+  std::unique_ptr<classfile::ClassLoader> loader_;
 };
 
 }  // namespace
@@ -57,7 +57,7 @@ TEST_F(ConstantPoolTest, ResolveClassCachesResult) {
   ASSERT_NE(klass, nullptr);
 
   auto* class_file = klass->getClassFile();
-  auto* class_info = dynamic_cast<const class_loader::ClassInfo*>(
+  auto* class_info = dynamic_cast<const classfile::ClassInfo*>(
     class_file->constant_pool.getConstantInfo(class_file->this_class_index));
   ASSERT_NE(class_info, nullptr);
 

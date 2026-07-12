@@ -14,7 +14,7 @@
 
 #include "utilities/types.h"
 
-namespace jvm::class_loader {
+namespace jvm::classfile {
 
 class Version {
  public:
@@ -35,4 +35,4 @@ class Version {
   U2 minor_;
 };
 
-}  // namespace jvm::class_loader
+}  // namespace jvm::classfile
