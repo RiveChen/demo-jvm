@@ -124,14 +124,12 @@ TEST_F(InterpreterLoadStoreTest, ALOAD_Basic) {
   engine::Interpreter interpreter;
 
   runtime::Frame caller_frame(method);
-  caller_frame.setCallerPC(method->getCode().size());
+  caller_frame.setPC(method->getCode().size());
   thread.pushFrame(std::move(caller_frame));
-  thread.setPC(method->getCode().size());
 
   runtime::Frame callee_frame(method);
   callee_frame.getLocalVariables().setRef(0, nullptr);
   thread.pushFrame(std::move(callee_frame));
-  thread.setPC(0);
 
   interpreter.interpret(&thread);
 
@@ -154,14 +152,12 @@ TEST_F(InterpreterLoadStoreTest, ALOAD_0) {
   engine::Interpreter interpreter;
 
   runtime::Frame caller_frame(method);
-  caller_frame.setCallerPC(method->getCode().size());
+  caller_frame.setPC(method->getCode().size());
   thread.pushFrame(std::move(caller_frame));
-  thread.setPC(method->getCode().size());
 
   runtime::Frame callee_frame(method);
   callee_frame.getLocalVariables().setRef(0, nullptr);
   thread.pushFrame(std::move(callee_frame));
-  thread.setPC(0);
 
   interpreter.interpret(&thread);
 
@@ -184,14 +180,12 @@ TEST_F(InterpreterLoadStoreTest, ASTORE_Basic) {
   engine::Interpreter interpreter;
 
   runtime::Frame caller_frame(method);
-  caller_frame.setCallerPC(method->getCode().size());
+  caller_frame.setPC(method->getCode().size());
   thread.pushFrame(std::move(caller_frame));
-  thread.setPC(method->getCode().size());
 
   runtime::Frame callee_frame(method);
   callee_frame.getLocalVariables().setRef(0, nullptr);
   thread.pushFrame(std::move(callee_frame));
-  thread.setPC(0);
 
   interpreter.interpret(&thread);
 

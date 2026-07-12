@@ -21,7 +21,7 @@ namespace jvm::engine {
 void Interpreter::interpret(runtime::Thread* thread) {
   // cache pc to avoid fetching it from thread every time
   // for thread-pc, we only use it when the frame is popped or pushed
-  size_t pc = 0;
+  size_t pc = thread->getCurrentFrame().getPC();
 
   while (true) {
     if (thread->isStackEmpty()) {
@@ -1141,8 +1141,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
           // push ret into caller frame's operand stack
           auto& caller_frame = thread->getCurrentFrame();
           caller_frame.getOperandStack().pushInt(ret);
-          pc = caller_frame.getCallerPC();
-          thread->setPC(pc);
+          pc = caller_frame.getPC();
         }
       } break;
       case LRETURN: {
@@ -1152,8 +1151,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         if (!thread->isStackEmpty()) {
           auto& caller_frame = thread->getCurrentFrame();
           caller_frame.getOperandStack().pushLong(ret);
-          pc = caller_frame.getCallerPC();
-          thread->setPC(pc);
+          pc = caller_frame.getPC();
         }
       } break;
       case FRETURN: {
@@ -1163,8 +1161,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         if (!thread->isStackEmpty()) {
           auto& caller_frame = thread->getCurrentFrame();
           caller_frame.getOperandStack().pushFloat(ret);
-          pc = caller_frame.getCallerPC();
-          thread->setPC(pc);
+          pc = caller_frame.getPC();
         }
       } break;
       case DRETURN: {
@@ -1174,8 +1171,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         if (!thread->isStackEmpty()) {
           auto& caller_frame = thread->getCurrentFrame();
           caller_frame.getOperandStack().pushDouble(ret);
-          pc = caller_frame.getCallerPC();
-          thread->setPC(pc);
+          pc = caller_frame.getPC();
         }
       } break;
       case ARETURN: {
@@ -1185,15 +1181,14 @@ void Interpreter::interpret(runtime::Thread* thread) {
         if (!thread->isStackEmpty()) {
           auto& caller_frame = thread->getCurrentFrame();
           caller_frame.getOperandStack().pushRef(ret);
-          pc = caller_frame.getCallerPC();
-          thread->setPC(pc);
+          pc = caller_frame.getPC();
         }
       } break;
       case RETURN: {
         thread->popFrame();
         if (!thread->isStackEmpty()) {
-          pc = thread->getCurrentFrame().getCallerPC();
-          thread->setPC(pc);
+          pc = thread->getCurrentFrame().getPC();
+
         } else {
           return;
         }
@@ -1269,11 +1264,10 @@ void Interpreter::interpret(runtime::Thread* thread) {
           }
         }
 
-        thread->getCurrentFrame().setCallerPC(pc);
+        thread->getCurrentFrame().setPC(pc);
         thread->pushFrame(std::move(next_frame));
         // reset pc to 0 for the next frame
         pc = 0;
-        thread->setPC(pc);
 
       } break;
       case INVOKEINTERFACE:

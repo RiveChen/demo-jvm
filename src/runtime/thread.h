@@ -15,10 +15,6 @@ class Thread {
   Thread& operator=(Thread&&)      = default;
   ~Thread()                        = default;
 
-  size_t getPC() const { return pc_; }
-  void   setPC(size_t pc) { pc_ = pc; }
-  void   incrementPC(size_t n = 1) { pc_ += n; }
-
   Stack& getStack() { return stack_; }
   void   pushFrame(Frame frame) { stack_.push(std::move(frame)); }
   void   popFrame() { stack_.pop(); }
@@ -26,8 +22,7 @@ class Thread {
   bool   isStackEmpty() { return stack_.empty(); }
 
  private:
-  size_t pc_{0};
-  Stack  stack_;
+  Stack stack_;
 };
 
 }  // namespace jvm::runtime

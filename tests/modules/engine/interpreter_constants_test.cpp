@@ -134,13 +134,11 @@ TEST_F(InterpreterConstantsTest, ACONST_NULL) {
   engine::Interpreter interpreter;
 
   runtime::Frame caller_frame(method);
-  caller_frame.setCallerPC(method->getCode().size());
+  caller_frame.setPC(method->getCode().size());
   thread.pushFrame(std::move(caller_frame));
-  thread.setPC(method->getCode().size());
 
   runtime::Frame callee_frame(method);
   thread.pushFrame(std::move(callee_frame));
-  thread.setPC(0);
 
   interpreter.interpret(&thread);
 

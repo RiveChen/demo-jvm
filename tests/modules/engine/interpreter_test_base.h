@@ -115,9 +115,8 @@ class InterpreterTestBase : public ::testing::Test {
 
     // 3. Prepare caller frame (Caller Frame)
     jvm::runtime::Frame caller_frame(method);
-    caller_frame.setCallerPC(method->getCode().size());
+    caller_frame.setPC(method->getCode().size());
     thread.pushFrame(std::move(caller_frame));
-    thread.setPC(method->getCode().size());
 
     // 4. Prepare callee frame (Callee Frame)
     jvm::runtime::Frame callee_frame(method);
@@ -134,7 +133,6 @@ class InterpreterTestBase : public ::testing::Test {
     (set_arg(args), ...);
 
     thread.pushFrame(std::move(callee_frame));
-    thread.setPC(0);
 
     // 6. Execute
     interpreter.interpret(&thread);
