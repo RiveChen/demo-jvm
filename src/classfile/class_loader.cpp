@@ -13,8 +13,8 @@
 #include <span>
 #include <vector>
 
+#include "class_file.h"
 #include "class_file_parser.h"
-#include "classfile/class_file.h"
 #include "oops/klass.h"
 #include "oops/method_area.h"
 
