@@ -101,10 +101,9 @@ void ClassLoader::linkSuperClass(oops::Klass* klass, classfile::ClassFile* cf) {
   }
 
   const auto& cp               = cf->constant_pool;
-  std::string super_class_name = cp.getClassName(super_class_index);
-  std::ranges::replace(super_class_name, '/', '.');
+  std::string super_class_name = cp.getClassName(super_class_index);  // internal slash form
 
-  if (super_class_name == "java.lang.Object") {
+  if (super_class_name == "java/lang/Object") {
     // suspend the support of Object for now
     klass->setSuperClass(nullptr);
     return;
@@ -120,8 +119,7 @@ void ClassLoader::linkInterfaces(oops::Klass* klass, classfile::ClassFile* cf) {
   auto        interfaces = cf->interfaces;
   const auto& cp         = cf->constant_pool;
   for (auto& interface_index : interfaces) {
-    std::string interface_name = cp.getClassName(interface_index);
-    std::ranges::replace(interface_name, '/', '.');
+    std::string interface_name = cp.getClassName(interface_index);  // internal slash form
     auto* interface_klass = loadClass(interface_name);
     klass->setInterface(interface_index, interface_klass);
   }
@@ -147,15 +145,21 @@ void ClassLoader::linkInterfaces(oops::Klass* klass, classfile::ClassFile* cf) {
  */
 // NOLINTNEXTLINE(misc-no-recursion)
 oops::Klass* ClassLoader::loadClass(const std::string& fully_qualified_name) {
+  // Normalize to the internal (slash) form; callers may pass '.' or '/'.
+  // From here on, slash is the single canonical class-name form (cache key,
+  // MethodArea key, Klass::name_, path all agree).
+  std::string name = fully_qualified_name;
+  std::ranges::replace(name, '.', '/');
+
   // Check cache first to avoid re-loading already loaded classes
-  if (cache_.contains(fully_qualified_name)) {
-    return cache_[fully_qualified_name];
+  if (cache_.contains(name)) {
+    return cache_[name];
   }
 
   // Read class file from classpath
-  auto class_file_data = readClassFile(fully_qualified_name);
+  auto class_file_data = readClassFile(name);
   if (!class_file_data) {
-    throw std::runtime_error("Class " + fully_qualified_name + " not found");
+    throw std::runtime_error("Class " + name + " not found");
   }
 
   // Parse the class file and create Klass object
@@ -164,7 +168,7 @@ oops::Klass* ClassLoader::loadClass(const std::string& fully_qualified_name) {
   auto  class_file = parser.parse();
   auto* cf = class_file.get();  // grab before the move (pointee stays put; MethodArea owns it)
 
-  auto* klass = defineClass(std::move(class_file), fully_qualified_name);
+  auto* klass = defineClass(std::move(class_file), name);
 
   // Prepare the class
   klass->prepareRuntimeConstantPool(cf);
@@ -172,7 +176,7 @@ oops::Klass* ClassLoader::loadClass(const std::string& fully_qualified_name) {
   klass->prepareFieldsAndStatics(cf);
 
   // Cache the loaded class for future access
-  cache_[fully_qualified_name] = klass;
+  cache_[name] = klass;
   return klass;
 }
 

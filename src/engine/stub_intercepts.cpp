@@ -22,8 +22,8 @@ void printlnString(runtime::OperandStack& s) {
 
 void registerStubIntercepts() {
   auto& t = StubIntercepts::getSingleton();
-  t.bind("java.lang.Object.<init> ()V", &objectInit);
-  t.bind("java.lang.System.out Ljava/io/PrintStream;", &systemOut);
-  t.bind("java.io.PrintStream.println (Ljava/lang/String;)V", &printlnString);
+  t.bind("java/lang/Object.<init> ()V", &objectInit);
+  t.bind("java/lang/System.out Ljava/io/PrintStream;", &systemOut);
+  t.bind("java/io/PrintStream.println (Ljava/lang/String;)V", &printlnString);
 }
 }  // namespace jvm::engine

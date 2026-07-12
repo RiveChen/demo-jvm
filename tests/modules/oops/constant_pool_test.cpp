@@ -102,21 +102,22 @@ TEST_F(ConstantPoolTest, SymbolicKeyFromMethodAndFieldRefs) {
   ASSERT_NE(klass, nullptr);
   auto& rcp = klass->getRuntimeConstantPool();
 
-  rcp.setConstant(1, oops::SymRef_Class{.class_name = "java.io.PrintStream"});
+  // class names are the internal slash form; the key must match registerStubIntercepts()
+  rcp.setConstant(1, oops::SymRef_Class{.class_name = "java/io/PrintStream"});
   rcp.setConstant(2, oops::SymRef_Method{.class_cp_index = 1,
                                          .member_name    = "println",
                                          .descriptor     = "(Ljava/lang/String;)V"});
   auto mkey = rcp.symbolicKey(2);
   ASSERT_TRUE(mkey.has_value());
-  EXPECT_EQ(*mkey, "java.io.PrintStream.println (Ljava/lang/String;)V");
+  EXPECT_EQ(*mkey, "java/io/PrintStream.println (Ljava/lang/String;)V");
 
-  rcp.setConstant(3, oops::SymRef_Class{.class_name = "java.lang.System"});
+  rcp.setConstant(3, oops::SymRef_Class{.class_name = "java/lang/System"});
   rcp.setConstant(4, oops::SymRef_Field{.class_cp_index = 3,
                                         .member_name    = "out",
                                         .descriptor     = "Ljava/io/PrintStream;"});
   auto fkey = rcp.symbolicKey(4);
   ASSERT_TRUE(fkey.has_value());
-  EXPECT_EQ(*fkey, "java.lang.System.out Ljava/io/PrintStream;");
+  EXPECT_EQ(*fkey, "java/lang/System.out Ljava/io/PrintStream;");
 }
 
 // A resolved slot (Method*) is not symbolic -> no key (keeps the invoke hot path cheap).

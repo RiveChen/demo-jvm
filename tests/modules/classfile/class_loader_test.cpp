@@ -87,7 +87,7 @@ TEST_F(ClassLoaderTest, MultipleClasspaths) {
   };
 
   auto        multi_loader = std::make_unique<classfile::ClassLoader>(nullptr, multiple_classpaths);
-  std::string class_name   = "tests.data.java.HelloWorld";
+  std::string class_name   = "tests/data/java/HelloWorld";
   auto*       klass        = multi_loader->loadClass(class_name);
 
   ASSERT_NE(klass, nullptr) << "Should find class in first classpath";
@@ -95,7 +95,7 @@ TEST_F(ClassLoaderTest, MultipleClasspaths) {
 
 TEST_F(ClassLoaderTest, ClassRegisteredInMethodArea) {
   // Load a class and verify it's registered in method area
-  std::string class_name = "tests.data.java.HelloWorld";
+  std::string class_name = "tests/data/java/HelloWorld";
   auto*       klass      = loader_->loadClass(class_name);
 
   ASSERT_NE(klass, nullptr);

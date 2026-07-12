@@ -68,11 +68,11 @@ void Klass::prepareRuntimeConstantPool(classfile::ClassFile* class_file) {
     const auto* cpinfo = class_file->constant_pool.getConstantInfo(i);
     switch (cpinfo->tag) {
       case classfile::ConstantTag::kClass: {
-        const auto* info       = dynamic_cast<const classfile::ClassInfo*>(cpinfo);
-        std::string class_name = class_file->constant_pool.getUtf8String(info->name_index);
-        // internal form 'a/b/C' -> loader's fully-qualified 'a.b.C'
-        std::ranges::replace(class_name, '/', '.');
-        constant_pool_.setConstant(i, SymRef_Class{.class_name = std::move(class_name)});
+        const auto* info = dynamic_cast<const classfile::ClassInfo*>(cpinfo);
+        // keep the internal slash form 'a/b/C' (loadClass normalizes on entry;
+        // symbolic-intercept keys are slash too)
+        constant_pool_.setConstant(
+          i, SymRef_Class{.class_name = class_file->constant_pool.getUtf8String(info->name_index)});
       } break;
       case classfile::ConstantTag::kMethodref: {
         const auto* info          = dynamic_cast<const classfile::MethodrefInfo*>(cpinfo);
