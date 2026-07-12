@@ -907,154 +907,154 @@ void Interpreter::interpret(runtime::Thread* thread) {
       } break;
       case IFEQ: {
         // Branch if int value equals 0
-        auto bass_addr     = pc - 1;
+        auto base_addr     = pc - 1;
         auto value         = op_stack.popInt();
         auto branch_offset = reader.readSU2();
         if (value == 0) {
-          pc = bass_addr + branch_offset;
+          pc = base_addr + branch_offset;
         }
       } break;
       case IFNE: {
         // Branch if int value not equal to 0
-        auto bass_addr     = pc - 1;
+        auto base_addr     = pc - 1;
         auto value         = op_stack.popInt();
         auto branch_offset = reader.readSU2();
         if (value != 0) {
-          pc = bass_addr + branch_offset;
+          pc = base_addr + branch_offset;
         }
       } break;
       case IFLT: {
         // Branch if int value less than 0
-        auto bass_addr     = pc - 1;
+        auto base_addr     = pc - 1;
         auto value         = op_stack.popInt();
         auto branch_offset = reader.readSU2();
         if (value < 0) {
-          pc = bass_addr + branch_offset;
+          pc = base_addr + branch_offset;
         }
       } break;
       case IFGE: {
         // Branch if int value greater than or equal to 0
-        auto bass_addr     = pc - 1;
+        auto base_addr     = pc - 1;
         auto value         = op_stack.popInt();
         auto branch_offset = reader.readSU2();
         if (value >= 0) {
-          pc = bass_addr + branch_offset;
+          pc = base_addr + branch_offset;
         }
       } break;
       case IFGT: {
         // Branch if int value greater than 0
-        auto bass_addr     = pc - 1;
+        auto base_addr     = pc - 1;
         auto value         = op_stack.popInt();
         auto branch_offset = reader.readSU2();
         if (value > 0) {
-          pc = bass_addr + branch_offset;
+          pc = base_addr + branch_offset;
         }
       } break;
       case IFLE: {
         // Branch if int value less than or equal to 0
-        auto bass_addr     = pc - 1;
+        auto base_addr     = pc - 1;
         auto value         = op_stack.popInt();
         auto branch_offset = reader.readSU2();
         if (value <= 0) {
-          pc = bass_addr + branch_offset;
+          pc = base_addr + branch_offset;
         }
       } break;
       case IF_ICMPEQ: {
         // Branch if two int values are equal
-        auto bass_addr     = pc - 1;
+        auto base_addr     = pc - 1;
         auto value2        = op_stack.popInt();
         auto value1        = op_stack.popInt();
         auto branch_offset = reader.readSU2();
         if (value1 == value2) {
-          pc = bass_addr + branch_offset;
+          pc = base_addr + branch_offset;
         }
       } break;
       case IF_ICMPNE: {
         // Branch if two int values are not equal
-        auto bass_addr     = pc - 1;
+        auto base_addr     = pc - 1;
         auto value2        = op_stack.popInt();
         auto value1        = op_stack.popInt();
         auto branch_offset = reader.readSU2();
         if (value1 != value2) {
-          pc = bass_addr + branch_offset;
+          pc = base_addr + branch_offset;
         }
       } break;
       case IF_ICMPLT: {
         // Branch if first int value less than second
-        auto bass_addr     = pc - 1;
+        auto base_addr     = pc - 1;
         auto value2        = op_stack.popInt();
         auto value1        = op_stack.popInt();
         auto branch_offset = reader.readSU2();
         if (value1 < value2) {
-          pc = bass_addr + branch_offset;
+          pc = base_addr + branch_offset;
         }
       } break;
       case IF_ICMPGE: {
         // Branch if first int value greater than or equal to second
-        auto bass_addr     = pc - 1;
+        auto base_addr     = pc - 1;
         auto value2        = op_stack.popInt();
         auto value1        = op_stack.popInt();
         auto branch_offset = reader.readSU2();
         if (value1 >= value2) {
-          pc = bass_addr + branch_offset;
+          pc = base_addr + branch_offset;
         }
       } break;
       case IF_ICMPGT: {
         // Branch if first int value greater than second
-        auto bass_addr     = pc - 1;
+        auto base_addr     = pc - 1;
         auto value2        = op_stack.popInt();
         auto value1        = op_stack.popInt();
         auto branch_offset = reader.readSU2();
         if (value1 > value2) {
-          pc = bass_addr + branch_offset;
+          pc = base_addr + branch_offset;
         }
       } break;
       case IF_ICMPLE: {
         // Branch if first int value less than or equal to second
-        auto bass_addr     = pc - 1;
+        auto base_addr     = pc - 1;
         auto value2        = op_stack.popInt();
         auto value1        = op_stack.popInt();
         auto branch_offset = reader.readSU2();
         if (value1 <= value2) {
-          pc = bass_addr + branch_offset;
+          pc = base_addr + branch_offset;
         }
       } break;
       case IF_ACMPEQ: {
         // Branch if two reference values are equal
-        auto  bass_addr     = pc - 1;
+        auto  base_addr     = pc - 1;
         auto* value2        = op_stack.popRef();
         auto* value1        = op_stack.popRef();
         auto  branch_offset = reader.readSU2();
         if (value1 == value2) {
-          pc = bass_addr + branch_offset;
+          pc = base_addr + branch_offset;
         }
       } break;
       case IF_ACMPNE: {
         // Branch if two reference values are not equal
-        auto  bass_addr     = pc - 1;
+        auto  base_addr     = pc - 1;
         auto* value2        = op_stack.popRef();
         auto* value1        = op_stack.popRef();
         auto  branch_offset = reader.readSU2();
         if (value1 != value2) {
-          pc = bass_addr + branch_offset;
+          pc = base_addr + branch_offset;
         }
       } break;
       case IFNULL: {
         // Branch if reference value is null
-        auto  bass_addr     = pc - 1;
+        auto  base_addr     = pc - 1;
         auto* value         = op_stack.popRef();
         auto  branch_offset = reader.readSU2();
         if (value == nullptr) {
-          pc = bass_addr + branch_offset;
+          pc = base_addr + branch_offset;
         }
       } break;
       case IFNONNULL: {
         // Branch if reference value is not null
-        auto  bass_addr     = pc - 1;
+        auto  base_addr     = pc - 1;
         auto* value         = op_stack.popRef();
         auto  branch_offset = reader.readSU2();
         if (value != nullptr) {
-          pc = bass_addr + branch_offset;
+          pc = base_addr + branch_offset;
         }
       } break;
       /* #endregion Comparisons */
@@ -1064,14 +1064,14 @@ void Interpreter::interpret(runtime::Thread* thread) {
       // Function: Unconditional branches and switch statements
       // Components: thread (PC)
       case GOTO: {
-        auto bass_addr     = pc - 1;
+        auto base_addr     = pc - 1;
         auto branch_offset = reader.readSU2();
-        pc                 = bass_addr + branch_offset;
+        pc                 = base_addr + branch_offset;
       } break;
       case GOTO_W: {
-        auto bass_addr     = pc - 1;
+        auto base_addr     = pc - 1;
         auto branch_offset = reader.readSU4();
-        pc                 = bass_addr + branch_offset;
+        pc                 = base_addr + branch_offset;
       } break;
       case JSR:
         // not used in Java SE 8
@@ -1083,7 +1083,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         // not used in Java SE 8
         break;
       case TABLESWITCH: {
-        auto bass_addr = pc - 1;
+        auto base_addr = pc - 1;
         // skip padding to make sure the defaultOffset' address in bytecode is always 4-byte aligned
         reader.align4();
         // defaultOffset, signed
@@ -1100,13 +1100,13 @@ void Interpreter::interpret(runtime::Thread* thread) {
         // pop index from operand stack
         auto index = op_stack.popInt();
         if (index < low_bytes || index > high_bytes) {
-          pc = bass_addr + default_offset;
+          pc = base_addr + default_offset;
         } else {
-          pc = bass_addr + jump_offsets[index - low_bytes];
+          pc = base_addr + jump_offsets[index - low_bytes];
         }
       } break;
       case LOOKUPSWITCH: {
-        auto bass_addr = pc - 1;
+        auto base_addr = pc - 1;
         // skip padding to make sure 4-byte alignment
         reader.align4();
         auto default_bytes = reader.readSU4();
@@ -1121,13 +1121,13 @@ void Interpreter::interpret(runtime::Thread* thread) {
         bool found = false;
         for (size_t i = 0; i < jump_offsets.size(); i++) {
           if (key == jump_offsets[i].first) {
-            pc    = bass_addr + jump_offsets[i].second;
+            pc    = base_addr + jump_offsets[i].second;
             found = true;
             break;
           }
         }
         if (!found) {
-          pc = bass_addr + default_bytes;
+          pc = base_addr + default_bytes;
         }
       } break;
 
