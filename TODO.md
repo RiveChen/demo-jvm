@@ -20,14 +20,12 @@ _更新于 2026-07-12。`[x]` 已完成,`[ ]` 待办,引用处标注 `文件:行
 - [x] **C5 迁移 oops 测试** — `klass`/`method_area`/`constant_pool_test` 移入 `tests/modules/oops/`,`test_runtime` 只留 `local_variables`/`operand_stack`。
 - [x] **M1/D2 无 GC 堆 + Object** — `memory/heap.*`(bump arena,64MB Meyer's 单例,8 对齐 + OOM)、`oops/object.h`(`MarkWord` 预留、无虚函数、`this+1` 内联字段、typed 访问器);`Jref` 直接指针。`tests/modules/memory/heap_test.cpp` 单测(newInstance/字段往返/对象独立/ref 访问器)。
 - [x] **D3 NEW + GETFIELD + PUTFIELD** — NEW 经 `Heap::getSingleton().newInstance`;字段读写复用 GETSTATIC 的 `isCategory2` 宽度分派。修了 NEW 的 `pc += 2` 双进、PUTFIELD 的弹栈顺序(先 value 后 objectref)。
-- [x] **INVOKESPECIAL** — 镜像 INVOKESTATIC + receiver 进 slot 0(`pos = arg_slot_count + 1`);`java.lang.Object.<init>()V` 符号层特判 no-op(未加载,resolve 前 peek SymRef)。`tests/modules/engine/interpreter_object_test.cpp` 端到端测 NEW→`<init>`→PUTFIELD→GETFIELD(int/long/double/两对象独立)。
-
----
-
-## A. 确定性 bug(仍开放)
-
-- [ ] **A1. LDC 悬垂指针** — `c_str()` 指向按值返回的临时 CP 项(`engine/interpreter.cpp` LDC 处)。因 String 对象未实现暂缓;停靠方案:`getConstant` 改按引用返回、指向 CP owned 字符串,先去 UB。随 M2 一起做。
-- [ ] **A4. LDC 与 LDC_W 字符串处理不一致** — LDC 压 `c_str`、LDC_W 压 `nullptr`;随 A1/M2 一起处理。
+- [x] **INVOKESPECIAL** — 镜像 INVOKESTATIC + receiver 进 slot 0;`java.lang.Object.<init>()V` 符号层特判 no-op。`interpreter_object_test.cpp` 端到端测 NEW→`<init>`→PUTFIELD→GETFIELD。
+- [x] **M5 INVOKEVIRTUAL + 虚分派** — `peekRef(arg_slot_count)` 取 receiver → `getKlass()` → `findMethod` 沿继承链选 override → 用 actual 建帧;`OperandStack` 换 `vector` + `peekRef`。测非 override 调用 + Animal/Dog override 分派。
+- [x] **M2 最小 String** — `oops/string_pool.h`(intern,结点式 `unordered_set` 稳定地址),LDC/LDC_W → intern + pushRef 稳定 `std::string*`;**A1/A4 随之关闭**。`string_pool_test` + LDC 驻留测试。
+- [x] **M3 native 机制** — `engine/native_registry.h`(key `类/方.描述符`→`NativeFn`),INVOKESTATIC 的 isNative 查表分派;`interpreter_native_test`。
+- [x] **M6 System.out/println 符号拦截** — GETSTATIC 认 `java.lang.System.out` 压哨兵、INVOKEVIRTUAL 认 `java.io.PrintStream.println:(Ljava/lang/String;)V`→`std::cout`,均在 resolve 之前。
+- [x] **M7 桩接版 hello world 端到端 🎉** — `main.cpp` 加载主类→驱动真 `main`;`interpreter_hello_world_test` 抓 cout 断言 `"Hello, World!\n"`。
 
 ---
 
@@ -47,31 +45,30 @@ _更新于 2026-07-12。`[x]` 已完成,`[ ]` 待办,引用处标注 `文件:行
 
 ---
 
-## D. 功能缺口(里程碑,按依赖顺序)
+## 🎯 里程碑:桩接版 canonical hello world —— **已达成 🎉**
 
-- [ ] **D1. heap / Object 模型(先无 GC)** — bump-pointer arena,只分配不回收;对象头 = `Klass*` + 预留 GC 元数据字 + `instance_slot_count` 个字段槽(零初始化)。`memory/heap.h` 仍空,当前最大缺口。
-- [ ] **D2. 引用表示** — 无 GC/非移动阶段用**直接指针**指进 arena;`Jref` 保持 typedef、解引用走小 API。仅当选移动式 GC 才换句柄/oopmap。
-- [ ] **D3. 实例字段与对象创建** — GETFIELD/PUTFIELD/NEW。
-- [ ] **D4. 数组** — NEWARRAY/ANEWARRAY/\*ALOAD/\*ASTORE/ARRAYLENGTH。
-- [ ] **D5. 其余 invoke** — INVOKEVIRTUAL/INVOKESPECIAL/INVOKEINTERFACE。
-- [ ] **D6. 异常处理** — ATHROW + 异常表 + 真正的 Java 异常,替换 `std::runtime_error`。
-- [ ] **D7. GC** — oopmap(StackMapTable / 抽象解释推导);不复活 per-slot tag。
+`HelloWorld.main` 的 `System.out.println("Hello, World!")` 端到端跑通(不加载真 JDK 类)。M1–M7 全部完成,见上方 ✅。
 
 ---
 
-## 🎯 里程碑:桩接版 canonical hello world
+## 下一阶段:走向更完整的 JVM
 
-跑通 `HelloWorld.main` 的 `System.out.println("Hello, World!")`,用 C++ 把字打到 stdout(不加载真 JDK 类)。按序:
+### R. 先重构(在加更多特性前收拾干净)
 
-- [x] **M1. 无 GC 堆 + Object** — 见上方 ✅。外加 NEW/GETFIELD/PUTFIELD/INVOKESPECIAL 已通,`new` + 字段读写端到端可跑。
-- [ ] **M5. INVOKEVIRTUAL + 虚分派** —— **下一步**。receiver 进 slot 0(镜像 INVOKESPECIAL),但按 `obj->getKlass()` 的**实际类**沿继承链 findMethod 分派。可用真实对象的实例方法(如 `obj.add(1,2)`)端到端测,无需桩。
-- [ ] **M2. 最小 String** — LDC 产出 String 对象(内部挂 `std::string`,跳过真 char[]);修 A1/A4。
-- [ ] **M3. native 方法机制** — invoke 流水线 native 分支 + 注册表(`类.方法.描述符` → C++ 函数)。
-- [ ] **M6. GETSTATIC `System.out` 拦截 + `PrintStream.println` 桩接** — 返回哨兵 PrintStream,println 走 M3 native → `std::cout`(在 INVOKEVIRTUAL 里拦截)。
-- [ ] **M7. 跑通 HelloWorld** — 端到端,输出 `Hello, World!`。
-- [ ] **(旁支)INVOKESTATIC 补全** — `<clinit>` 触发 + native 分支(`engine/interpreter.cpp` 两处 TODO);hello world 不强依赖,择机补。
+- [ ] **R1. 抽象符号拦截**(你想做的)—— 把散在 GETSTATIC/INVOKEVIRTUAL/INVOKESPECIAL 里的内联 `if (class_name=="..." && member=="...")` 收进一张**符号拦截表**:`{class,member,descriptor} → handler(op_stack)`,resolve 前统一查表命中即走 handler。可与 M3 的 native 注册表合并成一个"内建方法表"(注意 native 用斜杠 key、符号拦截用点 key,需统一)。Object.<init>/System.out/println 三处都归它。
+- [ ] **R2. `Klass::getName()` 的斜杠/点形式统一** —— 现在 `name_` 是斜杠形式,而 loader/resolve 用点形式;native key 与符号拦截 key 因此不一致(R1 会撞上)。定一种规范形式。
+- [ ] **C2. 拆解释器大 switch** — 单函数已很长;按指令组拆 TU、抽 invoke 建帧/return 退帧到 runtime。
+- [ ] **R3. 极简 `JVM_TRACE`** — `utilities/log.h` 一个 env 门控宏(`JVM_TRACE=1` 时输出到 `std::cerr`),先给解释器循环一条 opcode 执行轨迹(`pc`/op/栈深)+ 类加载/resolve/拦截命中几点。**不引框架、不分 level/category**;错误报告维持异常。VM 长大到多子系统后再演进成 `-Xlog` 式分类日志。
+- [ ] **`slotCount` 补 `return`**、**B5 debug tag**(小项,随时)。
 
-可跳过(桩接版不需要):真 JDK java.lang/java.io、完整 `<clinit>`、异常、通用数组、char[] 内部。
+### D. 功能(按价值/依赖)
+
+- [ ] **D4. 数组** —— **推荐下一个大特性**。NEWARRAY/ANEWARRAY/\*ALOAD/\*ASTORE/ARRAYLENGTH;解锁真 `String[] args`、真 String(char[]/byte[])、大量普通程序。建在现有 heap 上,自洽。
+- [ ] **`<clinit>` 类初始化** — 首次主动使用触发 `<clinit>`(Klass 加 initialized 状态 + 递归守卫);补 INVOKESTATIC/GETSTATIC 的触发点。修正"`static int x = 5;` 仍是 0"这类静态初始化缺口。
+- [ ] **D6. 异常处理** — ATHROW + 异常表 + 真 Java 异常,替换会打挂 VM 的 `std::runtime_error`(除零/NPE)。解锁 try/catch。
+- [ ] **INVOKEINTERFACE** — 接口方法分派。
+- [ ] **D7. GC** — mark-sweep(非移动,直接指针不变);再远才是移动 + oopmap。
+- [ ] **旁支:INVOKESTATIC 的 `<clinit>` + native 分支**(现有两处 TODO);`natives.cpp` 进 CMake + `registerBuiltins` 在 main 调。
 
 ---
 
@@ -84,9 +81,9 @@ _更新于 2026-07-12。`[x]` 已完成,`[ ]` 待办,引用处标注 `文件:行
 
 ## 建议下一步
 
-M1(堆/Object)+ NEW/字段/INVOKESPECIAL 已通、全绿。接下来:
+hello world 已达成 🎉。建议:
 
-1. **M5 INVOKEVIRTUAL + 虚分派**(最后一个"正常"invoke)—— receiver 进 slot 0(照 INVOKESPECIAL),但按 `obj->getKlass()` 实际类沿继承链 findMethod。用真实对象的实例方法端到端测,干净、无桩。
-2. 然后进"打印层":**M2 最小 String**(LDC 出 String,顺带修 A1/A4)→ **M3 native 机制** → **M6 GETSTATIC `System.out` + `println` 拦截到 `std::cout`** → **M7 跑通 HelloWorld**。
-
-`slotCount return` 小项可随时穿插。
+1. **先重构 R1**:把三处内联符号拦截抽成一张拦截表(你想做的),顺带 R2 统一类名斜杠/点形式——趁只有三处、上下文还热,先收拾干净,再加特性。
+2. **再上 D4 数组**:解锁真 `String[]`、真 String、大量普通程序,是最高价值的下一个大特性,且干净地建在现有 heap 上。
+3. 之后按需:**`<clinit>` 类初始化**(修静态初始化)→ **D6 异常**(try/catch,别再 crash)→ INVOKEINTERFACE → 最后 **GC(mark-sweep)**。
+4. 设计已稳,**E3 `ARCHITECTURE.md`** 是个好时机——把 slot(64 位裸 union)、pc 归属、引用模型、拦截机制、边界检查策略记下来。
