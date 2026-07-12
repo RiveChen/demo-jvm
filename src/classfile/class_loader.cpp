@@ -1,3 +1,8 @@
+/**
+ * @file class_loader.cpp
+ * @brief Class file reading, parsing orchestration, and Klass definition.
+ */
+
 #include "class_loader.h"
 
 #include <algorithm>
@@ -119,30 +124,13 @@ void ClassLoader::linkInterfaces(oops::Klass* klass, classfile::ClassFile* cf) {
   auto        interfaces = cf->interfaces;
   const auto& cp         = cf->constant_pool;
   for (auto& interface_index : interfaces) {
-    std::string interface_name = cp.getClassName(interface_index);  // internal slash form
-    auto* interface_klass = loadClass(interface_name);
+    std::string interface_name  = cp.getClassName(interface_index);  // internal slash form
+    auto*       interface_klass = loadClass(interface_name);
     klass->setInterface(interface_index, interface_klass);
   }
 }
 
-/**
- * @brief Loads a class by name, parsing it from the classpath and creating a Klass object
- *
- * This is the main entry point for class loading. It first checks the cache for an
- * already loaded class, and if not found, reads the class file from the classpath,
- * parses it, and creates a new Klass object. The loaded class is cached for future
- * access.
- *
- * @param fully_qualified_name The fully qualified class name to load (e.g., "java.lang.String")
- * @return oops::Klass* A pointer to the loaded Klass object, or nullptr if the
- *         class could not be found or loaded
- *
- * @note This method implements caching - subsequent calls with the same name return
- *       the cached Klass object without re-parsing the class file
- * @note If the class file cannot be found, an error message is printed to stderr
- * @note The method handles the complete class loading process: file reading, parsing,
- *       and Klass object creation
- */
+// (documentation in class_loader.h)
 // NOLINTNEXTLINE(misc-no-recursion)
 oops::Klass* ClassLoader::loadClass(const std::string& fully_qualified_name) {
   // Normalize to the internal (slash) form; callers may pass '.' or '/'.

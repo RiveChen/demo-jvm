@@ -1,3 +1,12 @@
+/**
+ * @file class_file_parser.cpp
+ * @brief Implementation of the class file binary parser.
+ *
+ * Reads the class file structure sequentially: magic → version →
+ * constant pool → access flags → interfaces → fields → methods → attributes.
+ * Produces a ClassFile value object.
+ */
+
 #include "class_file_parser.h"
 
 namespace jvm::classfile {

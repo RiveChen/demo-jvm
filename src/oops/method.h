@@ -1,3 +1,12 @@
+/**
+ * @file method.h
+ * @brief Runtime representation of a Java method.
+ *
+ * A Method object holds the bytecode, max stack/locals, access flags,
+ * and parsed signature for a single method. Method objects are created
+ * by Klass during class loading.
+ */
+
 #pragma once
 
 #include <string>
@@ -8,23 +17,43 @@
 
 namespace jvm::oops {
 
-class Frame;  // avoid circular dependency
+class Frame;
 class Klass;
-// using NativeMethod = void (*)(Frame*);
 
+/**
+ * @brief Runtime representation of a single Java method.
+ *
+ * Stores the method's bytecode, metadata (max_stack, max_locals),
+ * access flags, and parsed method signature. Created and owned
+ * by the Klass object representing the declaring class.
+ */
 class Method {
  public:
-  bool               isStatic() const { return access_flags_.has(flags::Method::STATIC); }
-  bool               isNative() const { return access_flags_.has(flags::Method::NATIVE); }
-  const std::string& getName() const { return name_; }
-  const std::string& getDescriptor() const { return descriptor_; }
+  /// @name Query Access Flags
+  ///@{
+  bool isStatic() const { return access_flags_.has(flags::Method::STATIC); }
+  bool isNative() const { return access_flags_.has(flags::Method::NATIVE); }
+  ///@}
+
+  /// @name Method Identity
+  ///@{
+  const std::string&            getName() const { return name_; }
+  const std::string&            getDescriptor() const { return descriptor_; }
   const descriptor::MethodType& getSignature() const { return signature_; }
-  Klass*                        getOwnerKlass() const { return owner_klass_; }
-  const std::vector<U1>&        getCode() const { return code_; }
-  U2                            getMaxStack() const { return max_stack_; }
-  U2                            getMaxLocals() const { return max_locals_; }
+  ///@}
+
+  /// @brief The class that owns this method.
+  Klass* getOwnerKlass() const { return owner_klass_; }
+
+  /// @name Bytecode and Frame Layout
+  ///@{
+  const std::vector<U1>& getCode() const { return code_; }
+  U2                     getMaxStack() const { return max_stack_; }
+  U2                     getMaxLocals() const { return max_locals_; }
+  ///@}
 
  private:
+  /// Methods can only be constructed by Klass (friend).
   Method() = default;
   Method(AccessFlags<flags::Method> access_flags, std::string name, std::string descriptor,
          Klass* owner_klass)
@@ -44,8 +73,6 @@ class Method {
   U2              max_stack_{};
   U2              max_locals_{};
   std::vector<U1> code_;
-
-  // NativeMethod native_function_;
 
   friend class Klass;
 };

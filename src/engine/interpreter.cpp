@@ -1,8 +1,17 @@
+/**
+ * @file interpreter.cpp
+ * @brief JVM bytecode interpreter implementation.
+ *
+ * Implements the instruction dispatch loop for all defined opcodes.
+ * Each instruction group (constants, loads, stores, arithmetic, etc.)
+ * is handled within the main switch statement.
+ *
+ * @see JVM Specification §6.5 for the complete instruction set.
+ */
 
 #include "interpreter.h"
 
 #include <cmath>
-#include <iostream>
 #include <stdexcept>
 #include <vector>
 

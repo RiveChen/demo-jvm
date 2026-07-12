@@ -1,11 +1,14 @@
 /**
  * @file endian.hpp
- * @author Rive Chen
- * @brief Endianness conversion functions
- * @version 0.1
- * @date 2025-12-11
+ * @brief Endianness conversion functions for reading big-endian class files.
  *
- * @copyright Copyright (c) 2025
+ * The JVM class file format uses big-endian (network byte order).
+ * This module provides platform-independent byte swapping via
+ * compiler intrinsics.
+ *
+ * @note Most modern machines are little-endian (x86, ARM). This module
+ * assumes we are reading from a big-endian stream into a little-endian
+ * host. For this learning project the assumption is safe.
  *
  */
 #pragma once
@@ -38,8 +41,16 @@ inline U8 BSWAP64(U8 val) {
 
 namespace jvm {
 
-// C++17 'if constexpr' allows compile-time dispatch based on type size.
-// This template provides a clean interface for swapping byte order.
+/**
+ * @brief Swap byte order of a multi-byte value, or leave 1-byte values unchanged.
+ *
+ * Uses C++17 `if constexpr` to dispatch to the correct BSWAP intrinsic
+ * at compile time based on the type size.
+ *
+ * @tparam T A scalar type (typically U2, U4, U8, or their signed equivalents).
+ * @param value The value to convert from big-endian to host endianness (or vice versa).
+ * @return The byte-swapped value, or the original unchanged for single-byte types.
+ */
 template <typename T>
 T swapEndian(T value) {
   if constexpr (sizeof(T) == sizeof(U1)) {
@@ -54,12 +65,5 @@ T swapEndian(T value) {
   // For any other size, just return the value unchanged.
   return value;
 }
-
-// NOTE: The JVM spec's byte order is big-endian (network byte order).
-// Most modern machines are little-endian. This function assumes we are
-// reading from a big-endian stream into a little-endian host.
-// If the host machine is already big-endian, this function would incorrectly
-// swap the bytes. A full implementation would check the host's endianness.
-// For our learning project on x86/ARM, this assumption is safe.
 
 }  // namespace jvm

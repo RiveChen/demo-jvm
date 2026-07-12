@@ -1,3 +1,8 @@
+/**
+ * @file method_area.cpp
+ * @brief Method area singleton storage for loaded classes.
+ */
+
 #include "method_area.h"
 
 namespace jvm::oops {

@@ -1,3 +1,14 @@
+/**
+ * @file klass.h
+ * @brief Runtime representation of a loaded Java class.
+ *
+ * "Klass" is the HotSpot JVM term for the in-memory representation
+ * of a Java class. After a class file is parsed by the class file
+ * parser, a Klass object is constructed to represent the class
+ * at runtime, holding its methods, fields, constant pool,
+ * and class hierarchy information.
+ */
+
 #pragma once
 
 #include <string>
@@ -19,32 +30,51 @@ namespace jvm::oops {
 
 class Object;
 
-// enum class KlassState {
-//   LOADED,
-//   LINKED,
-//   PREPARING,
-//   INITIALIZING,
-//   INITIALIZED,
-//   ERROR,
-// };
-
+/**
+ * @brief Runtime representation of a loaded Java class.
+ *
+ * Created by ClassLoader::defineClass() after parsing a .class file.
+ * Holds the resolved constant pool, methods, fields, static variables,
+ * and links to super class and interfaces.
+ */
 class Klass {
  public:
+  /// @brief Construct a Klass from a parsed class file.
+  /// @param class_file The parsed class file (ownership transferred).
+  /// @param loader The class loader that loaded this class.
   explicit Klass(classfile::ClassFile* class_file, classfile::ClassLoader* loader);
 
+  /// @name Class Hierarchy
+  ///@{
   classfile::ClassLoader* getClassLoader() const { return loader_; }
-
-  void   setSuperClass(Klass* super_class) { super_class_ = super_class; }
-  Klass* getSuperClass() const { return super_class_; }
-  void   setInterface(U2 index, Klass* interface) { interfaces_.at(index) = interface; }
+  void                    setSuperClass(Klass* super_class) { super_class_ = super_class; }
+  Klass*                  getSuperClass() const { return super_class_; }
+  void setInterface(U2 index, Klass* interface) { interfaces_.at(index) = interface; }
   const std::vector<Klass*>& getInterfaces() const { return interfaces_; }
-  RuntimeConstantPool&       getRuntimeConstantPool() { return constant_pool_; }
-  size_t                     getInstanceSlotCount() const { return instance_slot_count_; }
-  size_t                     getStaticSlotCount() const { return static_slot_count_; }
-  Method*                    findMethod(const std::string& name, const std::string& descriptor);
-  Field*                     findField(const std::string& name, const std::string& descriptor);
-  Slot&                      getStaticSlot(size_t index) { return statics_.at(index); }
-  const std::string&         getName() const { return name_; }
+  ///@}
+
+  /// @name Runtime Constant Pool
+  RuntimeConstantPool& getRuntimeConstantPool() { return constant_pool_; }
+
+  /// @name Instance and Static Layout
+  ///@{
+  size_t getInstanceSlotCount() const { return instance_slot_count_; }
+  size_t getStaticSlotCount() const { return static_slot_count_; }
+  ///@}
+
+  /// @name Member Lookup
+  ///@{
+  Method* findMethod(const std::string& name, const std::string& descriptor);
+  Field*  findField(const std::string& name, const std::string& descriptor);
+  ///@}
+
+  /// @name Static Field Access
+  ///@{
+  Slot& getStaticSlot(size_t index) { return statics_.at(index); }
+  ///@}
+
+  /// @brief The fully qualified class name (e.g. "java.lang.Object").
+  const std::string& getName() const { return name_; }
 
  private:
   classfile::ClassLoader* loader_;
@@ -63,11 +93,12 @@ class Klass {
 
   Object* mirror_class_object_;
 
-  // define class
+  /// @name Initialization Helpers (called by ClassLoader::defineClass)
+  ///@{
   void prepareRuntimeConstantPool(classfile::ClassFile* class_file);
   void prepareMethods(classfile::ClassFile* class_file);
   void prepareFieldsAndStatics(classfile::ClassFile* class_file);
-  // void linkNativeMethods(Method* method);
+  ///@}
 
   friend class classfile::ClassLoader;
 };

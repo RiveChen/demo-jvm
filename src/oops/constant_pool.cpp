@@ -1,3 +1,8 @@
+/**
+ * @file constant_pool.cpp
+ * @brief Runtime constant pool resolution (class, field, method references).
+ */
+
 #include "constant_pool.h"
 
 #include <stdexcept>
@@ -68,7 +73,7 @@ Method* RuntimeConstantPool::resolveMethod(U2 index) {
 std::optional<std::string> RuntimeConstantPool::symbolicKey(U2 index) {
   const auto& slot  = infos_.at(index);
   auto        build = [&](U2 class_cp, const std::string& m,
-                   const std::string& d) -> std::optional<std::string> {
+                          const std::string& d) -> std::optional<std::string> {
     // the target Class may already be resolved (Klass*) by another ref to the same
     // class -> then this ref's class is loaded, so it's never a stub candidate.
     const auto* c = std::get_if<SymRef_Class>(&infos_.at(class_cp));

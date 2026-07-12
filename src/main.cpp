@@ -1,19 +1,40 @@
+/**
+ * @file main.cpp
+ * @brief Minimal JVM launcher entry point.
+ *
+ * usage: demo-jvm <classpath-dir> <fully.qualified.MainClass>
+ *
+ * Example:
+ *   demo-jvm build/test_classes tests.data.java.HelloWorld
+ *
+ * Loads the specified class, finds its main method, and invokes the
+ * interpreter loop. This is the program entry point.
+ */
+
 #include <iostream>
 #include <string>
 #include <vector>
 
 #include "classfile/class_loader.h"
 #include "engine/interpreter.h"
-#include "engine/native_registry.h"
-#include "engine/stub_intercepts.h"
 #include "oops/klass.h"
 #include "oops/method.h"
 #include "runtime/frame.h"
 #include "runtime/thread.h"
 
-// Minimal JVM launcher.
-// usage: demo-jvm <classpath-dir> <fully.qualified.MainClass>
-//   e.g. demo-jvm build/test_classes tests.data.java.HelloWorld
+/**
+ * @brief Program entry point.
+ *
+ * Parses command-line arguments for classpath and main class name.
+ * Loads the class, looks up `main([Ljava/lang/String;)V`, creates
+ * a Thread with an initial frame, and starts the interpreter loop.
+ *
+ * @param argc Argument count.
+ * @param argv Argument vector:
+ *             argv[1] = classpath directory (default: ".")
+ *             argv[2] = fully qualified main class (default: "tests.data.java.HelloWorld")
+ * @return 0 on success, 1 on error (class not found or no main method).
+ */
 int main(int argc, char** argv) {
   const std::string classpath  = (argc > 1) ? argv[1] : ".";
   const std::string main_class = (argc > 2) ? argv[2] : "tests.data.java.HelloWorld";
@@ -36,13 +57,10 @@ int main(int argc, char** argv) {
   jvm::runtime::Thread     thread;
   jvm::engine::Interpreter interpreter;
 
-  // Entry frame for main; local 0 = args array (null for now, unused by hello world).
+  // Entry frame for main; local 0 = args array (null for now).
   jvm::runtime::Frame frame(entry);
   frame.getLocalVariables().setRef(0, nullptr);
   thread.pushFrame(std::move(frame));
-
-  jvm::engine::registerBuiltinNatives();
-  jvm::engine::registerStubIntercepts();
 
   interpreter.interpret(&thread);
   return 0;

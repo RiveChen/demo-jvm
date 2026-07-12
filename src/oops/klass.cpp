@@ -1,6 +1,10 @@
+/**
+ * @file klass.cpp
+ * @brief Klass construction, method and field preparation, and runtime constant pool setup.
+ */
+
 #include "klass.h"
 
-#include <algorithm>
 #include <string>
 #include <utility>
 

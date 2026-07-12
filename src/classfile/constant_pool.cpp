@@ -1,3 +1,13 @@
+/**
+ * @file constant_pool.cpp
+ * @brief Parsing implementations for class file constant pool entries.
+ *
+ * Implements readInfo() for each CONSTANT_* entry type: Utf8, Integer,
+ * Float, Long, Double, Class, String, Fieldref, Methodref,
+ * InterfaceMethodref, NameAndType, MethodHandle, MethodType,
+ * and InvokeDynamic.
+ */
+
 #include "constant_pool.h"
 
 #include <bit>

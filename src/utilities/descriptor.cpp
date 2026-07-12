@@ -1,3 +1,8 @@
+/**
+ * @file descriptor.cpp
+ * @brief JVM descriptor string parser implementations.
+ */
+
 #include "descriptor.h"
 
 #include <cassert>

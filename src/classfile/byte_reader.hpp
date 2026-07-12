@@ -1,32 +1,46 @@
 /**
  * @file byte_reader.hpp
- * @author Rive Chen
- * @brief Byte reader for reading bytes from a binary stream: classfile
- * @version 0.2
- * @date 2025-12-11
+ * @brief Sequential byte reader for parsing class file binary streams.
  *
- * @copyright Copyright (c) 2025
+ * Wraps a `std::span<U1>` with sequential read operations that
+ * automatically handle endianness conversion (JVM class files are
+ * big-endian). Provides typed reads (read<T>()), byte array reads,
+ * and bounds checking.
  *
  */
 #pragma once
 
+#include <cstring>
 #include <span>
+#include <stdexcept>
+#include <vector>
 
 #include "utilities/endian.hpp"
 
 namespace jvm::classfile {
+
+/**
+ * @brief Sequential reader over a byte buffer with endian conversion.
+ *
+ * Reads values of type T (typically U1, U2, U4, U8) from a buffer,
+ * automatically converting from big-endian (class file format) to
+ * host endianness. Tracks position and performs bounds checking.
+ */
 class ByteReader {
  public:
-  /**
-   * @brief Construct a new ByteReader object
-   * @param data Data to read from, not owned by the ByteReader
-   */
+  /// @brief Construct a ByteReader over the given span.
+  /// @param data The byte span to read from (not owned by the reader).
   explicit ByteReader(std::span<U1> data) : data_(data) {}
 
   /**
-   * @brief Read a value of type T
-   * @tparam T Type to read
-   * @return Value of type T
+   * @brief Read a value of type T from the current position.
+   *
+   * Advances the position by sizeof(T). Automatically converts
+   * from big-endian to host endianness.
+   *
+   * @tparam T The type to read (typically U1, U2, U4, U8).
+   * @return The read value in host endianness.
+   * @throws std::out_of_range if there aren't enough bytes left.
    */
   template <typename T>
   T read() {
@@ -38,9 +52,11 @@ class ByteReader {
   }
 
   /**
-   * @brief Read bytes into a buffer
-   * @param buffer Buffer to read into
-   * @param count Number of bytes to read
+   * @brief Read raw bytes into a user-provided buffer.
+   * @param buffer Destination buffer (must be at least count bytes).
+   * @param count Number of bytes to read.
+   * @throws std::invalid_argument if buffer is nullptr.
+   * @throws std::out_of_range if not enough bytes remain.
    */
   void readBytes(char* buffer, size_t count) {
     checkBounds(count);
@@ -52,9 +68,10 @@ class ByteReader {
   }
 
   /**
-   * @brief Read bytes into a vector
-   * @param count Number of bytes to read
-   * @return Vector of bytes
+   * @brief Read raw bytes into a new vector.
+   * @param count Number of bytes to read.
+   * @return A vector containing the read bytes.
+   * @throws std::out_of_range if not enough bytes remain.
    */
   std::vector<U1> readBytes(size_t count) {
     checkBounds(count);
@@ -64,16 +81,19 @@ class ByteReader {
     return buffer;
   }
 
+  /// @brief Get current read position.
+  size_t getPosition() const { return pos_; }
+
  private:
+  /// @brief Bounds check: ensure @p n bytes remain.
   void checkBounds(size_t n) {
     if (pos_ + n > data_.size()) {
       throw std::out_of_range("ByteReader: read out of bounds");
     }
   }
 
-  // stateful parsing
-  std::span<U1> data_;
-  size_t        pos_{};
+  std::span<U1> data_;   ///< The underlying byte buffer.
+  size_t        pos_{};  ///< Current read position.
 };
 
 }  // namespace jvm::classfile

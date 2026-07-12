@@ -97,7 +97,7 @@
 
 - `ClassLoader`(classfile)读取+解析+链接;`MethodArea`(oops 单例)按 `(loader, name)` 拥有 `(Klass, ClassFile)` 对。
 - **名字形式(单一规范:斜杠)**:内部一律用**斜杠内部形式**(`java/lang/String`)——class 文件原生、与 descriptor 一致、同 HotSpot 内部 Symbol。`loadClass` 入口把输入 `.`→`/` **归一化一次**,此后 cache key / MethodArea key / `Klass::name_` / 路径 / SymRef_Class.class_name 全是斜杠且相等。**点形式只在人机/API 边界**(CLI main-class 参数、将来的 `Class.getName`/`forName`)。
-- **桩**:`java.lang.Object` **不加载**——`linkSuperClass` 把 "java.lang.Object" 的 super 映射为 `nullptr`;`Object.<init>()V` 被拦截为 no-op。
+- **桩**:`java.lang.Object` **不加载**——`linkSuperClass` 把 "java.lang.Object" 的 super 映射为 `nullptr`;`Object.\<init\>()V` 被拦截为 no-op。
 
 ---
 
@@ -106,9 +106,9 @@
 两种"内建行为",**刻意分开、生命周期相反,不合并**:
 
 - **`NativeRegistry`**(engine)——**永久、正规**:给**已加载类**里的 `ACC_NATIVE` 方法用。INVOKESTATIC 等 resolve **之后**查 `isNative` → 用 key(来自已解析 `Method`,`Klass::getName()` 斜杠形式)查表 → 调 `NativeFn(OperandStack&)`。这是 JNI 式 native 绑定的简化版,**会增长并正规化**;未来向 JNI 靠拢(fn 签名从裸 `OperandStack&` 演进成 `JNIEnv*` + 编组参数)。
-- **符号拦截**(`StubIntercepts`)——**临时 workaround、应烧毁归零**:给**未加载**的 JDK 类(System.out、PrintStream.println、Object.<init>)用,它们无法 resolve。resolve **之前** peek SymRef,匹配 `{class_name(点), member, descriptor}` → handler。
+- **符号拦截**(`StubIntercepts`)——**临时 workaround、应烧毁归零**:给**未加载**的 JDK 类(System.out、PrintStream.println、Object.\<init\>)用,它们无法 resolve。resolve **之前** peek SymRef,匹配 `{class_name(点), member, descriptor}` → handler。
 
-**为什么不合并**:两者命运相反——native 越做越多,拦截应随真类库/桩类到位而**逐条删除**。每个拦截最终分解成**(真方法分派)+(永久 native)**:如 `println` 拦截 → 有了已加载 PrintStream 后变成真方法调用,其底层 `write` 落在 NativeRegistry;`Object.<init>` 拦截 → 加载真·最小 Object 后变普通调用;`System.out` 拦截 → 真 System 类 + `<clinit>` 装配 PrintStream 后走正常 GETSTATIC。绑一张表会让拦截无法独立烧毁。
+**为什么不合并**:两者命运相反——native 越做越多,拦截应随真类库/桩类到位而**逐条删除**。每个拦截最终分解成**(真方法分派)+(永久 native)**:如 `println` 拦截 → 有了已加载 PrintStream 后变成真方法调用,其底层 `write` 落在 NativeRegistry;`Object.\<init\>` 拦截 → 加载真·最小 Object 后变普通调用;`System.out` 拦截 → 真 System 类 + `\<clinit\>` 装配 PrintStream 后走正常 GETSTATIC。绑一张表会让拦截无法独立烧毁。
 
 **key 形式**:R2 后两套 key 都是**斜杠**(拦截 key 来自 `RuntimeConstantPool::symbolicKey`,native key 来自 `Klass::getName()`,都是斜杠)。**已实现**:`StubIntercepts` 表(engine)+ `symbolicKey`(oops,resolve 后返回 nullopt、且对已解析的目标类返回 nullopt 不抛)+ `tryStubIntercept` 三站点统一,顶部维护 burn-down 列表。
 
@@ -140,7 +140,7 @@
 ## 已知限制 / 推迟项
 
 - 无 GC(bump arena 全泄漏——短程序无所谓)。
-- 无数组;无 `<clinit>`(静态初始化不跑——带初始化器的静态字段停在默认值);无 Java 层异常;无 INVOKEINTERFACE/INVOKEDYNAMIC。
+- 无数组;无 `\<clinit\>`(静态初始化不跑——带初始化器的静态字段停在默认值);无 Java 层异常;无 INVOKEINTERFACE/INVOKEDYNAMIC。
 - String 是 std::string 桩;无真类库。
 - 单线程;无 monitor。
 - `instance_slot_count` 不含继承字段。

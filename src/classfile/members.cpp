@@ -1,3 +1,8 @@
+/**
+ * @file members.cpp
+ * @brief Parsing implementations for field and method member entries.
+ */
+
 #include "members.h"
 
 #include "class_file_parser.h"

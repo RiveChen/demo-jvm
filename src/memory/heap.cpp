@@ -1,3 +1,8 @@
+/**
+ * @file heap.cpp
+ * @brief Bump-pointer heap allocation implementation.
+ */
+
 #include "heap.h"
 
 #include <new>

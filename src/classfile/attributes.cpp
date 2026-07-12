@@ -1,3 +1,12 @@
+/**
+ * @file attributes.cpp
+ * @brief Class file attribute parsing implementations.
+ *
+ * Implements readInfo() for all attribute types: GenericAttribute,
+ * ConstantValueAttribute, ExceptionsAttribute, BootstrapMethodsAttribute,
+ * CodeAttribute, and their nested structures.
+ */
+
 #include "attributes.hpp"
 
 #include "class_file_parser.h"

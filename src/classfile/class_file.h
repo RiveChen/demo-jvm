@@ -1,11 +1,9 @@
 /**
  * @file class_file.h
- * @author Rive Chen
- * @brief Class file for representing class files
- * @version 0.1
- * @date 2025-12-11
+ * @brief Data structure representing a parsed class file.
  *
- * @copyright Copyright (c) 2025
+ * Holds all data parsed from a .class file, including version info,
+ * constant pool, access flags, interfaces, fields, methods, and attributes.
  *
  */
 #pragma once
@@ -19,8 +17,15 @@
 
 namespace jvm::classfile {
 
+/// Magic number identifying a valid class file (JVM Spec §4.1).
 constexpr U4 kClassFileMagic = 0xCAFEBABE;
 
+/**
+ * @brief In-memory representation of a parsed .class file.
+ *
+ * All fields are public for direct access during class loading.
+ * Instances are created by ClassFileParser::parse().
+ */
 class ClassFile {
  public:
   ClassFile(Version version, ConstantPool constant_pool, AccessFlags<flags::Class> access_flags,
@@ -43,16 +48,16 @@ class ClassFile {
   ClassFile& operator=(ClassFile&&)      = default;
   ~ClassFile()                           = default;
 
-  Version                   version;
-  ConstantPool              constant_pool;
-  AccessFlags<flags::Class> access_flags;
-  U2                        this_class_index;
-  U2                        super_class_index;
-  U2                        interfaces_count;
-  std::vector<U2>           interfaces;
-  MemberTable               fields;
-  MemberTable               methods;
-  AttributeTable            attributes;
+  Version                   version;            ///< Class file version (major.minor)
+  ConstantPool              constant_pool;      ///< Constant pool entries (JVM §4.4)
+  AccessFlags<flags::Class> access_flags;       ///< Class access and property modifiers (JVM §4.1)
+  U2                        this_class_index;   ///< Index of this class name in the constant pool
+  U2                        super_class_index;  ///< Index of super class name in the constant pool
+  U2                        interfaces_count;   ///< Number of direct interfaces
+  std::vector<U2>           interfaces;         ///< Indices of interface class entries
+  MemberTable               fields;             ///< Field table (JVM §4.5)
+  MemberTable               methods;            ///< Method table (JVM §4.6)
+  AttributeTable            attributes;         ///< Class-level attributes (JVM §4.7)
 };
 
 }  // namespace jvm::classfile
