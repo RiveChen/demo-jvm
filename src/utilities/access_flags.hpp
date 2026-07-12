@@ -66,7 +66,7 @@ class AccessFlags {
   AccessFlags() : flags_(0) {}
   explicit AccessFlags(U2 flags) : flags_(flags) {}
 
-  bool has(FlagEnum flag) const { return flags_ & static_cast<U2>(flag); }
+  bool has(FlagEnum flag) const { return (flags_ & static_cast<U2>(flag)) != 0; }
 
   U2 getFlags() const { return flags_; }
 

@@ -30,8 +30,7 @@ class LocalVariables {
 
   void setInt(U2 index, Jint value) {
     checkBounds(index);
-    variables_[index].tag = SlotType::INT;
-    variables_[index].i   = value;
+    variables_[index].i = value;
   }
   Jint getInt(U2 index) {
     checkBounds(index);
@@ -39,8 +38,7 @@ class LocalVariables {
   }
   void setFloat(U2 index, Jfloat value) {
     checkBounds(index);
-    variables_[index].tag = SlotType::FLOAT;
-    variables_[index].f   = value;
+    variables_[index].f = value;
   }
   Jfloat getFloat(U2 index) {
     checkBounds(index);
@@ -48,10 +46,8 @@ class LocalVariables {
   }
   void setLong(U2 index, Jlong value) {
     checkBounds(index);
-    variables_[index].tag     = SlotType::LONG;
-    variables_[index].l       = value;
-    variables_[index + 1].tag = SlotType::PADDING;
-    variables_[index + 1].i   = 0;
+    variables_[index].l     = value;
+    variables_[index + 1].i = 0;
   }
   Jlong getLong(U2 index) {
     checkBounds(index);
@@ -59,10 +55,8 @@ class LocalVariables {
   }
   void setDouble(U2 index, Jdouble value) {
     checkBounds(index);
-    variables_[index].tag     = SlotType::DOUBLE;
-    variables_[index].d       = value;
-    variables_[index + 1].tag = SlotType::PADDING;
-    variables_[index + 1].i   = 0;
+    variables_[index].d     = value;
+    variables_[index + 1].i = 0;
   }
   Jdouble getDouble(U2 index) {
     checkBounds(index);
@@ -70,8 +64,7 @@ class LocalVariables {
   }
   void setRef(U2 index, Jref value) {
     checkBounds(index);
-    variables_[index].tag = SlotType::REF;
-    variables_[index].r   = value;
+    variables_[index].r = value;
   }
   Jref getRef(U2 index) {
     checkBounds(index);

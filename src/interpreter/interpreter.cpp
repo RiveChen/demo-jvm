@@ -9,52 +9,8 @@
 #include "opcode.h"
 #include "runtime/frame.h"
 #include "runtime/thread.h"
+#include "utilities/descriptor.h"
 #include "utilities/types.h"
-
-namespace {
-
-// NOLINTBEGIN(readability-function-cognitive-complexity)
-jvm::U2 calculateArgSlotCount(const std::string& descriptor) {
-  jvm::U2 slot_count = 0;
-  for (size_t i = 1; i < descriptor.length(); ++i) {
-    char c = descriptor[i];
-    if (c == ')') {
-      break;
-    }
-    if (c == 'L') {
-      // object reference: Ljava/lang/String;
-      // skip until ';'
-      while (descriptor[i] != ';') {
-        i++;
-      }
-      slot_count++;
-    } else if (c == '[') {
-      // array: [[I or [Ljava/lang/String;
-      // array reference only takes 1 slot, skip all '['
-      while (descriptor[i + 1] == '[') {
-        i++;
-      }
-      if (descriptor[i + 1] == 'L') {
-        i++;
-        while (descriptor[i] != ';') {
-          i++;
-        }
-      } else {
-        i++;  // skip basic type characters
-      }
-      slot_count++;
-    } else if (c == 'J' || c == 'D') {
-      // long or double takes 2 slots
-      slot_count += 2;
-    } else {
-      // other basic types (I, F, B, C, S, Z) take 1 slot
-      slot_count++;
-    }
-  }
-  return slot_count;
-}
-// NOLINTEND(readability-function-cognitive-complexity)
-}  // namespace
 
 namespace jvm::engine {
 
@@ -1252,35 +1208,8 @@ void Interpreter::interpret(runtime::Thread* thread) {
         auto& slot  = field->getOwnerKlass()->getStaticSlot(field->getSlotIndex());
         // Use the field descriptor to determine the type (not the slot tag, which may be
         // uninitialized)
-        auto descriptor = field->getDescriptor();
-        if (descriptor == "J") {
-          // Long type - ensure slot is initialized
-          if (slot.tag != SlotType::LONG) {
-            slot.tag = SlotType::LONG;
-            slot.l   = 0;
-          }
-          op_stack.pushLong(slot.l);
-        } else if (descriptor == "D") {
-          // Double type - ensure slot is initialized
-          if (slot.tag != SlotType::DOUBLE) {
-            slot.tag = SlotType::DOUBLE;
-            slot.d   = 0.0;
-          }
-          op_stack.pushDouble(slot.d);
-        } else {
-          // For other types (int, float, ref), ensure slot is initialized
-          if (slot.tag == SlotType::INVALID) {
-            if (descriptor == "I") {
-              slot.tag = SlotType::INT;
-              slot.i   = 0;
-            } else if (descriptor == "F") {
-              slot.tag = SlotType::FLOAT;
-              slot.f   = 0.0F;
-            }
-            // Note: REF types would need different handling if needed
-          }
-          op_stack.pushSlot(slot);
-        }
+        auto signature = field->getSignature();
+        descriptor::isCategory2(signature) ? op_stack.pushWide(slot) : op_stack.pushSlot(slot);
       } break;
       case PUTSTATIC: {
         auto  index = reader.readU2();
@@ -1288,16 +1217,8 @@ void Interpreter::interpret(runtime::Thread* thread) {
         auto& slot  = field->getOwnerKlass()->getStaticSlot(field->getSlotIndex());
         // Use the field descriptor to determine the type (not the slot tag, which may be
         // uninitialized)
-        auto descriptor = field->getDescriptor();
-        if (descriptor == "J") {
-          slot.tag = SlotType::LONG;
-          slot.l   = op_stack.popLong();
-        } else if (descriptor == "D") {
-          slot.tag = SlotType::DOUBLE;
-          slot.d   = op_stack.popDouble();
-        } else {
-          slot = op_stack.popSlot();
-        }
+        auto signature = field->getSignature();
+        slot = descriptor::isCategory2(signature) ? op_stack.popWide() : op_stack.popSlot();
       } break;
       case GETFIELD:
         // TODO: implement getfield, Object module are needed
@@ -1327,7 +1248,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
           throw std::runtime_error("Cannot invoke non-static method as static");
         }
 
-        U2 arg_slot_count = calculateArgSlotCount(method->getDescriptor());
+        U2 arg_slot_count = descriptor::argSlotCount(method->getSignature());
 
         runtime::Frame next_frame(method);
 

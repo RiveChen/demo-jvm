@@ -37,41 +37,35 @@ class OperandStack {
     return value;
   }
 
-  void   pushInt(Jint value) { stack_.push({.tag = SlotType::INT, .i = value}); }
-  Jint   popInt() { return popSlot().i; }
-  void   pushFloat(Jfloat value) { stack_.push({.tag = SlotType::FLOAT, .f = value}); }
-  Jfloat popFloat() { return popSlot().f; }
-  void   pushLong(Jlong value) {
-    // Long values occupy 2 slots in the operand stack
+  void pushWide(Slot value) {
     // Push a placeholder first (second slot), then push the actual value (first slot)
     // When popped, the value is on top, then the placeholder
-    stack_.push({.tag = SlotType::PADDING, .i = 0});  // Push a placeholder slot first (second slot)
-    stack_.push({.tag = SlotType::LONG, .l = value});  // Push the actual value (first slot, on top)
+    stack_.push({.i = 0});  // placeholder
+    stack_.push(value);
   }
-  Jlong popLong() {
-    // Long values occupy 2 slots, pop both
-    // The value is on top, then the placeholder
-    Jlong value = popSlot().l;  // Pop the first slot with the actual value
-    popSlot();                  // Pop the second (placeholder) slot
+  Slot popWide() {
+    if (stack_.empty()) {
+      throw std::runtime_error("Operand stack is empty");
+    }
+    auto value = stack_.top();
+    stack_.pop();
+    if (stack_.empty()) {
+      throw std::runtime_error("Operand stack is empty");
+    }
+    stack_.pop();  // pop placeholder
     return value;
   }
-  void pushDouble(Jdouble value) {
-    // Double values occupy 2 slots in the operand stack
-    // Push a placeholder first (second slot), then push the actual value (first slot)
-    // When popped, the value is on top, then the placeholder
-    stack_.push({.tag = SlotType::PADDING, .i = 0});  // Push a placeholder slot first (second slot)
-    stack_.push(
-      {.tag = SlotType::DOUBLE, .d = value});  // Push the actual value (first slot, on top)
-  }
-  Jdouble popDouble() {
-    // Double values occupy 2 slots, pop both
-    // The value is on top, then the placeholder
-    Jdouble value = popSlot().d;  // Pop the first slot with the actual value
-    popSlot();                    // Pop the second (placeholder) slot
-    return value;
-  }
-  void pushRef(Jref value) { stack_.push({.tag = SlotType::REF, .r = value}); }
-  Jref popRef() { return popSlot().r; }
+
+  void    pushInt(Jint value) { pushSlot({.i = value}); }
+  Jint    popInt() { return popSlot().i; }
+  void    pushFloat(Jfloat value) { pushSlot({.f = value}); }
+  Jfloat  popFloat() { return popSlot().f; }
+  void    pushLong(Jlong value) { pushWide({.l = value}); }
+  Jlong   popLong() { return popWide().l; }
+  void    pushDouble(Jdouble value) { pushWide({.d = value}); }
+  Jdouble popDouble() { return popWide().d; }
+  void    pushRef(Jref value) { pushSlot({.r = value}); }
+  Jref    popRef() { return popSlot().r; }
 
  private:
   std::stack<Slot> stack_;
