@@ -1,4 +1,4 @@
-add_subdirectory(common)
-add_subdirectory(class_loader)
+add_subdirectory(utilities)
+add_subdirectory(classfile)
 add_subdirectory(runtime)
 add_subdirectory(engine)

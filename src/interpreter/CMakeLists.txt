@@ -1,2 +1,0 @@
-add_library(jvm_interpreter STATIC interpreter.cpp)
-target_link_libraries(jvm_interpreter PRIVATE jvm_utilities PUBLIC jvm_runtime)

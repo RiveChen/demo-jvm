@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "classfile/class_loader.h"
-#include "interpreter/interpreter.h"
+#include "engine/interpreter.h"
 #include "oops/method_area.h"
 #include "runtime/frame.h"
 #include "runtime/thread.h"
