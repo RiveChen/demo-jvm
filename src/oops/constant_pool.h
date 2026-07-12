@@ -51,6 +51,8 @@ class RuntimeConstantPool {
   Field*  resolveField(U2 index);
   Method* resolveMethod(U2 index);
 
+  std::optional<std::string> symbolicKey(U2 index);
+
  private:
   std::vector<RtCpInfo> infos_;
   Klass*                owner_klass_;

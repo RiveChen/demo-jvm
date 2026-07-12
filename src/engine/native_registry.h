@@ -25,5 +25,5 @@ class NativeRegistry {
   std::unordered_map<std::string, NativeFn> table_;
 };
 
-void registerBuiltins();
+void registerBuiltinNatives();
 }  // namespace jvm::engine

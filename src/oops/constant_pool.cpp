@@ -65,4 +65,25 @@ Method* RuntimeConstantPool::resolveMethod(U2 index) {
   return resolved_method;
 }
 
+std::optional<std::string> RuntimeConstantPool::symbolicKey(U2 index) {
+  const auto& slot  = infos_.at(index);
+  auto        build = [&](U2 class_cp, const std::string& m,
+                   const std::string& d) -> std::optional<std::string> {
+    // the target Class may already be resolved (Klass*) by another ref to the same
+    // class -> then this ref's class is loaded, so it's never a stub candidate.
+    const auto* c = std::get_if<SymRef_Class>(&infos_.at(class_cp));
+    if (c == nullptr) {
+      return std::nullopt;
+    }
+    return c->class_name + '.' + m + ' ' + d;
+  };
+  if (const auto* mr = std::get_if<SymRef_Method>(&slot)) {
+    return build(mr->class_cp_index, mr->member_name, mr->descriptor);
+  }
+  if (const auto* fr = std::get_if<SymRef_Field>(&slot)) {
+    return build(fr->class_cp_index, fr->member_name, fr->descriptor);
+  }
+  return std::nullopt;
+}
+
 }  // namespace jvm::oops

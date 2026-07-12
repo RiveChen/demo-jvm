@@ -4,6 +4,8 @@
 
 #include "classfile/class_loader.h"
 #include "engine/interpreter.h"
+#include "engine/native_registry.h"
+#include "engine/stub_intercepts.h"
 #include "oops/klass.h"
 #include "oops/method.h"
 #include "runtime/frame.h"
@@ -38,6 +40,9 @@ int main(int argc, char** argv) {
   jvm::runtime::Frame frame(entry);
   frame.getLocalVariables().setRef(0, nullptr);
   thread.pushFrame(std::move(frame));
+
+  jvm::engine::registerBuiltinNatives();
+  jvm::engine::registerStubIntercepts();
 
   interpreter.interpret(&thread);
   return 0;

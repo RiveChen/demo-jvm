@@ -8,6 +8,8 @@
 
 #include "classfile/class_loader.h"
 #include "engine/interpreter.h"
+#include "engine/native_registry.h"
+#include "engine/stub_intercepts.h"
 #include "oops/method_area.h"
 #include "runtime/frame.h"
 #include "runtime/thread.h"
@@ -84,6 +86,10 @@ class InterpreterTestBase : public ::testing::Test {
     classpath_list_ = {test_classpath_};
     loader_         = std::make_unique<classfile::ClassLoader>(nullptr, classpath_list_);
     oops::MethodArea::getSingleton().reset();
+    // register built-ins so intercepted JDK calls (System.out/println, Object.<init>)
+    // and ACC_NATIVE methods work in interpreter tests (bind is idempotent)
+    engine::registerBuiltinNatives();
+    engine::registerStubIntercepts();
   }
 
   void TearDown() override { loader_.reset(); }

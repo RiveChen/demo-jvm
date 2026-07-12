@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "bytecode_reader.h"
+#include "engine/stub_intercepts.h"
 #include "memory/heap.h"
 #include "native_registry.h"
 #include "oops/klass.h"
@@ -1206,16 +1207,8 @@ void Interpreter::interpret(runtime::Thread* thread) {
       case GETSTATIC: {
         auto index = reader.readU2();
 
-        auto entry = rt_cp.getConstant(index);
-        if (auto* fref = std::get_if<oops::SymRef_Field>(&entry)) {
-          auto  cls  = rt_cp.getConstant(fref->class_cp_index);
-          auto* cref = std::get_if<oops::SymRef_Class>(&cls);
-          if (cref != nullptr && cref->class_name == "java.lang.System" &&
-              fref->member_name == "out") {
-            static char kSystemOut;
-            op_stack.pushRef(&kSystemOut);
-            break;
-          }
+        if (tryStubIntercept(rt_cp, index, op_stack)) {
+          break;
         }
 
         auto* field     = rt_cp.resolveField(index);
@@ -1262,17 +1255,8 @@ void Interpreter::interpret(runtime::Thread* thread) {
       case INVOKEVIRTUAL: {
         auto index = reader.readU2();
 
-        auto entry = rt_cp.getConstant(index);
-        if (auto* mref = std::get_if<oops::SymRef_Method>(&entry)) {
-          auto  cls  = rt_cp.getConstant(mref->class_cp_index);
-          auto* cref = std::get_if<oops::SymRef_Class>(&cls);
-          if (cref != nullptr && cref->class_name == "java.io.PrintStream" &&
-              mref->member_name == "println" && mref->descriptor == "(Ljava/lang/String;)V") {
-            auto* str = static_cast<std::string*>(op_stack.popRef());  // String 实参 (栈顶)
-            op_stack.popRef();                                         // receiver(哨兵),丢弃
-            std::cout << *str << '\n';                                 // println 带换行
-            break;
-          }
+        if (tryStubIntercept(rt_cp, index, op_stack)) {
+          break;
         }
 
         auto* resolved = rt_cp.resolveMethod(index);
@@ -1314,18 +1298,9 @@ void Interpreter::interpret(runtime::Thread* thread) {
       case INVOKESPECIAL: {
         auto index = reader.readU2();
 
-        // workaround stub for java.lang.Object.<init>()V
-        auto cp_entry = rt_cp.getConstant(index);
-        if (auto* mref = std::get_if<oops::SymRef_Method>(&cp_entry)) {
-          auto  cls_entry = rt_cp.getConstant(mref->class_cp_index);
-          auto* cref      = std::get_if<oops::SymRef_Class>(&cls_entry);
-          if (cref != nullptr && cref->class_name == "java.lang.Object" &&
-              mref->member_name == "<init>" && mref->descriptor == "()V") {
-            op_stack.popRef();
-            break;
-          }
+        if (tryStubIntercept(rt_cp, index, op_stack)) {
+          break;
         }
-        // workaround end
 
         auto* method = rt_cp.resolveMethod(index);
 
