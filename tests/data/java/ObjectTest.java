@@ -37,4 +37,20 @@ public class ObjectTest {
         o2.ix = b;
         return o1.ix * 1000 + o2.ix;
     }
+
+    // instance method reached via INVOKEVIRTUAL (not overridden)
+    public int addInstance(int a, int b) {
+        return a + b;
+    }
+
+    public static int callVirtual(int a, int b) {
+        ObjectTest o = new ObjectTest();
+        return o.addInstance(a, b);  // INVOKEVIRTUAL ObjectTest.addInstance
+    }
+
+    // virtual dispatch through a supertype reference must reach the subclass override
+    public static int callOverride() {
+        Animal a = new Dog();  // static type Animal, dynamic type Dog
+        return a.sound();      // INVOKEVIRTUAL Animal.sound -> Dog.sound (=2)
+    }
 }

@@ -32,4 +32,15 @@ TEST_F(InterpreterObjectTest, TwoInstancesIndependent) {
   EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testTwoObjects", 7, 3), 7003);
 }
 
+// INVOKEVIRTUAL: instance method reached via dynamic dispatch on the receiver's class.
+TEST_F(InterpreterObjectTest, InvokeVirtualInstanceMethod) {
+  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "callVirtual", 3, 4), 7);
+}
+
+// INVOKEVIRTUAL virtual dispatch: Animal a = new Dog(); a.sound() must select the
+// override Dog.sound()=2 by the receiver's actual class, not Animal.sound()=1.
+TEST_F(InterpreterObjectTest, InvokeVirtualDispatchesToOverride) {
+  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "callOverride"), 2);
+}
+
 }  // namespace

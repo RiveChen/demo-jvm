@@ -1245,7 +1245,42 @@ void Interpreter::interpret(runtime::Thread* thread) {
       // Function: Invoke methods
       // Components: rt_cp, thread (PC), op_stack
       case INVOKEVIRTUAL: {
-        // TODO: invoke virtual method
+        auto  index    = reader.readU2();
+        auto* resolved = rt_cp.resolveMethod(index);
+        auto* recv =
+          static_cast<oops::Object*>(op_stack.peekRef(resolved->getSignature().arg_slot_count));
+
+        if (recv == nullptr) {
+          throw std::runtime_error("NPE");
+        }
+        oops::Klass* recv_klass = recv->getKlass();
+
+        oops::Method* actual =
+          recv_klass->findMethod(resolved->getName(), resolved->getDescriptor());
+        if (actual == nullptr) {
+          throw std::runtime_error("NPE");
+        }
+
+        const auto&    signature = actual->getSignature();
+        runtime::Frame next_frame(actual);
+        auto&          current_op_stack = op_stack;  // current frame's operand stack
+        auto&          next_local_vars  = next_frame.getLocalVariables();
+
+        U2 pos = signature.arg_slot_count + 1;
+        for (int p = static_cast<int>(signature.params.size()) - 1; p >= 0; --p) {
+          if (descriptor::isCategory2(signature.params[p])) {
+            pos -= 2;
+            next_local_vars.setWide(pos, current_op_stack.popWide());
+          } else {
+            pos -= 1;
+            next_local_vars.setSlot(pos, current_op_stack.popSlot());
+          }
+        }
+        next_local_vars.setSlot(0, op_stack.popSlot());
+
+        thread->getCurrentFrame().setPC(pc);
+        thread->pushFrame(std::move(next_frame));
+        pc = 0;
       } break;
       case INVOKESPECIAL: {
         auto index = reader.readU2();

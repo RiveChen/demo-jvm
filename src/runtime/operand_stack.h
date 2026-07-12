@@ -10,7 +10,8 @@
  */
 #pragma once
 
-#include <stack>
+#include <cstddef>
+#include <vector>
 
 #include "utilities/slot.h"
 
@@ -27,32 +28,32 @@ class OperandStack {
 
   size_t getSize() const { return stack_.size(); }
 
-  void pushSlot(Slot value) { stack_.push(value); }
+  void pushSlot(Slot value) { stack_.push_back(value); }
   Slot popSlot() {
     if (stack_.empty()) {
       throw std::runtime_error("Operand stack is empty");
     }
-    auto value = stack_.top();
-    stack_.pop();
+    auto value = stack_.back();
+    stack_.pop_back();
     return value;
   }
 
   void pushWide(Slot value) {
     // Push a placeholder first (second slot), then push the actual value (first slot)
     // When popped, the value is on top, then the placeholder
-    stack_.push({.i = 0});  // placeholder
-    stack_.push(value);
+    stack_.push_back({.i = 0});  // placeholder
+    stack_.push_back(value);
   }
   Slot popWide() {
     if (stack_.empty()) {
       throw std::runtime_error("Operand stack is empty");
     }
-    auto value = stack_.top();
-    stack_.pop();
+    auto value = stack_.back();
+    stack_.pop_back();
     if (stack_.empty()) {
       throw std::runtime_error("Operand stack is empty");
     }
-    stack_.pop();  // pop placeholder
+    stack_.pop_back();  // pop placeholder
     return value;
   }
 
@@ -66,9 +67,10 @@ class OperandStack {
   Jdouble popDouble() { return popWide().d; }
   void    pushRef(Jref value) { pushSlot({.r = value}); }
   Jref    popRef() { return popSlot().r; }
+  Jref    peekRef(size_t depth) const { return stack_.at(stack_.size() - 1 - depth).r; }
 
  private:
-  std::stack<Slot> stack_;
+  std::vector<Slot> stack_;
 };
 
 }  // namespace jvm::runtime
