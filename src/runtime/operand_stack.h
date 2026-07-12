@@ -25,7 +25,7 @@ class OperandStack {
   OperandStack& operator=(OperandStack&&)      = default;
   ~OperandStack()                              = default;
 
-  U2 getSize() const { return stack_.size(); }
+  size_t getSize() const { return stack_.size(); }
 
   void pushSlot(Slot value) { stack_.push(value); }
   Slot popSlot() {

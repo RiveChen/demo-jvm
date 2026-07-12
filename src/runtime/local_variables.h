@@ -10,6 +10,7 @@
  */
 #pragma once
 
+#include <cstddef>
 #include <vector>
 
 #include "utilities/slot.h"
@@ -26,38 +27,18 @@ class LocalVariables {
   LocalVariables& operator=(LocalVariables&&)      = default;
   ~LocalVariables()                                = default;
 
-  U2 getSize() const { return variables_.size(); }
+  size_t getSize() const { return variables_.size(); }
 
-  void setInt(U2 index, Jint value) {
-    setSlot(index, {.i = value});
-  }
-  Jint getInt(U2 index) {
-    return getSlot(index).i;
-  }
-  void setFloat(U2 index, Jfloat value) {
-    setSlot(index, {.f = value});
-  }
-  Jfloat getFloat(U2 index) {
-    return getSlot(index).f;
-  }
-  void setLong(U2 index, Jlong value) {
-    setWide(index, {.l = value});
-  }
-  Jlong getLong(U2 index) {
-    return getWide(index).l;
-  }
-  void setDouble(U2 index, Jdouble value) {
-    setWide(index, {.d = value});
-  }
-  Jdouble getDouble(U2 index) {
-    return getWide(index).d;
-  }
-  void setRef(U2 index, Jref value) {
-    setSlot(index, {.r = value});
-  }
-  Jref getRef(U2 index) {
-    return getSlot(index).r;
-  }
+  void    setInt(U2 index, Jint value) { setSlot(index, {.i = value}); }
+  Jint    getInt(U2 index) { return getSlot(index).i; }
+  void    setFloat(U2 index, Jfloat value) { setSlot(index, {.f = value}); }
+  Jfloat  getFloat(U2 index) { return getSlot(index).f; }
+  void    setLong(U2 index, Jlong value) { setWide(index, {.l = value}); }
+  Jlong   getLong(U2 index) { return getWide(index).l; }
+  void    setDouble(U2 index, Jdouble value) { setWide(index, {.d = value}); }
+  Jdouble getDouble(U2 index) { return getWide(index).d; }
+  void    setRef(U2 index, Jref value) { setSlot(index, {.r = value}); }
+  Jref    getRef(U2 index) { return getSlot(index).r; }
 
   void setSlot(U2 index, Slot value) {
     checkBounds(index);
