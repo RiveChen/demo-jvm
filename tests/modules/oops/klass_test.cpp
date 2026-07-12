@@ -19,7 +19,7 @@ class KlassTest : public ::testing::Test {
     test_classpath_ = TEST_CLASS_PATH;
     classpath_list_ = {test_classpath_};
     loader_         = std::make_unique<classfile::ClassLoader>(nullptr, classpath_list_);
-    oops::MethodArea::getInstance().reset();
+    oops::MethodArea::getSingleton().reset();
   }
 
   std::string                             test_classpath_;

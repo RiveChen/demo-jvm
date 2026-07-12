@@ -6,8 +6,10 @@
 #include <vector>
 
 #include "bytecode_reader.h"
+#include "memory/heap.h"
 #include "oops/klass.h"
 #include "oops/method.h"
+#include "oops/object.h"
 #include "opcode.h"
 #include "runtime/frame.h"
 #include "runtime/thread.h"
@@ -1213,12 +1215,28 @@ void Interpreter::interpret(runtime::Thread* thread) {
         auto  signature = field->getSignature();
         slot = descriptor::isCategory2(signature) ? op_stack.popWide() : op_stack.popSlot();
       } break;
-      case GETFIELD:
-        // TODO: implement getfield, Object module are needed
-        break;
-      case PUTFIELD:
-        // TODO: implement putfield, Object module are needed
-        break;
+      case GETFIELD: {
+        auto  index = reader.readU2();
+        auto* field = rt_cp.resolveField(index);
+        auto* obj   = static_cast<oops::Object*>(op_stack.popRef());
+        if (obj == nullptr) {
+          throw std::runtime_error("NPE");
+        }
+        auto& slot      = obj->fieldSlot(field->getSlotIndex());
+        auto  signature = field->getSignature();
+        descriptor::isCategory2(signature) ? op_stack.pushWide(slot) : op_stack.pushSlot(slot);
+      } break;
+      case PUTFIELD: {
+        auto  index = reader.readU2();
+        auto* field = rt_cp.resolveField(index);
+        auto* obj   = static_cast<oops::Object*>(op_stack.popRef());
+        if (obj == nullptr) {
+          throw std::runtime_error("NPE");
+        }
+        auto& slot      = obj->fieldSlot(field->getSlotIndex());
+        auto  signature = field->getSignature();
+        slot = descriptor::isCategory2(signature) ? op_stack.popWide() : op_stack.popSlot();
+      } break;
       /* #endregion Fields */
 
       /* #region Methods */
@@ -1283,12 +1301,10 @@ void Interpreter::interpret(runtime::Thread* thread) {
       // Function: Object creation and type checking
       // Components: rt_cp, op_stack, thread (PC)
       case NEW: {
-        // auto index = reader.readU2()
-        // thread->incrementPC();
-        // thread->incrementPC();
-        // runtime::Klass* klass = rt_cp.resolveClass(index);
-        // Jref            obj_ref = heap_.newInstance(klass);
-        // op_stack.pushRef(obj_ref);
+        auto         index   = reader.readU2();
+        oops::Klass* klass   = rt_cp.resolveClass(index);
+        Jref         obj_ref = memory::Heap::getSingleton().newInstance(klass);
+        op_stack.pushRef(obj_ref);
       } break;
       case CHECKCAST:
         // TODO: implement checkcast

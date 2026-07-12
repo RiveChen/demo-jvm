@@ -21,7 +21,7 @@ class ConstantPoolTest : public ::testing::Test {
     test_classpath_ = TEST_CLASS_PATH;
     classpath_list_ = {test_classpath_};
     loader_         = std::make_unique<classfile::ClassLoader>(nullptr, classpath_list_);
-    oops::MethodArea::getInstance().reset();
+    oops::MethodArea::getSingleton().reset();
   }
 
   static constexpr const char* kClassName = "tests.data.java.KlassTestData";
@@ -59,9 +59,8 @@ TEST_F(ConstantPoolTest, ResolveMethodAndCache) {
   auto& rcp = klass->getRuntimeConstantPool();
   // slot 1: the Class entry the method ref points at (via class_cp_index)
   rcp.setConstant(1, oops::SymRef_Class{.class_name = kClassName});
-  rcp.setConstant(2, oops::SymRef_Method{.class_cp_index = 1,
-                                         .member_name    = "add",
-                                         .descriptor     = "(II)I"});
+  rcp.setConstant(
+    2, oops::SymRef_Method{.class_cp_index = 1, .member_name = "add", .descriptor = "(II)I"});
 
   auto* resolved_first  = rcp.resolveMethod(2);
   auto* resolved_second = rcp.resolveMethod(2);
@@ -80,9 +79,8 @@ TEST_F(ConstantPoolTest, ResolveFieldAndCache) {
 
   auto& rcp = klass->getRuntimeConstantPool();
   rcp.setConstant(1, oops::SymRef_Class{.class_name = kClassName});
-  rcp.setConstant(3, oops::SymRef_Field{.class_cp_index = 1,
-                                        .member_name    = "sd",
-                                        .descriptor     = "D"});
+  rcp.setConstant(3,
+                  oops::SymRef_Field{.class_cp_index = 1, .member_name = "sd", .descriptor = "D"});
 
   auto* resolved_first  = rcp.resolveField(3);
   auto* resolved_second = rcp.resolveField(3);

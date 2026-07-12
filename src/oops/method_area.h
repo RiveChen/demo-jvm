@@ -28,7 +28,7 @@ class MethodArea {
   using ClassData       = std::pair<std::unique_ptr<Klass>, std::unique_ptr<classfile::ClassFile>>;
 
   // Meyer's singleton
-  static MethodArea& getInstance() {
+  static MethodArea& getSingleton() {
     static MethodArea instance;
     return instance;
   }

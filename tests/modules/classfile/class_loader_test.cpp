@@ -22,7 +22,7 @@ class ClassLoaderTest : public ::testing::Test {
     classpath_list_ = {test_classpath_};
     loader_         = std::make_unique<classfile::ClassLoader>(nullptr, classpath_list_);
     // Reset method area
-    oops::MethodArea::getInstance().reset();
+    oops::MethodArea::getSingleton().reset();
   }
 
   void TearDown() override {
@@ -101,7 +101,7 @@ TEST_F(ClassLoaderTest, ClassRegisteredInMethodArea) {
   ASSERT_NE(klass, nullptr);
 
   // Check if class is registered in method area
-  oops::MethodArea&                 method_area = oops::MethodArea::getInstance();
+  oops::MethodArea&                 method_area = oops::MethodArea::getSingleton();
   oops::MethodArea::ClassIdentifier identifier  = std::make_pair(loader_.get(), class_name);
 
   EXPECT_TRUE(method_area.hasClass(identifier)) << "Class should be registered in method area";

@@ -85,8 +85,8 @@ oops::Klass* ClassLoader::defineClass(std::unique_ptr<classfile::ClassFile> clas
   linkInterfaces(klass_ptr, cf);
 
   // Register the class in the method area with this class loader
-  oops::MethodArea::getInstance().addClass(std::make_pair(this, name),
-                                           std::make_pair(std::move(klass), std::move(class_file)));
+  oops::MethodArea::getSingleton().addClass(
+    std::make_pair(this, name), std::make_pair(std::move(klass), std::move(class_file)));
   return klass_ptr;
 }
 

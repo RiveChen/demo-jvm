@@ -7,7 +7,7 @@
 
 namespace jvm::memory {
 void* Heap::allocate(size_t bytes) {
-  bytes = (bytes + 7) & ~size_t{7};
+  bytes = (bytes + (kAlignment - 1)) & ~(kAlignment - 1);
   if (top_ + bytes > arena_.size()) {
     throw std::bad_alloc();
   }

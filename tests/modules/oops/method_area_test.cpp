@@ -19,7 +19,7 @@ class MethodAreaTest : public ::testing::Test {
     classpath_list_ = {test_classpath_};
     loader_         = std::make_unique<classfile::ClassLoader>(nullptr, classpath_list_);
     // Reset method area because it is a global singleton
-    oops::MethodArea::getInstance().reset();
+    oops::MethodArea::getSingleton().reset();
   }
 
   void TearDown() override { loader_.reset(); }
@@ -31,8 +31,8 @@ class MethodAreaTest : public ::testing::Test {
 
 TEST_F(MethodAreaTest, SingletonInstance) {
   // Test that getInstance returns the same instance
-  oops::MethodArea& instance1 = oops::MethodArea::getInstance();
-  oops::MethodArea& instance2 = oops::MethodArea::getInstance();
+  oops::MethodArea& instance1 = oops::MethodArea::getSingleton();
+  oops::MethodArea& instance2 = oops::MethodArea::getSingleton();
 
   EXPECT_EQ(&instance1, &instance2) << "MethodArea should be a singleton";
 }
@@ -44,7 +44,7 @@ TEST_F(MethodAreaTest, AddAndGetClass) {
 
   ASSERT_NE(klass, nullptr);
 
-  oops::MethodArea&                 method_area = oops::MethodArea::getInstance();
+  oops::MethodArea&                 method_area = oops::MethodArea::getSingleton();
   oops::MethodArea::ClassIdentifier identifier  = std::make_pair(loader_.get(), class_name);
 
   // Verify class is in method area
@@ -56,7 +56,7 @@ TEST_F(MethodAreaTest, AddAndGetClass) {
 }
 
 TEST_F(MethodAreaTest, HasClass) {
-  oops::MethodArea& method_area = oops::MethodArea::getInstance();
+  oops::MethodArea& method_area = oops::MethodArea::getSingleton();
 
   // Test with non-existent class
   oops::MethodArea::ClassIdentifier non_existent =
@@ -73,7 +73,7 @@ TEST_F(MethodAreaTest, HasClass) {
 }
 
 TEST_F(MethodAreaTest, GetClassReturnsNullptrForNonExistent) {
-  oops::MethodArea& method_area = oops::MethodArea::getInstance();
+  oops::MethodArea& method_area = oops::MethodArea::getSingleton();
 
   oops::MethodArea::ClassIdentifier non_existent =
     std::make_pair(loader_.get(), "NonExistentClass");
@@ -96,7 +96,7 @@ TEST_F(MethodAreaTest, DifferentClassLoadersSameClassName) {
   ASSERT_NE(klass1, nullptr);
   ASSERT_NE(klass2, nullptr);
 
-  oops::MethodArea& method_area = oops::MethodArea::getInstance();
+  oops::MethodArea& method_area = oops::MethodArea::getSingleton();
 
   // They should be stored separately in method area
   oops::MethodArea::ClassIdentifier id1 = std::make_pair(loader1.get(), class_name);
