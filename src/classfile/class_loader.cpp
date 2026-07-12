@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "class_file_parser.h"
+#include "classfile/class_file.h"
 #include "oops/klass.h"
 #include "oops/method_area.h"
 
@@ -78,9 +79,10 @@ oops::Klass* ClassLoader::defineClass(std::unique_ptr<classfile::ClassFile> clas
   // Create new Klass object from the parsed class file
   auto         klass     = std::make_unique<oops::Klass>(class_file.get(), this);
   oops::Klass* klass_ptr = klass.get();
+  auto*        cf        = class_file.get();
 
-  linkSuperClass(klass_ptr);
-  linkInterfaces(klass_ptr);
+  linkSuperClass(klass_ptr, cf);
+  linkInterfaces(klass_ptr, cf);
 
   // Register the class in the method area with this class loader
   oops::MethodArea::getInstance().addClass(std::make_pair(this, name),
@@ -89,8 +91,8 @@ oops::Klass* ClassLoader::defineClass(std::unique_ptr<classfile::ClassFile> clas
 }
 
 // NOLINTNEXTLINE(misc-no-recursion)
-void ClassLoader::linkSuperClass(oops::Klass* klass) {
-  U2 super_class_index = klass->getClassFile()->super_class_index;
+void ClassLoader::linkSuperClass(oops::Klass* klass, classfile::ClassFile* cf) {
+  U2 super_class_index = cf->super_class_index;
 
   if (super_class_index == 0) {
     // only `java.lang.Object` has no super class
@@ -98,9 +100,9 @@ void ClassLoader::linkSuperClass(oops::Klass* klass) {
     return;
   }
 
-  const auto& cp               = klass->getClassFile()->constant_pool;
+  const auto& cp               = cf->constant_pool;
   std::string super_class_name = cp.getClassName(super_class_index);
-  std::replace(super_class_name.begin(), super_class_name.end(), '/', '.');
+  std::ranges::replace(super_class_name, '/', '.');
 
   if (super_class_name == "java.lang.Object") {
     // suspend the support of Object for now
@@ -114,12 +116,12 @@ void ClassLoader::linkSuperClass(oops::Klass* klass) {
 }
 
 // NOLINTNEXTLINE(misc-no-recursion)
-void ClassLoader::linkInterfaces(oops::Klass* klass) {
-  auto        interfaces = klass->getClassFile()->interfaces;
-  const auto& cp         = klass->getClassFile()->constant_pool;
+void ClassLoader::linkInterfaces(oops::Klass* klass, classfile::ClassFile* cf) {
+  auto        interfaces = cf->interfaces;
+  const auto& cp         = cf->constant_pool;
   for (auto& interface_index : interfaces) {
     std::string interface_name = cp.getClassName(interface_index);
-    std::replace(interface_name.begin(), interface_name.end(), '/', '.');
+    std::ranges::replace(interface_name, '/', '.');
     auto* interface_klass = loadClass(interface_name);
     klass->setInterface(interface_index, interface_klass);
   }
@@ -146,7 +148,7 @@ void ClassLoader::linkInterfaces(oops::Klass* klass) {
 // NOLINTNEXTLINE(misc-no-recursion)
 oops::Klass* ClassLoader::loadClass(const std::string& fully_qualified_name) {
   // Check cache first to avoid re-loading already loaded classes
-  if (cache_.find(fully_qualified_name) != cache_.end()) {
+  if (cache_.contains(fully_qualified_name)) {
     return cache_[fully_qualified_name];
   }
 
@@ -157,16 +159,17 @@ oops::Klass* ClassLoader::loadClass(const std::string& fully_qualified_name) {
   }
 
   // Parse the class file and create Klass object
-  auto parser = ClassFileParser(std::span<U1>(std::bit_cast<U1*>(class_file_data.value().data()),
-                                              class_file_data.value().size()));
-  auto class_file = parser.parse();
+  auto  parser = ClassFileParser(std::span<U1>(std::bit_cast<U1*>(class_file_data.value().data()),
+                                               class_file_data.value().size()));
+  auto  class_file = parser.parse();
+  auto* cf = class_file.get();  // grab before the move (pointee stays put; MethodArea owns it)
 
   auto* klass = defineClass(std::move(class_file), fully_qualified_name);
 
   // Prepare the class
-  klass->prepareRuntimeConstantPool(klass->getClassFile());
-  klass->prepareMethods(klass->getClassFile());
-  klass->prepareFieldsAndStatics(klass->getClassFile());
+  klass->prepareRuntimeConstantPool(cf);
+  klass->prepareMethods(cf);
+  klass->prepareFieldsAndStatics(cf);
 
   // Cache the loaded class for future access
   cache_[fully_qualified_name] = klass;

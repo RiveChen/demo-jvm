@@ -23,8 +23,8 @@ class ClassLoader {
 
   std::optional<std::vector<std::byte>> readClassFile(const std::string& name);
   oops::Klass* defineClass(std::unique_ptr<ClassFile> class_file, const std::string& name);
-  void         linkSuperClass(oops::Klass* klass);
-  void         linkInterfaces(oops::Klass* klass);
+  void         linkSuperClass(oops::Klass* klass, classfile::ClassFile* cf);
+  void         linkInterfaces(oops::Klass* klass, classfile::ClassFile* cf);
 
  public:
   explicit ClassLoader(ClassLoader* parent = nullptr, std::vector<std::string> classpaths = {})

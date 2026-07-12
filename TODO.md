@@ -16,6 +16,8 @@ _更新于 2026-07-12。`[x]` 已完成,`[ ]` 待办,引用处标注 `文件:行
 - [x] **A3 `getSize()` → `size_t`** — `operand_stack.h`、`local_variables.h` 均已改。
 - [x] **C1 PC 收进 Frame** — `Thread` 删掉 pc 整套;`Frame` 持 `pc_`(唯一真相);解释器本地 `pc` 做热寄存器,invoke 前 spill、return 后 reload。
 - [x] **边界检查加固** — CP 下标(`constant_pool.*`)、`getStaticSlot` 用 `.at()`;`BytecodeReader::readU1` 加界检查(`readU2`/`readU4` 走它);`LocalVariables::setWide` 修 index+1 越界写、`checkBounds` 参数改 `size_t`。
+- [x] **C4 断开 oops→ClassFile 耦合** — SymRef 烘焙成字符串(`class_name` / `class_cp_index`+`member_name`+`descriptor`),运行期 resolve\* 自给自足、不再碰 ClassFile;Option B 完成:`Klass` 删除 `class_file_`/`getClassFile`,loader 把 `ClassFile*` 直接 thread 进 link\*/prepare\*。修了 `/`→`.` 烘焙丢失和 `loadClass` 的 use-after-move 段错误。`constant_pool_test` 按新 API 重写。
+- [x] **C5 迁移 oops 测试** — `klass`/`method_area`/`constant_pool_test` 移入 `tests/modules/oops/`,`test_runtime` 只留 `local_variables`/`operand_stack`。
 
 ---
 
@@ -37,8 +39,8 @@ _更新于 2026-07-12。`[x]` 已完成,`[ ]` 待办,引用处标注 `文件:行
 
 - [ ] **C2. 拆解释器大 switch** — `engine/interpreter.cpp` 仍是单函数;按指令组拆 TU、抽出 invoke 建帧/return 退帧到 runtime。
 - [ ] **C3. constant_pool 命名(可选)** — 命名空间已消歧;可选把 `oops/constant_pool.*` → `runtime_constant_pool.*` 做文件级澄清。
-- [ ] **C4. Klass→ClassFile 反指针耦合** — `oops/klass.h`、`method_area.h` 前置声明 `jvm::classfile`。link 期把数据烘焙进 Klass 后解除,断开 oops↔classfile 源码纠缠。
-- [ ] **C5. 迁移 oops 测试** — `klass_test`/`method_area_test`/`constant_pool_test` 现寄在 `tests/modules/runtime/`,实测 `oops`。新建 `tests/modules/oops/`(`test_oops`,link `jvm_oops jvm_classfile` + `compile_test_classes`),`test_runtime` 只留 `local_variables`/`operand_stack`。
+
+> C4、C5 已完成,见上方 ✅。`method_area.h`/构造仍前置声明 `classfile::ClassFile` 作瞬时参数(良性构建方向,不再处理)。
 
 ---
 
@@ -79,4 +81,6 @@ _更新于 2026-07-12。`[x]` 已完成,`[ ]` 待办,引用处标注 `文件:行
 
 ## 建议下一步
 
-`C5`(迁 oops 测试,快)→ `D1`/`M1`(无 GC 堆 + Object,通往 hello world 的大解锁点)→ `M2` 最小 String。`slotCount return`、`A4` 可随时穿插。
+架构清理(C1/C4/C5)已收尾,直接进 **`D1`/`M1`:无 GC 堆 + Object**(bump arena + 直接指针 + 对象头 `Klass*`)——通往 hello world 的大解锁点,之后 `M2` 最小 String。`slotCount return` 这个小项可随时穿插;`A1`/`A4` 等 M2 一起做。
+
+**注意:** 当前 C4/Option B 改动(`class_loader.*`、`klass.*`)还在工作树未提交——先 `ctest` 全绿再作为一个 commit 落地(如 `refactor(oops): drop ClassFile pointer from Klass (C4/Option B)`),再开 M1。

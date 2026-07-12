@@ -10,7 +10,6 @@
 namespace jvm::oops {
 Klass::Klass(classfile::ClassFile* class_file, classfile::ClassLoader* loader)
   : loader_(loader),
-    class_file_(class_file),
     name_(class_file->constant_pool.getClassName(class_file->this_class_index)),
     access_flags_(class_file->access_flags),
     super_class_(nullptr),
