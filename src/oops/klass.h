@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <vector>
 
 #include "constant_pool.h"
@@ -43,6 +44,7 @@ class Klass {
   Method*                    findMethod(const std::string& name, const std::string& descriptor);
   Field*                     findField(const std::string& name, const std::string& descriptor);
   Slot&                      getStaticSlot(size_t index) { return statics_.at(index); }
+  const std::string&         getName() const { return name_; }
 
  private:
   classfile::ClassLoader* loader_;

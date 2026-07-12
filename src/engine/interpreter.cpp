@@ -2,11 +2,13 @@
 #include "interpreter.h"
 
 #include <cmath>
+#include <iostream>
 #include <stdexcept>
 #include <vector>
 
 #include "bytecode_reader.h"
 #include "memory/heap.h"
+#include "native_registry.h"
 #include "oops/klass.h"
 #include "oops/method.h"
 #include "oops/object.h"
@@ -1202,7 +1204,20 @@ void Interpreter::interpret(runtime::Thread* thread) {
       // Function: Access static and instance fields
       // Components: rt_cp, op_stack, thread (PC)
       case GETSTATIC: {
-        auto  index     = reader.readU2();
+        auto index = reader.readU2();
+
+        auto entry = rt_cp.getConstant(index);
+        if (auto* fref = std::get_if<oops::SymRef_Field>(&entry)) {
+          auto  cls  = rt_cp.getConstant(fref->class_cp_index);
+          auto* cref = std::get_if<oops::SymRef_Class>(&cls);
+          if (cref != nullptr && cref->class_name == "java.lang.System" &&
+              fref->member_name == "out") {
+            static char kSystemOut;
+            op_stack.pushRef(&kSystemOut);
+            break;
+          }
+        }
+
         auto* field     = rt_cp.resolveField(index);
         auto& slot      = field->getOwnerKlass()->getStaticSlot(field->getSlotIndex());
         auto  signature = field->getSignature();
@@ -1245,7 +1260,21 @@ void Interpreter::interpret(runtime::Thread* thread) {
       // Function: Invoke methods
       // Components: rt_cp, thread (PC), op_stack
       case INVOKEVIRTUAL: {
-        auto  index    = reader.readU2();
+        auto index = reader.readU2();
+
+        auto entry = rt_cp.getConstant(index);
+        if (auto* mref = std::get_if<oops::SymRef_Method>(&entry)) {
+          auto  cls  = rt_cp.getConstant(mref->class_cp_index);
+          auto* cref = std::get_if<oops::SymRef_Class>(&cls);
+          if (cref != nullptr && cref->class_name == "java.io.PrintStream" &&
+              mref->member_name == "println" && mref->descriptor == "(Ljava/lang/String;)V") {
+            auto* str = static_cast<std::string*>(op_stack.popRef());  // String 实参 (栈顶)
+            op_stack.popRef();                                         // receiver(哨兵),丢弃
+            std::cout << *str << '\n';                                 // println 带换行
+            break;
+          }
+        }
+
         auto* resolved = rt_cp.resolveMethod(index);
         auto* recv =
           static_cast<oops::Object*>(op_stack.peekRef(resolved->getSignature().arg_slot_count));
@@ -1334,8 +1363,14 @@ void Interpreter::interpret(runtime::Thread* thread) {
         }
 
         if (method->isNative()) {
-          // TODO: if the method is native
-          throw std::runtime_error("invoking static native method not implemented yet");
+          auto key = method->getOwnerKlass()->getName() + "." + method->getName() + "." +
+                     method->getDescriptor();
+          auto fn  = NativeRegistry::getSingleton().find(key);
+          if (fn == nullptr) {
+            throw std::runtime_error("unbound native: " + key);
+          }
+          fn(op_stack);
+          break;
         }
 
         const auto&    signature = method->getSignature();
