@@ -54,4 +54,44 @@ TEST_F(InterpreterMethodInvocationTest, InvokeStaticFactorial_Negative) {
   EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testInvokeStaticFactorial", -5), 1);
 }
 
+// ============================================================================
+// Category-2 (long/double) argument passing through invokestatic — covers A2
+// (typed setWide/popWide transfer + per-arg local offsets). Factorial only
+// exercises int args, so these are what actually verify the A2 fix.
+// ============================================================================
+
+TEST_F(InterpreterMethodInvocationTest, InvokeStatic_LongArgs_Value) {
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testInvokeSubLong", Jlong{10}, Jlong{3}), 7);
+}
+
+TEST_F(InterpreterMethodInvocationTest, InvokeStatic_LongArgs_Ordering) {
+  // non-commutative: if a/b were swapped during transfer the sign flips
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testInvokeSubLong", Jlong{3}, Jlong{10}), -7);
+}
+
+TEST_F(InterpreterMethodInvocationTest, InvokeStatic_LongArgs_WideValueSurvives) {
+  // value beyond 32-bit range must survive the two-slot transfer intact
+  const Jlong big = 0x1122334455667788LL;
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testInvokeSubLong", big, Jlong{0}), big);
+}
+
+TEST_F(InterpreterMethodInvocationTest, InvokeStatic_SecondLongArg_Offset) {
+  // returns b: the second category-2 arg must land at the callee's slot 2
+  EXPECT_EQ(
+    executeStaticMethod<Jlong>(kClassName, "testInvokePickSecondLong", Jlong{111}, Jlong{222}), 222);
+}
+
+TEST_F(InterpreterMethodInvocationTest, InvokeStatic_DoubleArgs) {
+  EXPECT_DOUBLE_EQ(
+    executeStaticMethod<Jdouble>(kClassName, "testInvokeSubDouble", Jdouble{10.5}, Jdouble{3.25}),
+    7.25);
+}
+
+TEST_F(InterpreterMethodInvocationTest, InvokeStatic_MixedOffsets_IntLongInt) {
+  // int(slot0) long(slot1-2) int(slot3): category-2 between two category-1 args
+  EXPECT_EQ(
+    executeStaticMethod<Jlong>(kClassName, "testInvokePackMix", Jint{1}, Jlong{22}, Jint{333}),
+    1022333);
+}
+
 }  // namespace

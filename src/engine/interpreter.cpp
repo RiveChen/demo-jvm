@@ -2,6 +2,8 @@
 #include "interpreter.h"
 
 #include <cmath>
+#include <stdexcept>
+#include <vector>
 
 #include "bytecode_reader.h"
 #include "oops/klass.h"
@@ -1203,21 +1205,17 @@ void Interpreter::interpret(runtime::Thread* thread) {
       // Function: Access static and instance fields
       // Components: rt_cp, op_stack, thread (PC)
       case GETSTATIC: {
-        auto  index = reader.readU2();
-        auto* field = rt_cp.resolveField(index);
-        auto& slot  = field->getOwnerKlass()->getStaticSlot(field->getSlotIndex());
-        // Use the field descriptor to determine the type (not the slot tag, which may be
-        // uninitialized)
-        auto signature = field->getSignature();
+        auto  index     = reader.readU2();
+        auto* field     = rt_cp.resolveField(index);
+        auto& slot      = field->getOwnerKlass()->getStaticSlot(field->getSlotIndex());
+        auto  signature = field->getSignature();
         descriptor::isCategory2(signature) ? op_stack.pushWide(slot) : op_stack.pushSlot(slot);
       } break;
       case PUTSTATIC: {
-        auto  index = reader.readU2();
-        auto* field = rt_cp.resolveField(index);
-        auto& slot  = field->getOwnerKlass()->getStaticSlot(field->getSlotIndex());
-        // Use the field descriptor to determine the type (not the slot tag, which may be
-        // uninitialized)
-        auto signature = field->getSignature();
+        auto  index     = reader.readU2();
+        auto* field     = rt_cp.resolveField(index);
+        auto& slot      = field->getOwnerKlass()->getStaticSlot(field->getSlotIndex());
+        auto  signature = field->getSignature();
         slot = descriptor::isCategory2(signature) ? op_stack.popWide() : op_stack.popSlot();
       } break;
       case GETFIELD:
@@ -1244,29 +1242,35 @@ void Interpreter::interpret(runtime::Thread* thread) {
 
         auto* method = rt_cp.resolveMethod(index);
 
+        // TODO: if the klass is not initialized, call <clinit>
+
         if (!method->isStatic()) {
           throw std::runtime_error("Cannot invoke non-static method as static");
         }
 
-        U2 arg_slot_count = descriptor::argSlotCount(method->getSignature());
+        if (method->isNative()) {
+          // TODO: if the method is native
+          throw std::runtime_error("invoking static native method not implemented yet");
+        }
 
+        const auto&    signature = method->getSignature();
         runtime::Frame next_frame(method);
+        auto&          current_op_stack = op_stack;  // current frame's operand stack
+        auto&          next_local_vars  = next_frame.getLocalVariables();
 
-        auto& current_op_stack = op_stack;  // current frame's operand stack
-        auto& next_local_vars  = next_frame.getLocalVariables();
-
-        if (arg_slot_count > 0) {
-          // must use int instead of U2, because the loop may decrement to negative numbers
-          for (int i = arg_slot_count - 1; i >= 0; i--) {
-            Slot val = current_op_stack.popSlot();
-            next_local_vars.setSlot(i, val);
+        U2 pos = signature.arg_slot_count;
+        for (int p = static_cast<int>(signature.params.size()) - 1; p >= 0; --p) {
+          if (descriptor::isCategory2(signature.params[p])) {
+            pos -= 2;
+            next_local_vars.setWide(pos, current_op_stack.popWide());
+          } else {
+            pos -= 1;
+            next_local_vars.setSlot(pos, current_op_stack.popSlot());
           }
         }
 
         thread->getCurrentFrame().setCallerPC(pc);
-
         thread->pushFrame(std::move(next_frame));
-
         // reset pc to 0 for the next frame
         pc = 0;
         thread->setPC(pc);

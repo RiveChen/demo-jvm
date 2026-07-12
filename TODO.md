@@ -1,93 +1,86 @@
 # demo-jvm 待办清单
 
-按优先级与阶段排列。`[ ]` 待办,引用处标注了 `文件:行`。
+_更新于 2026-07-12。`[x]` 已完成,`[ ]` 待办,引用处标注 `文件:行`。_
 
 ---
 
-## A. 确定性 bug(先修,影响正确性 / UB)
+## ✅ 已完成
 
-- [ ] **A1. LDC 字符串压栈是悬垂指针** — `interpreter.cpp:178-179`
-  `getConstant()` 按值返回 `RtCpInfo`(`oops/constant_pool.h:44`),`c_str()` 指向 case 块内临时变量,块结束即悬垂。需指向生命周期稳定的对象(等 String/字符串常量池),或暂存到 method area。
-
-- [ ] **A2. long/double 作方法参数落错槽** — `interpreter.cpp:1337-1343`
-  操作数栈把值放"高格(栈顶)"、局部表放"低格",逐槽平移导致值进了 `index+1`,被调方 `LLOAD_0` 读到 padding。**统一 category-2 的低/高格约定**(建议:值固定放低格,高格恒 padding),push/pop/传参三处一致。
-
-- [ ] **A3. `getSize()` 把 `size_t` 截断成 `U2`** — `operand_stack.h:28`、`local_variables.h:29`
-  改返回 `size_t`。
-
-- [ ] **A4. LDC 与 LDC_W 对字符串行为不一致** — `interpreter.cpp:168-194`
-  一个压指针、一个压 nullptr,统一处理。
-
-- [ ] **A5. `calculateArgSlotCount` descriptor 解析无越界保护** — `interpreter.cpp:27,39`
-  `while (descriptor[i] != ';')` 遇畸形 descriptor 会读越界,加边界检查。
+- [x] **descriptor 模块 + 单测**(`utilities/descriptor.*`、`tests/modules/utilities/descriptor_test.cpp`);带游标原语 + 边界检查,原 A5 越界问题随之解决。
+- [x] **Slot 去 tag 重构**:`slot.h` 退化为裸 union(B4);GETSTATIC/PUTSTATIC 改按 descriptor + `pushWide`/`popWide` 分派、不再判 tag(B2);`getStaticSlot` 去掉 PADDING 抛异常(B3);long/double 两槽仅作计数(B6)。
+- [x] **静态字段默认值**:经 `statics_.resize()` 值初始化落地(全零 = 所有 Java 默认值)(B1)。
+- [x] **Method/Field 身份与缓存分离**:`getDescriptor()` 返回字符串做**身份**(find\* 比字符串,重载解析无损),另存缓存的 `MethodType`/`TypeKind` 供执行期用。
+- [x] **命名空间/目录/CMake target 三向对齐**:`interpreter/`→`engine/`(`jvm_engine`)、ns `class_loader`→`classfile`、测试 `common/`→`utilities/`、`jvm::common` 折入 `jvm`、`jvm_utilities` INTERFACE→STATIC。
+- [x] **`.DS_Store` 入 `.gitignore`**(E1)。
+- [x] **A2 long/double 传参已修** — INVOKESTATIC 改单趟反向 + `setWide`/`popWide` typed 转移,`arg_slot_count` 缓存进 `MethodType`。⚠️ 见下方"待补测试"——修复尚未被测试验证。
 
 ---
 
-## B. Slot 重构(已确定方向:删 tag,物理槽 = 机器字)
+## A. 确定性 bug(仍开放)
 
-- [ ] **B1. 静态字段改为类准备阶段 eager 默认初始化** — `oops/klass.cpp:148-171`
-  resize 后按 descriptor 写默认值(`I→0` / `F→0.0f` / `J→0L` / `D→0.0` / 引用→null)。这是规范 preparation 语义,也是删 tag 的前提。
+- [ ] **A1. LDC 悬垂指针** — 仍在(`engine/interpreter.cpp:135`,`c_str()` 指向按值返回的临时 CP 项)。已知因 String 对象未实现暂缓。停靠方案:`getConstant` 改按引用返回、指向 CP owned 字符串,先去 UB。
+- [ ] **A3. `getSize()` 截断 `size_t`→`U2`** — `runtime/operand_stack.h:28`、`runtime/local_variables.h:29`,改返回 `size_t`。
+- [ ] **A4. LDC 与 LDC_W 字符串处理不一致** — LDC 压 `c_str`、LDC_W 压 `nullptr`(`engine/interpreter.cpp:135,148`);随 A1 一起处理。
 
-- [ ] **B2. GETSTATIC/PUTSTATIC 改为纯按 descriptor 派发** — `interpreter.cpp:1249-1301`
-  去掉所有 `slot.tag` 判断与懒初始化。
+### 待补测试(验证缺口)
 
-- [ ] **B3. `getStaticSlot` 去掉 PADDING 抛异常** — `oops/klass.h:45-53`
-  换成纯越界检查;"long/double 占两槽"交给 `slot_index_` 计数(`klass.cpp:161` 已 +2)。
-
-- [ ] **B4. 删除 `Slot.tag`,退化为裸 union(一个机器字)** — `utilities/slot.h`
-  物理槽宽保持 64 位机器字(与 HotSpot 一致,引用天然放得下)。同步简化 `operand_stack.h` / `local_variables.h` 的 push/set。
-
-- [ ] **B5.(可选)保留 debug-only tag** — `#ifndef NDEBUG` 下在 `pop*/get*` 加 `assert(tag==...)`,Release 零开销,仅作开发期类型安全网。
-
-- [ ] **B6. long/double 的"两个 slot"统一当作计数/索引规则**,不再用运行时 tag 识别 padding。
+- [ ] **long/double 静态调用测试** — A2 修复(typed 传参)目前**无测试覆盖**,现有 invoke 测试仅 int(factorial),旧的裸槽版也能过。需在 `tests/data/java/MethodInvocationTest.java` 加 long/double/混合参数的静态方法 + 用例并重编 `.class`。**建议随 A2 修复一起 commit,让该提交自带验证。**
 
 ---
 
-## C. 架构 / 模块划分
+## B. Slot 重构收尾(小项)
 
-- [ ] **C1. PC 收进 Frame** — `runtime/frame.h`、`runtime/thread.h:18-20`、`interpreter.cpp:66`
-  删除 Thread 全局 `pc_` 与死代码 `incrementPC`,单一来源,为异常栈展开铺路。
+- [ ] **B5.(可选)debug-only tag** — `#ifndef NDEBUG` 下在 `pop*`/`get*` 加 `assert`,作开发期类型安全网,Release 零开销。
+- [ ] **`slotCount` switch 后补 `return`** — `-Wreturn-type` 警告(`utilities/descriptor.h`),switch 后加 `return 1;` 或 `std::unreachable()`。
+- [ ] **`getStaticSlot` 加越界检查** — 去掉 PADDING 抛异常后目前直接 `return statics_[index]`,无边界保护(`oops/klass.h`)。
 
-- [ ] **C2. 拆解巨型解释器 switch** — `interpreter.cpp`(~1400 行单函数)
-  按指令组(loads/stores/arith/control/invoke…)拆成多个 TU,函数表或 computed-goto 派发;把 invoke 建帧/传参、return 退帧抽进 runtime。提升编译并行度与可测性。
+---
 
-- [ ] **C3. 两套 constant_pool 命名消歧** — `classfile/constant_pool.*` vs `oops/constant_pool.*`
-  概念分开是对的,命名上显式区分(raw cp_info vs RuntimeConstantPool)。
+## C. 架构
 
-- [ ] **C4. 降低 Klass→ClassFile 回指耦合** — `oops/klass.h:57`
-  link 阶段把所需数据"烘焙"进 Klass,减少生命周期纠缠。
+- [ ] **C1. PC 收进 Frame —— 未做** — `runtime/thread.h` 仍有全局 `pc_`/`getPC`/`setPC`/`incrementPC`;`Frame` 虽有 `caller_pc_`,但双源仍在。删全局 pc,单一来源,为异常展开铺路。
+- [ ] **C2. 拆解释器大 switch** — `engine/interpreter.cpp` 仍是单函数;按指令组拆 TU、抽出 invoke 建帧/return 退帧到 runtime。
+- [ ] **C3. constant_pool 命名** — 命名空间已消歧(`jvm::classfile` vs `jvm::oops`);可选:`oops/constant_pool.*` → `runtime_constant_pool.*` 做文件级澄清。
+- [ ] **C4. Klass→ClassFile 反指针耦合** — 仍在(`oops/klass.h`、`method_area.h` 前置声明 `jvm::classfile`)。link 期把所需数据烘焙进 Klass 后解除;这也会断开 oops↔classfile 的源码纠缠。
+- [ ] **C5.(新)迁移 oops 测试** — `klass_test`/`method_area_test`/`constant_pool_test` 现寄在 `tests/modules/runtime/`,实测 `oops` 模块。新建 `tests/modules/oops/`(`test_oops`,link `jvm_oops jvm_classfile` + `compile_test_classes`),`test_runtime` 只留 `local_variables`/`operand_stack`(纯单元、无需 `.class` 机制)。
 
 ---
 
 ## D. 功能缺口(里程碑,按依赖顺序)
 
-- [ ] **D1. 实现 heap / Object 模型** — `memory/heap.h`(目前空)
-  当前最大缺口,解锁字段与对象;同时定义 `Jref` 真实类型(现为 `void*`,`utilities/types.h:22`)。
-
-- [ ] **D2. 引用表示选型:先用句柄表**(移动 GC 最简单正确的路径),物理槽仍保持机器字宽。
-
-- [ ] **D3. 实例字段与对象创建** — GETFIELD/PUTFIELD/NEW(`interpreter.cpp:1302-1373`)。
-
-- [ ] **D4. 数组** — NEWARRAY/ANEWARRAY/*ALOAD/*ASTORE/ARRAYLENGTH(`interpreter.cpp:315-338,450-473,1407-1418`)。
-
-- [ ] **D5. 其余 invoke** — INVOKEVIRTUAL/INVOKESPECIAL/INVOKEINTERFACE(需对象模型 + 方法解析/分派)。
-
-- [ ] **D6. 异常处理** — ATHROW + 异常表 + 真正的 Java 异常,替换现在的 `std::runtime_error`(如除零 `interpreter.cpp:625` 会直接打挂 VM)。
-
-- [ ] **D7. GC** — 实现 oopmap(由 StackMapTable / 抽象解释推导);**不要**复活 per-slot tag。
+- [ ] **D1. heap / Object 模型(先无 GC)** — bump-pointer arena,只分配不回收;对象头 = `Klass*` + 预留一个 GC 元数据字,后接 `instance_slot_count` 个字段槽(零初始化)。`memory/heap.h` 仍空,是当前最大缺口。
+- [ ] **D2. 引用表示** — 无 GC/非移动阶段用**直接指针**指进 arena(不移动即稳定,最简单);`Jref` 保持 typedef、解引用走小 API,以便日后可换。仅当选择移动式 GC 才回头换句柄/oopmap。
+- [ ] **D3. 实例字段与对象创建** — GETFIELD/PUTFIELD/NEW。
+- [ ] **D4. 数组** — NEWARRAY/ANEWARRAY/\*ALOAD/\*ASTORE/ARRAYLENGTH。
+- [ ] **D5. 其余 invoke** — INVOKEVIRTUAL/INVOKESPECIAL/INVOKEINTERFACE(需对象模型 + 方法分派)。
+- [ ] **D6. 异常处理** — ATHROW + 异常表 + 真正的 Java 异常,替换 `std::runtime_error`(如除零 crash VM)。
+- [ ] **D7. GC** — oopmap(由 StackMapTable / 抽象解释推导);不复活 per-slot tag。
 
 ---
 
-## E. 构建 / 工程卫生
+## 🎯 里程碑:桩接版 canonical hello world
 
-- [ ] **E1. `.gitignore` 加入 `.DS_Store`** — `src/.DS_Store`、`tests/.DS_Store` 已被纳入版本管理。
+跑通 `HelloWorld.main` 里的 `System.out.println("Hello, World!")`,用 C++ 把字打到 stdout(不加载真 JDK 类)。按序:
 
-- [ ] **E2. 暂不迁移 Bazel**。当前 CMake 已足够干净;想提速优先:CI 加 ccache、继续用 Ninja、靠 C2 的 TU 拆分提并行度。迁移信号:引入第二语言 / 需远程缓存 / 仓库大到增量构建明显变慢。
+- [ ] **M1. 无 GC 堆 + Object**(= D1/D2):bump arena + 直接指针 + 对象头 `Klass*`。
+- [ ] **M2. 最小 String** — LDC 产出 String 对象(可内部挂 `std::string`,暂跳过真 char[]);修 A1。
+- [ ] **M3. native 方法机制** — invoke 流水线的 native 分支 + 注册表(`类.方法.描述符` → C++ 函数)。
+- [ ] **M4. INVOKESTATIC 补全** — typed 传参已完成(A2);剩:加类初始化(`<clinit>`)触发 + native 分支(`engine/interpreter.cpp:1245,1251` 两处 TODO)。
+- [ ] **M5. INVOKEVIRTUAL + 虚分派** — locals[0] 放 receiver,按实际类分派;复用 M4 骨架。
+- [ ] **M6. GETSTATIC `System.out` 拦截 + `PrintStream.println` 桩接** — 返回哨兵 PrintStream,println 走 M3 native → `std::cout`。
+- [ ] **M7. 跑通 HelloWorld** — 端到端,输出 `Hello, World!`。
 
-- [ ] **E3.(可选)补一份 `ARCHITECTURE.md`** 记录分层、slot 选型与引用模型决策。
+可跳过(桩接版不需要):真 JDK java.lang/java.io、完整 `<clinit>`、异常、通用数组、char[] 内部。
 
 ---
 
-## 建议执行顺序
+## E. 工程
 
-`A2 → B1 → B2 → B3 → B4 → C1`(先把 slot/PC 这层地基理顺并修掉确定性 bug)→ `D1 → D2 → D3/D4/D5`(打通对象与堆)→ `D6 → D7`(异常与 GC)。`A1/A3/A4/A5`、`E1` 可随时穿插。
+- [x] **E2. 暂不迁移 Bazel** — 已决策;提速优先靠 ccache / Ninja / C2 的 TU 拆分。
+- [ ] **E3.(可选)`ARCHITECTURE.md`** — 记录分层、slot 选型(64 位裸 union)、引用模型、命名约定。
+
+---
+
+## 建议下一步
+
+`A2`(typed 传参,已有 `getSignature` 可用)→ `C1`(PC 进 Frame)→ `C5`(迁 oops 测试,顺手清理)→ 再进入 `D1` 打通 heap/Object。`A3`/`A4`/两个 B 小项/`slotCount return` 可随时穿插。

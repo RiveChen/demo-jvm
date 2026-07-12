@@ -10,7 +10,7 @@
 namespace jvm::descriptor {
 
 namespace {
-TypeKind nextFieldType(std::string_view d, size_t& i) {
+TypeKind nextFieldType(std::string_view d, size_t& i) {  // NOLINT(misc-no-recursion)
   assert(i < d.size());
   char c = d[i];
   switch (c) {
@@ -72,16 +72,12 @@ MethodType parseMethodDescriptor(std::string_view desc) {
     throw std::runtime_error("invalid descriptor");
   }
   i++;
-  auto ret = (desc[i] == 'V') ? TypeKind::Void : nextFieldType(desc, i);
-  return {.params = params, .ret = ret};
-}
-
-jvm::U2 argSlotCount(const MethodType& methodType) {
-  jvm::U2 res = 0;
-  for (const auto& param : methodType.params) {
-    res += slotCount(param);
+  auto    ret            = (desc[i] == 'V') ? TypeKind::Void : nextFieldType(desc, i);
+  jvm::U2 arg_slot_count = 0;
+  for (const auto& param : params) {
+    arg_slot_count += slotCount(param);
   }
-  return res;
+  return {.params = params, .ret = ret, .arg_slot_count = arg_slot_count};
 }
 
 };  // namespace jvm::descriptor

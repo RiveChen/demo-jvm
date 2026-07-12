@@ -134,8 +134,9 @@ TEST(DescriptorMethodTest, MixedArrayParamsBooleanReturn) {
 }
 
 TEST(DescriptorMethodTest, StructEquality) {
-  auto m = parseMethodDescriptor("(IJ)V");
-  MethodType expected{.params = {TypeKind::Int, TypeKind::Long}, .ret = TypeKind::Void};
+  auto       m = parseMethodDescriptor("(IJ)V");
+  MethodType expected{
+    .params = {TypeKind::Int, TypeKind::Long}, .ret = TypeKind::Void, .arg_slot_count = 3};
   EXPECT_TRUE(m == expected);
 }
 
@@ -144,13 +145,13 @@ TEST(DescriptorMethodTest, StructEquality) {
 // ============================================================================
 
 TEST(DescriptorArgSlotTest, Counts) {
-  EXPECT_EQ(argSlotCount(parseMethodDescriptor("()V")), 0);
-  EXPECT_EQ(argSlotCount(parseMethodDescriptor("(I)I")), 1);
-  EXPECT_EQ(argSlotCount(parseMethodDescriptor("(IJ)V")), 3);   // 1 + 2
-  EXPECT_EQ(argSlotCount(parseMethodDescriptor("(JD)J")), 4);   // 2 + 2
-  EXPECT_EQ(argSlotCount(parseMethodDescriptor("(DDD)V")), 6);  // 2 * 3
-  EXPECT_EQ(argSlotCount(parseMethodDescriptor("([Ljava/lang/String;)V")), 1);
-  EXPECT_EQ(argSlotCount(parseMethodDescriptor("(BCFDJZ)V")), 8);  // 1+1+1+2+2+1
+  EXPECT_EQ((parseMethodDescriptor("()V")).arg_slot_count, 0);
+  EXPECT_EQ((parseMethodDescriptor("(I)I")).arg_slot_count, 1);
+  EXPECT_EQ((parseMethodDescriptor("(IJ)V")).arg_slot_count, 3);   // 1 + 2
+  EXPECT_EQ((parseMethodDescriptor("(JD)J")).arg_slot_count, 4);   // 2 + 2
+  EXPECT_EQ((parseMethodDescriptor("(DDD)V")).arg_slot_count, 6);  // 2 * 3
+  EXPECT_EQ((parseMethodDescriptor("([Ljava/lang/String;)V")).arg_slot_count, 1);
+  EXPECT_EQ((parseMethodDescriptor("(BCFDJZ)V")).arg_slot_count, 8);  // 1+1+1+2+2+1
 }
 
 // ============================================================================

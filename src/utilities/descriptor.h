@@ -33,12 +33,11 @@ TypeKind parseFieldType(std::string_view desc);
 struct MethodType {
   std::vector<TypeKind> params;
   TypeKind              ret;
+  U2                    arg_slot_count;
 
   bool operator==(const MethodType& other) const = default;
 };
 
 MethodType parseMethodDescriptor(std::string_view desc);
-
-U2 argSlotCount(const MethodType&);
 
 }  // namespace jvm::descriptor

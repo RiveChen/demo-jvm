@@ -29,46 +29,34 @@ class LocalVariables {
   U2 getSize() const { return variables_.size(); }
 
   void setInt(U2 index, Jint value) {
-    checkBounds(index);
-    variables_[index].i = value;
+    setSlot(index, {.i = value});
   }
   Jint getInt(U2 index) {
-    checkBounds(index);
-    return variables_[index].i;
+    return getSlot(index).i;
   }
   void setFloat(U2 index, Jfloat value) {
-    checkBounds(index);
-    variables_[index].f = value;
+    setSlot(index, {.f = value});
   }
   Jfloat getFloat(U2 index) {
-    checkBounds(index);
-    return variables_[index].f;
+    return getSlot(index).f;
   }
   void setLong(U2 index, Jlong value) {
-    checkBounds(index);
-    variables_[index].l     = value;
-    variables_[index + 1].i = 0;
+    setWide(index, {.l = value});
   }
   Jlong getLong(U2 index) {
-    checkBounds(index);
-    return variables_[index].l;
+    return getWide(index).l;
   }
   void setDouble(U2 index, Jdouble value) {
-    checkBounds(index);
-    variables_[index].d     = value;
-    variables_[index + 1].i = 0;
+    setWide(index, {.d = value});
   }
   Jdouble getDouble(U2 index) {
-    checkBounds(index);
-    return variables_[index].d;
+    return getWide(index).d;
   }
   void setRef(U2 index, Jref value) {
-    checkBounds(index);
-    variables_[index].r = value;
+    setSlot(index, {.r = value});
   }
   Jref getRef(U2 index) {
-    checkBounds(index);
-    return variables_[index].r;
+    return getSlot(index).r;
   }
 
   void setSlot(U2 index, Slot value) {
@@ -76,6 +64,16 @@ class LocalVariables {
     variables_[index] = value;
   }
   Slot getSlot(U2 index) {
+    checkBounds(index);
+    return variables_[index];
+  }
+
+  void setWide(U2 index, Slot value) {
+    checkBounds(index);
+    variables_[index]     = value;
+    variables_[index + 1] = {.i = 0};
+  }
+  Slot getWide(U2 index) {
     checkBounds(index);
     return variables_[index];
   }
