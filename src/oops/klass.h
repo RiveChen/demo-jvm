@@ -32,8 +32,11 @@ class Klass {
   explicit Klass(classfile::ClassFile* class_file, classfile::ClassLoader* loader);
 
   classfile::ClassLoader* getClassLoader() const { return loader_; }
-  classfile::ClassFile*   getClassFile() const { return class_file_; }
-  void                    setSuperClass(Klass* super_class) { super_class_ = super_class; }
+  // NOTE: only used during loading/linking (loader threads ClassFile through here);
+  // runtime resolution no longer touches it. Fully removing it = thread ClassFile
+  // through the loader instead (C4 follow-up).
+  classfile::ClassFile* getClassFile() const { return class_file_; }
+  void                  setSuperClass(Klass* super_class) { super_class_ = super_class; }
   Klass*                  getSuperClass() const { return super_class_; }
   void setInterface(U2 index, Klass* interface) { interfaces_.at(index) = interface; }
   const std::vector<Klass*>& getInterfaces() const { return interfaces_; }
@@ -46,8 +49,7 @@ class Klass {
 
  private:
   classfile::ClassLoader* loader_;
-  classfile::ClassFile*
-    class_file_;  // class_file should be initialized first for constant_pool to be valid
+  classfile::ClassFile*   class_file_;  // owned by MethodArea; used only during loading/linking
 
   std::string               name_;
   AccessFlags<flags::Class> access_flags_;

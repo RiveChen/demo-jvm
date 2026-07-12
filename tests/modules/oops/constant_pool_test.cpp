@@ -3,14 +3,11 @@
 #include <gtest/gtest.h>
 
 #include <memory>
-#include <optional>
 #include <string>
 #include <variant>
 #include <vector>
 
-#include "classfile/class_file.h"
 #include "classfile/class_loader.h"
-#include "classfile/constant_pool.h"
 #include "oops/klass.h"
 #include "oops/method_area.h"
 
@@ -27,23 +24,7 @@ class ConstantPoolTest : public ::testing::Test {
     oops::MethodArea::getInstance().reset();
   }
 
-  std::optional<U2> findNameAndTypeIndex(classfile::ClassFile* class_file, const std::string& name,
-                                         const std::string& descriptor) {
-    const auto& cp = class_file->constant_pool;
-    for (size_t i = 1; i < cp.size(); i++) {
-      auto* info = dynamic_cast<const classfile::NameAndTypeInfo*>(cp.getConstantInfo(i));
-      if (info == nullptr) {
-        continue;
-      }
-      // std::cerr << "Name: " << cp.getUtf8String(info->name_index) << std::endl;
-      // std::cerr << "Descriptor: " << cp.getUtf8String(info->descriptor_index) << std::endl;
-      if (cp.getUtf8String(info->name_index) == name &&
-          cp.getUtf8String(info->descriptor_index) == descriptor) {
-        return i;
-      }
-    }
-    return std::nullopt;
-  }
+  static constexpr const char* kClassName = "tests.data.java.KlassTestData";
 
   std::string                             test_classpath_;
   std::vector<std::string>                classpath_list_;
@@ -52,55 +33,35 @@ class ConstantPoolTest : public ::testing::Test {
 
 }  // namespace
 
+// SymRef entries are self-sufficient (baked strings + runtime-cp class index);
+// resolution must not touch the ClassFile. Each test plants a SymRef and resolves it.
+
 TEST_F(ConstantPoolTest, ResolveClassCachesResult) {
-  auto* klass = loader_->loadClass("tests.data.java.KlassTestData");
+  auto* klass = loader_->loadClass(kClassName);
   ASSERT_NE(klass, nullptr);
 
-  auto* class_file = klass->getClassFile();
-  auto* class_info = dynamic_cast<const classfile::ClassInfo*>(
-    class_file->constant_pool.getConstantInfo(class_file->this_class_index));
-  ASSERT_NE(class_info, nullptr);
-
   auto& rcp = klass->getRuntimeConstantPool();
-  rcp.setConstant(1, oops::SymRef_Class{.name_index = class_info->name_index});
+  rcp.setConstant(1, oops::SymRef_Class{.class_name = kClassName});
 
   auto* resolved_first  = rcp.resolveClass(1);
   auto* resolved_second = rcp.resolveClass(1);
 
   EXPECT_EQ(resolved_first, klass);
   EXPECT_EQ(resolved_first, resolved_second);
+  // resolved result is cached back into the slot
   EXPECT_TRUE(std::holds_alternative<oops::Klass*>(rcp.getConstant(1)));
 }
 
-TEST_F(ConstantPoolTest, ResolveNameAndType) {
-  auto* klass = loader_->loadClass("tests.data.java.KlassTestData");
-  ASSERT_NE(klass, nullptr);
-
-  auto* class_file = klass->getClassFile();
-  auto  nt_index   = findNameAndTypeIndex(class_file, "add", "(II)I");
-  ASSERT_TRUE(nt_index.has_value());
-
-  auto [name, descriptor] = klass->getRuntimeConstantPool().resolveNameAndType(nt_index.value());
-  EXPECT_EQ(name, "add");
-  EXPECT_EQ(descriptor, "(II)I");
-}
-
 TEST_F(ConstantPoolTest, ResolveMethodAndCache) {
-  auto* klass = loader_->loadClass("tests.data.java.KlassTestData");
+  auto* klass = loader_->loadClass(kClassName);
   ASSERT_NE(klass, nullptr);
-
-  auto* class_file = klass->getClassFile();
-
-  // find NameAndType for add(II)I
-  auto nt_index = findNameAndTypeIndex(class_file, "add", "(II)I");
-  ASSERT_TRUE(nt_index.has_value());
-
-  // reuse this class's own Class entry for class_index
-  auto class_index = class_file->this_class_index;
 
   auto& rcp = klass->getRuntimeConstantPool();
-  rcp.setConstant(
-    2, oops::SymRef_Method{.class_index = class_index, .name_and_type_index = nt_index.value()});
+  // slot 1: the Class entry the method ref points at (via class_cp_index)
+  rcp.setConstant(1, oops::SymRef_Class{.class_name = kClassName});
+  rcp.setConstant(2, oops::SymRef_Method{.class_cp_index = 1,
+                                         .member_name    = "add",
+                                         .descriptor     = "(II)I"});
 
   auto* resolved_first  = rcp.resolveMethod(2);
   auto* resolved_second = rcp.resolveMethod(2);
@@ -114,20 +75,14 @@ TEST_F(ConstantPoolTest, ResolveMethodAndCache) {
 }
 
 TEST_F(ConstantPoolTest, ResolveFieldAndCache) {
-  auto* klass = loader_->loadClass("tests.data.java.KlassTestData");
+  auto* klass = loader_->loadClass(kClassName);
   ASSERT_NE(klass, nullptr);
 
-  auto* class_file = klass->getClassFile();
-
-  // static field sd:D
-  auto nt_index = findNameAndTypeIndex(class_file, "sd", "D");
-  ASSERT_TRUE(nt_index.has_value());
-
-  auto class_index = class_file->this_class_index;
-
   auto& rcp = klass->getRuntimeConstantPool();
-  rcp.setConstant(
-    3, oops::SymRef_Field{.class_index = class_index, .name_and_type_index = nt_index.value()});
+  rcp.setConstant(1, oops::SymRef_Class{.class_name = kClassName});
+  rcp.setConstant(3, oops::SymRef_Field{.class_cp_index = 1,
+                                        .member_name    = "sd",
+                                        .descriptor     = "D"});
 
   auto* resolved_first  = rcp.resolveField(3);
   auto* resolved_second = rcp.resolveField(3);

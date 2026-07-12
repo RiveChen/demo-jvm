@@ -42,7 +42,8 @@ TEST_F(ClassLoaderTest, LoadExistingClass) {
 
   ASSERT_NE(klass, nullptr) << "Failed to load class: " << class_name;
   EXPECT_EQ(klass->getClassLoader(), loader_.get());
-  EXPECT_NE(klass->getClassFile(), nullptr);
+  // class file was parsed into methods
+  EXPECT_NE(klass->findMethod("main", "([Ljava/lang/String;)V"), nullptr);
 }
 
 TEST_F(ClassLoaderTest, LoadNonExistentClass) {

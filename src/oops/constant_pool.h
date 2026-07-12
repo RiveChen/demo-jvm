@@ -8,20 +8,24 @@
 namespace jvm::oops {
 
 // 4 types of symbol references, not resolved yet
+// using string, not U2 index, in order to remove the dependency for classfile
 struct SymRef_Class {
-  U2 name_index;
+  std::string class_name;
 };
 struct SymRef_Field {
-  U2 class_index;
-  U2 name_and_type_index;
+  U2          class_cp_index;
+  std::string member_name;
+  std::string descriptor;
 };
 struct SymRef_Method {
-  U2 class_index;
-  U2 name_and_type_index;
+  U2          class_cp_index;
+  std::string member_name;
+  std::string descriptor;
 };
 struct SymRef_InterfaceMethod {
-  U2 class_index;
-  U2 name_and_type_index;
+  U2          class_cp_index;
+  std::string member_name;
+  std::string descriptor;
 };
 
 class Klass;
@@ -43,10 +47,9 @@ class RuntimeConstantPool {
   void     setConstant(U2 index, RtCpInfo info) { infos_.at(index) = std::move(info); }
   RtCpInfo getConstant(U2 index) { return infos_.at(index); }
 
-  Klass*                              resolveClass(U2 index);
-  Field*                              resolveField(U2 index);
-  Method*                             resolveMethod(U2 index);
-  std::pair<std::string, std::string> resolveNameAndType(U2 index);
+  Klass*  resolveClass(U2 index);
+  Field*  resolveField(U2 index);
+  Method* resolveMethod(U2 index);
 
  private:
   std::vector<RtCpInfo> infos_;

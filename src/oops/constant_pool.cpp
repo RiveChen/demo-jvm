@@ -1,6 +1,8 @@
 #include "constant_pool.h"
 
-#include "classfile/class_file.h"
+#include <stdexcept>
+#include <variant>
+
 #include "classfile/class_loader.h"
 #include "klass.h"
 
@@ -8,7 +10,6 @@ namespace jvm::oops {
 
 Klass* RuntimeConstantPool::resolveClass(U2 index) {
   auto& slot = infos_.at(index);
-
   if (auto* klass = std::get_if<Klass*>(&slot)) {
     return *klass;
   }
@@ -18,13 +19,10 @@ Klass* RuntimeConstantPool::resolveClass(U2 index) {
     throw std::runtime_error("Invalid symbol reference");
   }
 
-  const auto& class_cp   = owner_klass_->getClassFile()->constant_pool;
-  auto        class_name = class_cp.getUtf8String(sym_ref->name_index);
-  // replace '/' with '.'
-  std::replace(class_name.begin(), class_name.end(), '/', '.');
-  auto* resolved_klass = owner_klass_->getClassLoader()->loadClass(class_name);
-  slot                 = resolved_klass;
-  return resolved_klass;
+  // class_name is already baked to dot-form at prepare time
+  Klass* k = owner_klass_->getClassLoader()->loadClass(sym_ref->class_name);
+  slot     = k;
+  return k;
 }
 
 Field* RuntimeConstantPool::resolveField(U2 index) {
@@ -41,11 +39,9 @@ Field* RuntimeConstantPool::resolveField(U2 index) {
     throw std::runtime_error("Invalid symbol reference");
   }
 
-  Klass* target_klass = this->resolveClass(sym_ref->class_index);
+  Klass* target_klass = this->resolveClass(sym_ref->class_cp_index);
 
-  auto [name, descriptor] = this->resolveNameAndType(sym_ref->name_and_type_index);
-
-  Field* resolved_field = target_klass->findField(name, descriptor);
+  Field* resolved_field = target_klass->findField(sym_ref->member_name, sym_ref->descriptor);
   slot                  = resolved_field;
   return resolved_field;
 }
@@ -62,27 +58,11 @@ Method* RuntimeConstantPool::resolveMethod(U2 index) {
     throw std::runtime_error("Invalid symbol reference");
   }
 
-  Klass* target_klass = this->resolveClass(sym_ref->class_index);
+  Klass* target_klass = this->resolveClass(sym_ref->class_cp_index);
 
-  auto [name, descriptor] = this->resolveNameAndType(sym_ref->name_and_type_index);
-
-  Method* resolved_method = target_klass->findMethod(name, descriptor);
+  Method* resolved_method = target_klass->findMethod(sym_ref->member_name, sym_ref->descriptor);
   slot                    = resolved_method;
   return resolved_method;
-}
-
-std::pair<std::string, std::string> RuntimeConstantPool::resolveNameAndType(U2 index) {
-  const auto& cf_cp = owner_klass_->getClassFile()->constant_pool;
-  const auto* nt_info =
-    dynamic_cast<const classfile::NameAndTypeInfo*>(cf_cp.getConstantInfo(index));
-  if (nt_info == nullptr) {
-    throw std::runtime_error("Invalid name and type info");
-  }
-
-  std::string name       = cf_cp.getUtf8String(nt_info->name_index);
-  std::string descriptor = cf_cp.getUtf8String(nt_info->descriptor_index);
-
-  return std::make_pair(name, descriptor);
 }
 
 }  // namespace jvm::oops
