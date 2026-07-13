@@ -125,10 +125,11 @@ void ClassLoader::linkSuperClass(oops::Klass* klass, classfile::ClassFile* cf) {
 void ClassLoader::linkInterfaces(oops::Klass* klass, classfile::ClassFile* cf) {
   auto        interfaces = cf->interfaces;
   const auto& cp         = cf->constant_pool;
-  for (auto& interface_index : interfaces) {
+  for (U2 i = 0; i < interfaces.size(); i++) {
+    U2          interface_index = interfaces[i];
     std::string interface_name  = cp.getClassName(interface_index);  // internal slash form
     auto*       interface_klass = loadClass(interface_name);
-    klass->setInterface(interface_index, interface_klass);
+    klass->setInterface(i, interface_klass);
   }
 }
 

@@ -23,12 +23,12 @@ std::unique_ptr<ClassFile> ClassFileParser::parse() {
   auto super_class_index = reader_.read<U2>();
   auto interfaces_count  = reader_.read<U2>();
   auto interfaces        = std::vector<U2>(interfaces_count);
-  auto fields            = parseFields();
-  auto methods           = parseMethods();
-  auto attributes        = parseAttributes();
-  for (U2 i = 0; i < interfaces_count; ++i) {
+  for (U2 i = 0; i < interfaces_count; i++) {
     interfaces[i] = reader_.read<U2>();
   }
+  auto fields     = parseFields();
+  auto methods    = parseMethods();
+  auto attributes = parseAttributes();
   LOG_DEBUG("Parsed: version=", version.toString(), ", cp_size=", constant_pool.size());
   return std::make_unique<ClassFile>(std::move(version), std::move(constant_pool), access_flags,
                                      this_class_index, super_class_index, interfaces_count,
