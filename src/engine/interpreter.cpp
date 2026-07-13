@@ -27,6 +27,7 @@
 #include "runtime/frame.h"
 #include "runtime/thread.h"
 #include "utilities/descriptor.h"
+#include "utilities/logger.h"
 #include "utilities/types.h"
 
 namespace jvm::engine {
@@ -63,6 +64,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
     // fetch opcode
     BytecodeReader reader(code, pc);          // note we pass pc by ref here
     auto           opcode = reader.readU1();  // note pc incremented by 1 here
+    LOG_TRACE("pc=0x", (pc - 1), " op=0x", opcode);
 
     // NOLINTBEGIN(bugprone-branch-clone)
     // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)

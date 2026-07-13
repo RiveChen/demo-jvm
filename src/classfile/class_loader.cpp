@@ -17,6 +17,7 @@
 #include "class_file_parser.h"
 #include "oops/klass.h"
 #include "oops/method_area.h"
+#include "utilities/logger.h"
 
 namespace jvm::classfile {
 
@@ -55,6 +56,7 @@ std::optional<std::vector<std::byte>> ClassLoader::readClassFile(const std::stri
       }
       file.seekg(0, std::ios::beg);
       std::vector<std::byte> buffer(static_cast<size_t>(size));
+      LOG_DEBUG("Found class file: ", full_path.string(), " (", size, " bytes)");
       if (file.read(std::bit_cast<char*>(buffer.data()), size)) {
         return buffer;
       }
@@ -133,6 +135,7 @@ void ClassLoader::linkInterfaces(oops::Klass* klass, classfile::ClassFile* cf) {
 // (documentation in class_loader.h)
 // NOLINTNEXTLINE(misc-no-recursion)
 oops::Klass* ClassLoader::loadClass(const std::string& fully_qualified_name) {
+  LOG_DEBUG("Loading class: ", fully_qualified_name);
   // Normalize to the internal (slash) form; callers may pass '.' or '/'.
   // From here on, slash is the single canonical class-name form (cache key,
   // MethodArea key, Klass::name_, path all agree).
@@ -162,6 +165,7 @@ oops::Klass* ClassLoader::loadClass(const std::string& fully_qualified_name) {
   klass->prepareRuntimeConstantPool(cf);
   klass->prepareMethods(cf);
   klass->prepareFieldsAndStatics(cf);
+  LOG_INFO("Class loaded: ", name);
 
   // Cache the loaded class for future access
   cache_[name] = klass;

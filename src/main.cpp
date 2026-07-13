@@ -15,6 +15,8 @@
 #include <string>
 #include <vector>
 
+#include "utilities/logger.h"
+
 #include "classfile/class_loader.h"
 #include "engine/interpreter.h"
 #include "oops/klass.h"
@@ -38,6 +40,8 @@
 int main(int argc, char** argv) {
   const std::string classpath  = (argc > 1) ? argv[1] : ".";
   const std::string main_class = (argc > 2) ? argv[2] : "tests.data.java.HelloWorld";
+
+  LOG_INFO("Starting demo-jvm: classpath=", classpath, ", main=", main_class);
 
   std::vector<std::string>    classpath_list{classpath};
   jvm::classfile::ClassLoader loader(nullptr, classpath_list);
@@ -63,5 +67,6 @@ int main(int argc, char** argv) {
   thread.pushFrame(std::move(frame));
 
   interpreter.interpret(&thread);
+  LOG_INFO("Interpretation finished");
   return 0;
 }

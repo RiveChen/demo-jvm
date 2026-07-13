@@ -9,10 +9,12 @@
 
 #include "oops/klass.h"
 #include "oops/object.h"
+#include "utilities/logger.h"
 
 namespace jvm::memory {
 void* Heap::allocate(size_t bytes) {
   bytes = (bytes + (kAlignment - 1)) & ~(kAlignment - 1);
+  LOG_TRACE("Heap allocate: ", bytes, " bytes at offset ", top_);
   if (top_ + bytes > arena_.size()) {
     throw std::bad_alloc();
   }
@@ -24,7 +26,8 @@ void* Heap::allocate(size_t bytes) {
 oops::Object* Heap::newInstance(oops::Klass* klass) {
   size_t n    = klass->getInstanceSlotCount();
   size_t size = sizeof(oops::Object) + (n * sizeof(Slot));
-  void*  mem  = allocate(size);
+  LOG_TRACE("Heap newInstance: ", klass->getName(), " (", n, " slots, ", size, " bytes)");
+  void* mem = allocate(size);
   return new (mem) oops::Object(klass);  // placement-new
 }
 }  // namespace jvm::memory

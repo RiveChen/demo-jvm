@@ -9,6 +9,8 @@
 
 #include "class_file_parser.h"
 
+#include "utilities/logger.h"
+
 namespace jvm::classfile {
 
 std::unique_ptr<ClassFile> ClassFileParser::parse() {
@@ -27,6 +29,7 @@ std::unique_ptr<ClassFile> ClassFileParser::parse() {
   for (U2 i = 0; i < interfaces_count; ++i) {
     interfaces[i] = reader_.read<U2>();
   }
+  LOG_DEBUG("Parsed: version=", version.toString(), ", cp_size=", constant_pool.size());
   return std::make_unique<ClassFile>(std::move(version), std::move(constant_pool), access_flags,
                                      this_class_index, super_class_index, interfaces_count,
                                      std::move(interfaces), std::move(fields), std::move(methods),

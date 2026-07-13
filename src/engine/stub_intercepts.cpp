@@ -14,6 +14,7 @@
 #include <iostream>
 
 #include "runtime/operand_stack.h"
+#include "utilities/logger.h"
 
 namespace jvm::engine {
 namespace {
@@ -36,6 +37,7 @@ void printlnString(runtime::OperandStack& s) {
 
 void registerStubIntercepts() {
   auto& t = StubIntercepts::getSingleton();
+  LOG_DEBUG("Registered stub: java.lang.Object.<init>");
   t.bind("java/lang/Object.<init> ()V", &objectInit);
   t.bind("java/lang/System.out Ljava/io/PrintStream;", &systemOut);
   t.bind("java/io/PrintStream.println (Ljava/lang/String;)V", &printlnString);

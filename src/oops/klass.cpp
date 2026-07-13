@@ -10,6 +10,7 @@
 
 #include "classfile/class_file.h"
 #include "constant_pool.h"
+#include "utilities/logger.h"
 
 namespace jvm::oops {
 Klass::Klass(classfile::ClassFile* class_file, classfile::ClassLoader* loader)
@@ -64,6 +65,8 @@ std::pair<std::string, std::string> resolveNameAndType(classfile::ClassFile* cla
 }  // namespace
 
 void Klass::prepareRuntimeConstantPool(classfile::ClassFile* class_file) {
+  LOG_DEBUG("Preparing runtime constant pool for ", name_, " (", class_file->constant_pool.size(),
+            " entries)");
   // create runtime constant pool
   size_t cp_count = class_file->constant_pool.size();
   constant_pool_.infos_.resize(cp_count);
@@ -146,6 +149,7 @@ void Klass::prepareRuntimeConstantPool(classfile::ClassFile* class_file) {
 }
 
 void Klass::prepareMethods(classfile::ClassFile* class_file) {
+  LOG_DEBUG("Preparing methods for class ", name_);
   // create methods
   for (auto& member_info : class_file->methods.getMembers()) {
     auto* method_info  = dynamic_cast<classfile::MethodInfo*>(member_info.get());
