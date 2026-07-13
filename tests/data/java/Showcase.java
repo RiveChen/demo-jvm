@@ -216,6 +216,55 @@ public class Showcase {
     }
 
     // ============================================================
+    // 14. INVOKEINTERFACE demo
+    // ============================================================
+    interface Talker {
+        int talk();
+    }
+
+    static class Cat implements Talker {
+        public int talk() {
+            return 7;
+        }
+    }
+
+    static class DogSpeaker implements Talker {
+        public int talk() {
+            return 3;
+        }
+    }
+
+    /** Invoke interface method (invokeinterface). */
+    static int interfaceDemo() {
+        Talker t = new Cat();
+        return t.talk();  // invokeinterface — expected: 7
+    }
+
+    // ============================================================
+    // 15. INSTANCEOF demo (uses Animal/Dog hierarchy)
+    // ============================================================
+    static int instanceOfDemo() {
+        Animal a = new Dog();                   // Dog is-a Animal
+        boolean r1 = a instanceof Animal;        // true → 1
+        boolean r2 = a instanceof Dog;           // true → 1
+        Point  p = null;
+        boolean r3 = p instanceof Point;         // false → 0 (null check)
+        Animal n = null;
+        boolean r4 = n instanceof Animal;        // false → 0
+        return (r1 ? 1 : 0) + (r2 ? 1 : 0) + (r3 ? 0 : 1) + (r4 ? 0 : 1);
+        // 1 + 1 + 1 + 1 = 4
+    }
+
+    // ============================================================
+    // 16. CHECKCAST demo (uses Animal/Dog hierarchy)
+    // ============================================================
+    static int checkCastDemo() {
+        Animal a = new Dog();                   // Dog stored as Animal
+        Dog d = (Dog) a;                        // checkcast Dog — valid
+        return d.sound();                       // expected: 2
+    }
+
+    // ============================================================
     // Main — orchestrate all demos, print results
     // ============================================================
     public static void main(String[] args) {

@@ -67,6 +67,58 @@ struct JvmTraits<Jdouble> {
   static Jdouble popStack(jvm::runtime::OperandStack& stack) { return stack.popDouble(); }
 };
 
+// Specialization: Jboolean (JVM uses Z in descriptors)
+template <>
+struct JvmTraits<Jboolean> {
+  static constexpr std::string_view descriptor = "Z";
+  static constexpr U2               slots      = 1;
+  static void setLocal(jvm::runtime::LocalVariables& vars, U2 index, Jboolean val) {
+    vars.setInt(index, static_cast<Jint>(val));
+  }
+  static Jboolean popStack(jvm::runtime::OperandStack& stack) {
+    return static_cast<Jboolean>(stack.popInt());
+  }
+};
+
+// Specialization: Jbyte (JVM uses B in descriptors)
+template <>
+struct JvmTraits<Jbyte> {
+  static constexpr std::string_view descriptor = "B";
+  static constexpr U2               slots      = 1;
+  static void setLocal(jvm::runtime::LocalVariables& vars, U2 index, Jbyte val) {
+    vars.setInt(index, static_cast<Jint>(val));
+  }
+  static Jbyte popStack(jvm::runtime::OperandStack& stack) {
+    return static_cast<Jbyte>(stack.popInt());
+  }
+};
+
+// Specialization: Jshort (JVM uses S in descriptors)
+template <>
+struct JvmTraits<Jshort> {
+  static constexpr std::string_view descriptor = "S";
+  static constexpr U2               slots      = 1;
+  static void setLocal(jvm::runtime::LocalVariables& vars, U2 index, Jshort val) {
+    vars.setInt(index, static_cast<Jint>(val));
+  }
+  static Jshort popStack(jvm::runtime::OperandStack& stack) {
+    return static_cast<Jshort>(stack.popInt());
+  }
+};
+
+// Specialization: Jchar (JVM uses C in descriptors)
+template <>
+struct JvmTraits<Jchar> {
+  static constexpr std::string_view descriptor = "C";
+  static constexpr U2               slots      = 1;
+  static void setLocal(jvm::runtime::LocalVariables& vars, U2 index, Jchar val) {
+    vars.setInt(index, static_cast<Jint>(val));
+  }
+  static Jchar popStack(jvm::runtime::OperandStack& stack) {
+    return static_cast<Jchar>(stack.popInt());
+  }
+};
+
 // Specialization: void (only used for return value)
 template <>
 struct JvmTraits<void> {

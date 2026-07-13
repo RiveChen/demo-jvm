@@ -1463,12 +1463,31 @@ void Interpreter::interpret(runtime::Thread* thread) {
         Jref         obj_ref = memory::Heap::getSingleton().newInstance(klass);
         op_stack.pushRef(obj_ref);
       } break;
-      case CHECKCAST:
-        // TODO: implement checkcast
-        break;
-      case INSTANCEOF:
-        // TODO: implement instanceof
-        break;
+
+      case CHECKCAST: {
+        auto  index = reader.readU2();
+        auto* obj   = static_cast<oops::Object*>(op_stack.popRef());
+        if (obj == nullptr) {
+          op_stack.pushRef(nullptr);
+          break;
+        }
+        auto* klass = rt_cp.resolveClass(index);
+        if (!obj->getKlass()->isInstanceOf(klass)) {
+          throw std::runtime_error("ClassCastException");
+        }
+        op_stack.pushRef(obj);
+      } break;
+
+      case INSTANCEOF: {
+        auto  index = reader.readU2();
+        auto* obj   = static_cast<oops::Object*>(op_stack.popRef());
+        if (obj == nullptr) {
+          op_stack.pushInt(0);
+          break;
+        }
+        auto* klass = rt_cp.resolveClass(index);
+        op_stack.pushInt(obj->getKlass()->isInstanceOf(klass) ? 1 : 0);
+      } break;
       /* #endregion Objects */
 
       /* #region Exceptions */

@@ -60,6 +60,7 @@ class Klass {
   ///@{
   size_t getInstanceSlotCount() const { return instance_slot_count_; }
   size_t getStaticSlotCount() const { return static_slot_count_; }
+  bool   isInstanceOf(Klass* target) const;
   ///@}
 
   /// @name Member Lookup

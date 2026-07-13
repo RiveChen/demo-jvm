@@ -58,24 +58,21 @@ Method* RuntimeConstantPool::resolveMethod(U2 index) {
     return *method;
   }
 
-  auto* sym_ref = std::get_if<SymRef_Method>(&slot);
-  if (sym_ref == nullptr) {
-    throw std::runtime_error("Invalid symbol reference");
+  if (auto* sym_ref = std::get_if<SymRef_Method>(&slot)) {
+    Klass*  target = resolveClass(sym_ref->class_cp_index);
+    Method* m = target->findMethod(sym_ref->member_name, sym_ref->descriptor);
+    slot = m;
+    return m;
   }
 
-  if (auto* interface_sym_ref = std::get_if<SymRef_InterfaceMethod>(&slot)) {
-    Klass*  target = resolveClass(interface_sym_ref->class_cp_index);
-    Method* method =
-      target->findMethod(interface_sym_ref->member_name, interface_sym_ref->descriptor);
-    slot = method;
-    return method;
+  if (auto* im_ref = std::get_if<SymRef_InterfaceMethod>(&slot)) {
+    Klass*  target = resolveClass(im_ref->class_cp_index);
+    Method* m = target->findMethod(im_ref->member_name, im_ref->descriptor);
+    slot = m;
+    return m;
   }
 
-  Klass* target_klass = this->resolveClass(sym_ref->class_cp_index);
-
-  Method* resolved_method = target_klass->findMethod(sym_ref->member_name, sym_ref->descriptor);
-  slot                    = resolved_method;
-  return resolved_method;
+  throw std::runtime_error("Invalid method symbol reference");
 }
 
 std::optional<std::string> RuntimeConstantPool::symbolicKey(U2 index) {

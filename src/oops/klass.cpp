@@ -203,6 +203,23 @@ void Klass::prepareFieldsAndStatics(classfile::ClassFile* class_file) {
   statics_.resize(static_slot_count);
 }
 
+bool Klass::isInstanceOf(Klass* target) const {
+  if (this == target) {
+    return true;
+  }
+  for (Klass* s = super_class_; s != nullptr; s = s->getSuperClass()) {
+    if (s == target) {
+      return true;
+    }
+  }
+  for (Klass* iface : interfaces_) {
+    if (iface != nullptr && iface->isInstanceOf(target)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 // void Klass::linkNativeMethods(runtime::Method* method) {
 //   std::string key        = this->name_ + "::" + method->getName() + ":" +
 //   method->getDescriptor(); auto        native_ptr =
