@@ -64,7 +64,8 @@ void Interpreter::interpret(runtime::Thread* thread) {
     // fetch opcode
     BytecodeReader reader(code, pc);          // note we pass pc by ref here
     auto           opcode = reader.readU1();  // note pc incremented by 1 here
-    LOG_TRACE("pc=0x", (pc - 1), " op=0x", opcode);
+    LOG_TRACE("pc=", (pc - 1), " 0x", "0123456789abcdef"[opcode >> 4U],
+              "0123456789abcdef"[opcode & 0x0FU], " (", opcode_name(opcode), ")");
 
     // NOLINTBEGIN(bugprone-branch-clone)
     // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
@@ -127,8 +128,8 @@ void Interpreter::interpret(runtime::Thread* thread) {
       // Function: Push immediate byte/short values onto operand stack
       // Components: op_stack, thread (PC)
       case BIPUSH: {
-        // byte integer push
-        op_stack.pushInt(reader.readU1());
+        // byte integer push (sign-extend)
+        op_stack.pushInt(reader.readSU1());
       } break;
       case SIPUSH: {
         // short integer push
@@ -1152,6 +1153,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
       case IRETURN: {
         auto& callee_frame = thread->getCurrentFrame();
         Jint  ret          = callee_frame.getOperandStack().popInt();
+        LOG_DEBUG("return from ", callee_frame.getMethod()->getName(), " = ", ret);
         thread->popFrame();
         if (!thread->isStackEmpty()) {
           // push ret into caller frame's operand stack
@@ -1163,6 +1165,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
       case LRETURN: {
         auto& callee_frame = thread->getCurrentFrame();
         Jlong ret          = callee_frame.getOperandStack().popLong();
+        LOG_DEBUG("return from ", callee_frame.getMethod()->getName(), " = ", ret);
         thread->popFrame();
         if (!thread->isStackEmpty()) {
           auto& caller_frame = thread->getCurrentFrame();
@@ -1173,6 +1176,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
       case FRETURN: {
         auto&  callee_frame = thread->getCurrentFrame();
         Jfloat ret          = callee_frame.getOperandStack().popFloat();
+        LOG_DEBUG("return from ", callee_frame.getMethod()->getName(), " = ", ret);
         thread->popFrame();
         if (!thread->isStackEmpty()) {
           auto& caller_frame = thread->getCurrentFrame();
@@ -1183,6 +1187,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
       case DRETURN: {
         auto&   callee_frame = thread->getCurrentFrame();
         Jdouble ret          = callee_frame.getOperandStack().popDouble();
+        LOG_DEBUG("return from ", callee_frame.getMethod()->getName(), " = ", ret);
         thread->popFrame();
         if (!thread->isStackEmpty()) {
           auto& caller_frame = thread->getCurrentFrame();
@@ -1193,6 +1198,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
       case ARETURN: {
         auto& callee_frame = thread->getCurrentFrame();
         Jref  ret          = callee_frame.getOperandStack().popRef();
+        LOG_DEBUG("return from ", callee_frame.getMethod()->getName(), " ref=", ret);
         thread->popFrame();
         if (!thread->isStackEmpty()) {
           auto& caller_frame = thread->getCurrentFrame();
@@ -1201,6 +1207,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         }
       } break;
       case RETURN: {
+        LOG_DEBUG("return from ", method->getName());
         thread->popFrame();
         if (!thread->isStackEmpty()) {
           pc = thread->getCurrentFrame().getPC();
@@ -1267,10 +1274,13 @@ void Interpreter::interpret(runtime::Thread* thread) {
         auto index = reader.readU2();
 
         if (tryStubIntercept(rt_cp, index, op_stack)) {
+          LOG_DEBUG("Stub intercepted INVOKEVIRTUAL at index=", index);
           break;
         }
 
         auto* resolved = rt_cp.resolveMethod(index);
+        LOG_DEBUG("INVOKEVIRTUAL ", resolved->getOwnerKlass()->getName(), ".", resolved->getName(),
+                  ".", resolved->getDescriptor());
         auto* recv =
           static_cast<oops::Object*>(op_stack.peekRef(resolved->getSignature().arg_slot_count));
 
@@ -1314,6 +1324,8 @@ void Interpreter::interpret(runtime::Thread* thread) {
         }
 
         auto* method = rt_cp.resolveMethod(index);
+        LOG_DEBUG("INVOKESPECIAL ", method->getOwnerKlass()->getName(), ".", method->getName(), ".",
+                  method->getDescriptor());
 
         const auto&    signature = method->getSignature();
         runtime::Frame next_frame(method);
@@ -1340,7 +1352,14 @@ void Interpreter::interpret(runtime::Thread* thread) {
         // calling static method
         auto index = reader.readU2();
 
+        if (tryStubIntercept(rt_cp, index, op_stack)) {
+          LOG_DEBUG("Stub intercepted INVOKESTATIC at index=", index);
+          break;
+        }
+
         auto* method = rt_cp.resolveMethod(index);
+        LOG_DEBUG("INVOKESTATIC ", method->getOwnerKlass()->getName(), ".", method->getName(), ".",
+                  method->getDescriptor());
 
         // TODO: if the klass is not initialized, call <clinit>
 
@@ -1446,9 +1465,64 @@ void Interpreter::interpret(runtime::Thread* thread) {
         break;
         /* #endregion Arrays */
 
-      case WIDE:
-        // TODO: implement wide
-        break;
+      case WIDE: {
+        auto widened_opcode = reader.readU1();
+        auto wide_index     = reader.readU2();
+        switch (widened_opcode) {
+          case ILOAD: {
+            op_stack.pushInt(local_vars.getInt(wide_index));
+            break;
+          }
+          case LLOAD: {
+            op_stack.pushLong(local_vars.getLong(wide_index));
+            break;
+          }
+          case FLOAD: {
+            op_stack.pushFloat(local_vars.getFloat(wide_index));
+            break;
+          }
+          case DLOAD: {
+            op_stack.pushDouble(local_vars.getDouble(wide_index));
+            break;
+          }
+          case ALOAD: {
+            op_stack.pushRef(local_vars.getRef(wide_index));
+            break;
+          }
+          case ISTORE: {
+            local_vars.setInt(wide_index, op_stack.popInt());
+            break;
+          }
+          case LSTORE: {
+            local_vars.setLong(wide_index, op_stack.popLong());
+            break;
+          }
+          case FSTORE: {
+            local_vars.setFloat(wide_index, op_stack.popFloat());
+            break;
+          }
+          case DSTORE: {
+            local_vars.setDouble(wide_index, op_stack.popDouble());
+            break;
+          }
+          case ASTORE: {
+            local_vars.setRef(wide_index, op_stack.popRef());
+            break;
+          }
+          case IINC: {
+            auto const_val = reader.readSU2();
+            auto current   = local_vars.getInt(wide_index);
+            local_vars.setInt(wide_index, current + const_val);
+            break;
+          }
+          case RET: { /* RET with wide index – unused in Java 8 */
+            break;
+          }
+          default:
+            throw std::runtime_error("Unsupported widened opcode: " +
+                                     std::to_string(widened_opcode));
+        }
+      } break;
 
       default:
         throw std::runtime_error("Invalid opcode: " + std::to_string(opcode));

@@ -19,6 +19,7 @@
 
 #include "classfile/class_loader.h"
 #include "engine/interpreter.h"
+#include "engine/stub_intercepts.h"
 #include "oops/klass.h"
 #include "oops/method.h"
 #include "runtime/frame.h"
@@ -42,6 +43,8 @@ int main(int argc, char** argv) {
   const std::string main_class = (argc > 2) ? argv[2] : "tests.data.java.HelloWorld";
 
   LOG_INFO("Starting demo-jvm: classpath=", classpath, ", main=", main_class);
+
+  jvm::engine::registerStubIntercepts();
 
   std::vector<std::string>    classpath_list{classpath};
   jvm::classfile::ClassLoader loader(nullptr, classpath_list);

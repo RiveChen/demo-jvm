@@ -11,6 +11,7 @@
 #pragma once
 
 #include <cstdlib>
+#include <cstring>
 #include <iostream>
 #include <string_view>
 
@@ -62,13 +63,21 @@ inline const char* level_name(Level lv) {
   }
 }
 
+/// @brief Strip path prefix before "src/" for shorter display.
+inline const char* strip_src(const char* file) {
+  if (const auto* p = std::strstr(file, "src/")) {
+    return p;
+  }
+  return file;
+}
+
 /// @brief Core log function — prints level, file:line, and variadic args to stderr.
 template <typename... Args>
 void log(Level lv, const char* file, int line, Args&&... args) {
   if (lv < min_level()) {
     return;
   }
-  std::cerr << "[" << level_name(lv) << "] " << file << ":" << line << " ";
+  std::cerr << "[" << level_name(lv) << "] " << strip_src(file) << ":" << line << " ";
   ((std::cerr << std::forward<Args>(args)), ...);
   std::cerr << '\n';
 }

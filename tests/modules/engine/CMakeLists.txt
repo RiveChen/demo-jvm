@@ -124,3 +124,14 @@ target_compile_definitions(
   test_interpreter_hello_world
   PRIVATE TEST_CLASS_PATH="${CMAKE_BINARY_DIR}/test_classes")
 gtest_discover_tests(test_interpreter_hello_world)
+
+# Tier 1 stub intercept tests (print/println, String methods, static utils)
+add_executable(test_interpreter_stub_intercept interpreter_stub_intercept_test.cpp)
+target_link_libraries(test_interpreter_stub_intercept
+                      PRIVATE jvm_engine jvm_classfile GTest::gtest_main)
+target_include_directories(test_interpreter_stub_intercept PRIVATE ${TEST_BASE_DIR})
+add_dependencies(test_interpreter_stub_intercept compile_test_classes)
+target_compile_definitions(
+  test_interpreter_stub_intercept
+  PRIVATE TEST_CLASS_PATH="${CMAKE_BINARY_DIR}/test_classes")
+gtest_discover_tests(test_interpreter_stub_intercept)
