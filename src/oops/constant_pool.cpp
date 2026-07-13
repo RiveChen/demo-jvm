@@ -63,6 +63,14 @@ Method* RuntimeConstantPool::resolveMethod(U2 index) {
     throw std::runtime_error("Invalid symbol reference");
   }
 
+  if (auto* interface_sym_ref = std::get_if<SymRef_InterfaceMethod>(&slot)) {
+    Klass*  target = resolveClass(interface_sym_ref->class_cp_index);
+    Method* method =
+      target->findMethod(interface_sym_ref->member_name, interface_sym_ref->descriptor);
+    slot = method;
+    return method;
+  }
+
   Klass* target_klass = this->resolveClass(sym_ref->class_cp_index);
 
   Method* resolved_method = target_klass->findMethod(sym_ref->member_name, sym_ref->descriptor);
