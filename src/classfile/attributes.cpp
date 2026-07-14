@@ -9,7 +9,7 @@
 
 #include "attributes.hpp"
 
-#include "class_file_parser.h"
+#include "class_file_parser.hpp"
 
 namespace jvm::classfile {
 

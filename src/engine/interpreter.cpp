@@ -9,26 +9,26 @@
  * @see JVM Specification §6.5 for the complete instruction set.
  */
 
-#include "interpreter.h"
+#include "interpreter.hpp"
 
 #include <cmath>
 #include <stdexcept>
 #include <vector>
 
-#include "bytecode_reader.h"
-#include "engine/stub_intercepts.h"
-#include "memory/heap.h"
-#include "native_registry.h"
-#include "oops/klass.h"
-#include "oops/method.h"
-#include "oops/object.h"
-#include "oops/string_pool.h"
-#include "opcode.h"
-#include "runtime/frame.h"
-#include "runtime/thread.h"
-#include "utilities/descriptor.h"
-#include "utilities/logger.h"
-#include "utilities/types.h"
+#include "bytecode_reader.hpp"
+#include "engine/stub_intercepts.hpp"
+#include "memory/heap.hpp"
+#include "native_registry.hpp"
+#include "oops/klass.hpp"
+#include "oops/method.hpp"
+#include "oops/object.hpp"
+#include "oops/string_pool.hpp"
+#include "opcode.hpp"
+#include "runtime/frame.hpp"
+#include "runtime/thread.hpp"
+#include "utilities/descriptor.hpp"
+#include "utilities/logger.hpp"
+#include "utilities/types.hpp"
 
 namespace jvm::engine {
 

@@ -11,7 +11,7 @@
 #include <memory>
 
 #include "byte_reader.hpp"
-#include "class_file.h"
+#include "class_file.hpp"
 
 namespace jvm::classfile {
 

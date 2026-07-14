@@ -3,13 +3,13 @@
  * @brief Bump-pointer heap allocation implementation.
  */
 
-#include "heap.h"
+#include "heap.hpp"
 
 #include <new>
 
-#include "oops/klass.h"
-#include "oops/object.h"
-#include "utilities/logger.h"
+#include "oops/klass.hpp"
+#include "oops/object.hpp"
+#include "utilities/logger.hpp"
 
 namespace jvm::memory {
 void* Heap::allocate(size_t bytes) {

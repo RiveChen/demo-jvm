@@ -1,4 +1,4 @@
-#include "oops/string_pool.h"
+#include "oops/string_pool.hpp"
 
 #include <gtest/gtest.h>
 

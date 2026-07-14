@@ -3,9 +3,9 @@
  * @brief Parsing implementations for field and method member entries.
  */
 
-#include "members.h"
+#include "members.hpp"
 
-#include "class_file_parser.h"
+#include "class_file_parser.hpp"
 
 namespace jvm::classfile {
 

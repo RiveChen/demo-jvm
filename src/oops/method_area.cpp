@@ -3,7 +3,7 @@
  * @brief Method area singleton storage for loaded classes.
  */
 
-#include "method_area.h"
+#include "method_area.hpp"
 
 namespace jvm::oops {
 

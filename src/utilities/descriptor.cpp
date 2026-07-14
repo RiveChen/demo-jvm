@@ -3,14 +3,14 @@
  * @brief JVM descriptor string parser implementations.
  */
 
-#include "descriptor.h"
+#include "descriptor.hpp"
 
 #include <cassert>
 #include <cstddef>
 #include <stdexcept>
 #include <vector>
 
-#include "utilities/types.h"
+#include "utilities/types.hpp"
 
 namespace jvm::descriptor {
 

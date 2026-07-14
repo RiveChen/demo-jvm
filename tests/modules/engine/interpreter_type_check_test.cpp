@@ -1,11 +1,11 @@
 #include <gtest/gtest.h>
 
-#include "interpreter_test_base.h"
-#include "oops/klass.h"
-#include "oops/method.h"
-#include "runtime/frame.h"
-#include "runtime/thread.h"
-#include "utilities/types.h"
+#include "interpreter_test_base.hpp"
+#include "oops/klass.hpp"
+#include "oops/method.hpp"
+#include "runtime/frame.hpp"
+#include "runtime/thread.hpp"
+#include "utilities/types.hpp"
 
 using namespace jvm;
 

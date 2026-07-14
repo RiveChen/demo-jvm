@@ -10,7 +10,7 @@
 
 #include <string>
 
-#include "utilities/types.h"
+#include "utilities/types.hpp"
 
 namespace jvm::classfile {
 

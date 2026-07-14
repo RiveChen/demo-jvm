@@ -1,4 +1,4 @@
-#include "oops/method_area.h"
+#include "oops/method_area.hpp"
 
 #include <gtest/gtest.h>
 
@@ -6,8 +6,8 @@
 #include <string>
 #include <vector>
 
-#include "classfile/class_loader.h"
-#include "oops/klass.h"
+#include "classfile/class_loader.hpp"
+#include "oops/klass.hpp"
 
 using namespace jvm;
 

@@ -9,11 +9,11 @@
 #pragma once
 
 #include "attributes.hpp"
-#include "constant_pool.h"
-#include "members.h"
+#include "constant_pool.hpp"
+#include "members.hpp"
 #include "utilities/access_flags.hpp"
-#include "utilities/types.h"
-#include "version.h"
+#include "utilities/types.hpp"
+#include "version.hpp"
 
 namespace jvm::classfile {
 

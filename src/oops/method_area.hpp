@@ -18,9 +18,9 @@
 #include <string>
 #include <unordered_map>
 
-#include "classfile/class_file.h"
-#include "classfile/class_loader.h"
-#include "klass.h"
+#include "classfile/class_file.hpp"
+#include "classfile/class_loader.hpp"
+#include "klass.hpp"
 
 namespace jvm::oops {
 

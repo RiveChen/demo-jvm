@@ -3,7 +3,7 @@
  * @brief Stub for native method registration (currently empty).
  */
 
-#include "native_registry.h"
+#include "native_registry.hpp"
 
 namespace jvm::engine {
 

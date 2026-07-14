@@ -12,7 +12,7 @@
 #include <cstddef>
 #include <vector>
 
-#include "utilities/slot.h"
+#include "utilities/slot.hpp"
 
 namespace jvm::runtime {
 

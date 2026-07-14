@@ -12,7 +12,7 @@
 #include <stdexcept>
 #include <vector>
 
-#include "utilities/types.h"
+#include "utilities/types.hpp"
 
 namespace jvm::engine {
 

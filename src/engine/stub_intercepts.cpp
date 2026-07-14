@@ -11,7 +11,7 @@
  * - Methods returning String must intern the result before pushing
  */
 
-#include "stub_intercepts.h"
+#include "stub_intercepts.hpp"
 
 #include <chrono>
 #include <cmath>
@@ -19,10 +19,10 @@
 #include <iostream>
 #include <string>
 
-#include "oops/string_pool.h"
-#include "runtime/operand_stack.h"
-#include "utilities/logger.h"
-#include "utilities/types.h"
+#include "oops/string_pool.hpp"
+#include "runtime/operand_stack.hpp"
+#include "utilities/logger.hpp"
+#include "utilities/types.hpp"
 
 namespace jvm::engine {
 namespace {

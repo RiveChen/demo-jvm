@@ -14,7 +14,7 @@
 #include <string>
 #include <unordered_map>
 
-#include "oops/constant_pool.h"
+#include "oops/constant_pool.hpp"
 
 namespace jvm::runtime {
 class OperandStack;

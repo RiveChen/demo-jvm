@@ -1,4 +1,4 @@
-#include "runtime/operand_stack.h"
+#include "runtime/operand_stack.hpp"
 
 #include <gtest/gtest.h>
 

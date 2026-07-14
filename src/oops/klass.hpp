@@ -14,11 +14,11 @@
 #include <string>
 #include <vector>
 
-#include "constant_pool.h"
-#include "field.h"
-#include "method.h"
+#include "constant_pool.hpp"
+#include "field.hpp"
+#include "method.hpp"
 #include "utilities/access_flags.hpp"
-#include "utilities/slot.h"
+#include "utilities/slot.hpp"
 
 namespace jvm::classfile {
 class ClassLoader;

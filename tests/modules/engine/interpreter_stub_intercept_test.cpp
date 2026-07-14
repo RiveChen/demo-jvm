@@ -3,13 +3,13 @@
 #include <iostream>
 #include <sstream>
 
-#include "engine/interpreter.h"
-#include "interpreter_test_base.h"
-#include "oops/klass.h"
-#include "oops/method.h"
-#include "oops/string_pool.h"
-#include "runtime/frame.h"
-#include "runtime/thread.h"
+#include "engine/interpreter.hpp"
+#include "interpreter_test_base.hpp"
+#include "oops/klass.hpp"
+#include "oops/method.hpp"
+#include "oops/string_pool.hpp"
+#include "runtime/frame.hpp"
+#include "runtime/thread.hpp"
 
 using namespace jvm;
 

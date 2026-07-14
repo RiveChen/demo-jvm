@@ -13,7 +13,7 @@
  */
 #pragma once
 
-#include "types.h"
+#include "types.hpp"
 
 // Using byte order swap macros for different compilers
 #if defined(_MSC_VER)

@@ -6,13 +6,13 @@
 #include <string>
 #include <vector>
 
-#include "classfile/class_loader.h"
-#include "engine/interpreter.h"
-#include "engine/native_registry.h"
-#include "engine/stub_intercepts.h"
-#include "oops/method_area.h"
-#include "runtime/frame.h"
-#include "runtime/thread.h"
+#include "classfile/class_loader.hpp"
+#include "engine/interpreter.hpp"
+#include "engine/native_registry.hpp"
+#include "engine/stub_intercepts.hpp"
+#include "oops/method_area.hpp"
+#include "runtime/frame.hpp"
+#include "runtime/thread.hpp"
 
 using namespace jvm;
 

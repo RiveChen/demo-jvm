@@ -7,9 +7,9 @@
  * Produces a ClassFile value object.
  */
 
-#include "class_file_parser.h"
+#include "class_file_parser.hpp"
 
-#include "utilities/logger.h"
+#include "utilities/logger.hpp"
 
 namespace jvm::classfile {
 

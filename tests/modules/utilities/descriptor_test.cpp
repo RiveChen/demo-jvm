@@ -1,4 +1,4 @@
-#include "utilities/descriptor.h"
+#include "utilities/descriptor.hpp"
 
 #include <gtest/gtest.h>
 

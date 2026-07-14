@@ -9,9 +9,9 @@
 
 #pragma once
 
-#include "local_variables.h"
-#include "oops/method.h"
-#include "operand_stack.h"
+#include "local_variables.hpp"
+#include "oops/method.hpp"
+#include "operand_stack.hpp"
 
 namespace jvm::runtime {
 

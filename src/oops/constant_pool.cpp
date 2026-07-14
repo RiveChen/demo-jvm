@@ -3,13 +3,13 @@
  * @brief Runtime constant pool resolution (class, field, method references).
  */
 
-#include "constant_pool.h"
+#include "constant_pool.hpp"
 
 #include <stdexcept>
 #include <variant>
 
-#include "classfile/class_loader.h"
-#include "klass.h"
+#include "classfile/class_loader.hpp"
+#include "klass.hpp"
 
 namespace jvm::oops {
 

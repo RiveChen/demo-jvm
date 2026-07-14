@@ -13,7 +13,7 @@
 #include <vector>
 
 #include "utilities/access_flags.hpp"
-#include "utilities/descriptor.h"
+#include "utilities/descriptor.hpp"
 
 namespace jvm::oops {
 

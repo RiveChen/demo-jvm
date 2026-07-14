@@ -3,7 +3,7 @@
  * @brief Class file reading, parsing orchestration, and Klass definition.
  */
 
-#include "class_loader.h"
+#include "class_loader.hpp"
 
 #include <algorithm>
 #include <filesystem>
@@ -13,11 +13,11 @@
 #include <span>
 #include <vector>
 
-#include "class_file.h"
-#include "class_file_parser.h"
-#include "oops/klass.h"
-#include "oops/method_area.h"
-#include "utilities/logger.h"
+#include "class_file.hpp"
+#include "class_file_parser.hpp"
+#include "oops/klass.hpp"
+#include "oops/method_area.hpp"
+#include "utilities/logger.hpp"
 
 namespace jvm::classfile {
 

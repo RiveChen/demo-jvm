@@ -3,14 +3,14 @@
  * @brief Klass construction, method and field preparation, and runtime constant pool setup.
  */
 
-#include "klass.h"
+#include "klass.hpp"
 
 #include <string>
 #include <utility>
 
-#include "classfile/class_file.h"
-#include "constant_pool.h"
-#include "utilities/logger.h"
+#include "classfile/class_file.hpp"
+#include "constant_pool.hpp"
+#include "utilities/logger.hpp"
 
 namespace jvm::oops {
 Klass::Klass(classfile::ClassFile* class_file, classfile::ClassLoader* loader)

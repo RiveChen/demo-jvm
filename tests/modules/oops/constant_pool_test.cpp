@@ -1,4 +1,4 @@
-#include "oops/constant_pool.h"
+#include "oops/constant_pool.hpp"
 
 #include <gtest/gtest.h>
 
@@ -8,9 +8,9 @@
 #include <variant>
 #include <vector>
 
-#include "classfile/class_loader.h"
-#include "oops/klass.h"
-#include "oops/method_area.h"
+#include "classfile/class_loader.hpp"
+#include "oops/klass.hpp"
+#include "oops/method_area.hpp"
 
 using namespace jvm;
 

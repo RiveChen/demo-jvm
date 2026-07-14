@@ -1,4 +1,4 @@
-#include "memory/heap.h"
+#include "memory/heap.hpp"
 
 #include <gtest/gtest.h>
 
@@ -7,10 +7,10 @@
 #include <string>
 #include <vector>
 
-#include "classfile/class_loader.h"
-#include "oops/klass.h"
-#include "oops/method_area.h"
-#include "oops/object.h"
+#include "classfile/class_loader.hpp"
+#include "oops/klass.hpp"
+#include "oops/method_area.hpp"
+#include "oops/object.hpp"
 
 using namespace jvm;
 

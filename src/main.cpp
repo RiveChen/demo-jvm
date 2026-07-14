@@ -15,15 +15,15 @@
 #include <string>
 #include <vector>
 
-#include "utilities/logger.h"
+#include "utilities/logger.hpp"
 
-#include "classfile/class_loader.h"
-#include "engine/interpreter.h"
-#include "engine/stub_intercepts.h"
-#include "oops/klass.h"
-#include "oops/method.h"
-#include "runtime/frame.h"
-#include "runtime/thread.h"
+#include "classfile/class_loader.hpp"
+#include "engine/interpreter.hpp"
+#include "engine/stub_intercepts.hpp"
+#include "oops/klass.hpp"
+#include "oops/method.hpp"
+#include "runtime/frame.hpp"
+#include "runtime/thread.hpp"
 
 /**
  * @brief Program entry point.

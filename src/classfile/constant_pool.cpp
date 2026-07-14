@@ -8,12 +8,12 @@
  * and InvokeDynamic.
  */
 
-#include "constant_pool.h"
+#include "constant_pool.hpp"
 
 #include <bit>
 
 #include "byte_reader.hpp"
-#include "utilities/types.h"
+#include "utilities/types.hpp"
 
 namespace jvm::classfile {
 

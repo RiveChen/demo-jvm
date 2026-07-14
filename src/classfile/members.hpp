@@ -11,7 +11,7 @@
 
 #include "attributes.hpp"
 #include "utilities/access_flags.hpp"
-#include "utilities/types.h"
+#include "utilities/types.hpp"
 
 namespace jvm::classfile {
 

@@ -1,4 +1,4 @@
-#include "runtime/local_variables.h"
+#include "runtime/local_variables.hpp"
 
 #include <gtest/gtest.h>
 

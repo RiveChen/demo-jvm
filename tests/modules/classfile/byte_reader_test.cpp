@@ -2,7 +2,7 @@
 
 #include <gtest/gtest.h>
 
-#include "utilities/types.h"
+#include "utilities/types.hpp"
 
 using namespace jvm;
 

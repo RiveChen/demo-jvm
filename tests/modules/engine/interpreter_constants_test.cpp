@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "interpreter_test_base.h"
+#include "interpreter_test_base.hpp"
 
 // ============================================================================
 // Integer Constants Tests

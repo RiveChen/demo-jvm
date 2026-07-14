@@ -11,7 +11,7 @@
 
 #include <stack>
 
-#include "frame.h"
+#include "frame.hpp"
 
 namespace jvm::runtime {
 

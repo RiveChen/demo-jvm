@@ -14,7 +14,7 @@
 #include <variant>
 #include <vector>
 
-#include "utilities/types.h"
+#include "utilities/types.hpp"
 
 namespace jvm::oops {
 

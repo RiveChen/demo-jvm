@@ -11,7 +11,7 @@
 #include <cstddef>
 #include <cstdint>
 
-#include "utilities/slot.h"
+#include "utilities/slot.hpp"
 namespace jvm::oops {
 class Klass;
 

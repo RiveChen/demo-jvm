@@ -18,7 +18,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "class_file.h"
+#include "class_file.hpp"
 
 namespace jvm::oops {
 class Klass;

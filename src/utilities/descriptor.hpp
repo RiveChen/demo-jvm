@@ -15,7 +15,7 @@
 #include <string_view>
 #include <vector>
 
-#include "utilities/types.h"
+#include "utilities/types.hpp"
 
 namespace jvm::descriptor {
 
