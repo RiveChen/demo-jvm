@@ -168,8 +168,9 @@ std::unique_ptr<MethodInfo> ClassFileParser::createMethodInfo() {
 }
 
 AttributeTable ClassFileParser::parseAttributes() {
-  U2   count      = reader_.read<U2>();
-  auto attributes = std::vector<std::unique_ptr<AttributeInfo>>(count);
+  U2                                          count = reader_.read<U2>();
+  std::vector<std::unique_ptr<AttributeInfo>> attributes;
+  attributes.reserve(count);
   for (auto i = 0; i < count; i++) {
     attributes.push_back(createAttributeInfo());
   }
