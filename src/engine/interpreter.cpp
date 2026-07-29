@@ -922,7 +922,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         // Branch if int value equals 0
         auto base_addr     = pc - 1;
         auto value         = op_stack.popInt();
-        auto branch_offset = reader.readSU2();
+        auto branch_offset = static_cast<size_t>(reader.readSU2());
         if (value == 0) {
           pc = base_addr + branch_offset;
         }
@@ -931,7 +931,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         // Branch if int value not equal to 0
         auto base_addr     = pc - 1;
         auto value         = op_stack.popInt();
-        auto branch_offset = reader.readSU2();
+        auto branch_offset = static_cast<size_t>(reader.readSU2());
         if (value != 0) {
           pc = base_addr + branch_offset;
         }
@@ -940,7 +940,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         // Branch if int value less than 0
         auto base_addr     = pc - 1;
         auto value         = op_stack.popInt();
-        auto branch_offset = reader.readSU2();
+        auto branch_offset = static_cast<size_t>(reader.readSU2());
         if (value < 0) {
           pc = base_addr + branch_offset;
         }
@@ -949,7 +949,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         // Branch if int value greater than or equal to 0
         auto base_addr     = pc - 1;
         auto value         = op_stack.popInt();
-        auto branch_offset = reader.readSU2();
+        auto branch_offset = static_cast<size_t>(reader.readSU2());
         if (value >= 0) {
           pc = base_addr + branch_offset;
         }
@@ -958,7 +958,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         // Branch if int value greater than 0
         auto base_addr     = pc - 1;
         auto value         = op_stack.popInt();
-        auto branch_offset = reader.readSU2();
+        auto branch_offset = static_cast<size_t>(reader.readSU2());
         if (value > 0) {
           pc = base_addr + branch_offset;
         }
@@ -967,7 +967,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         // Branch if int value less than or equal to 0
         auto base_addr     = pc - 1;
         auto value         = op_stack.popInt();
-        auto branch_offset = reader.readSU2();
+        auto branch_offset = static_cast<size_t>(reader.readSU2());
         if (value <= 0) {
           pc = base_addr + branch_offset;
         }
@@ -977,7 +977,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         auto base_addr     = pc - 1;
         auto value2        = op_stack.popInt();
         auto value1        = op_stack.popInt();
-        auto branch_offset = reader.readSU2();
+        auto branch_offset = static_cast<size_t>(reader.readSU2());
         if (value1 == value2) {
           pc = base_addr + branch_offset;
         }
@@ -987,7 +987,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         auto base_addr     = pc - 1;
         auto value2        = op_stack.popInt();
         auto value1        = op_stack.popInt();
-        auto branch_offset = reader.readSU2();
+        auto branch_offset = static_cast<size_t>(reader.readSU2());
         if (value1 != value2) {
           pc = base_addr + branch_offset;
         }
@@ -997,7 +997,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         auto base_addr     = pc - 1;
         auto value2        = op_stack.popInt();
         auto value1        = op_stack.popInt();
-        auto branch_offset = reader.readSU2();
+        auto branch_offset = static_cast<size_t>(reader.readSU2());
         if (value1 < value2) {
           pc = base_addr + branch_offset;
         }
@@ -1007,7 +1007,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         auto base_addr     = pc - 1;
         auto value2        = op_stack.popInt();
         auto value1        = op_stack.popInt();
-        auto branch_offset = reader.readSU2();
+        auto branch_offset = static_cast<size_t>(reader.readSU2());
         if (value1 >= value2) {
           pc = base_addr + branch_offset;
         }
@@ -1017,7 +1017,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         auto base_addr     = pc - 1;
         auto value2        = op_stack.popInt();
         auto value1        = op_stack.popInt();
-        auto branch_offset = reader.readSU2();
+        auto branch_offset = static_cast<size_t>(reader.readSU2());
         if (value1 > value2) {
           pc = base_addr + branch_offset;
         }
@@ -1027,7 +1027,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         auto base_addr     = pc - 1;
         auto value2        = op_stack.popInt();
         auto value1        = op_stack.popInt();
-        auto branch_offset = reader.readSU2();
+        auto branch_offset = static_cast<size_t>(reader.readSU2());
         if (value1 <= value2) {
           pc = base_addr + branch_offset;
         }
@@ -1037,7 +1037,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         auto  base_addr     = pc - 1;
         auto* value2        = op_stack.popRef();
         auto* value1        = op_stack.popRef();
-        auto  branch_offset = reader.readSU2();
+        auto  branch_offset = static_cast<size_t>(reader.readSU2());
         if (value1 == value2) {
           pc = base_addr + branch_offset;
         }
@@ -1047,7 +1047,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         auto  base_addr     = pc - 1;
         auto* value2        = op_stack.popRef();
         auto* value1        = op_stack.popRef();
-        auto  branch_offset = reader.readSU2();
+        auto  branch_offset = static_cast<size_t>(reader.readSU2());
         if (value1 != value2) {
           pc = base_addr + branch_offset;
         }
@@ -1056,7 +1056,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         // Branch if reference value is null
         auto  base_addr     = pc - 1;
         auto* value         = op_stack.popRef();
-        auto  branch_offset = reader.readSU2();
+        auto  branch_offset = static_cast<size_t>(reader.readSU2());
         if (value == nullptr) {
           pc = base_addr + branch_offset;
         }
@@ -1065,7 +1065,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         // Branch if reference value is not null
         auto  base_addr     = pc - 1;
         auto* value         = op_stack.popRef();
-        auto  branch_offset = reader.readSU2();
+        auto  branch_offset = static_cast<size_t>(reader.readSU2());
         if (value != nullptr) {
           pc = base_addr + branch_offset;
         }
@@ -1078,12 +1078,12 @@ void Interpreter::interpret(runtime::Thread* thread) {
       // Components: thread (PC)
       case GOTO: {
         auto base_addr     = pc - 1;
-        auto branch_offset = reader.readSU2();
+        auto branch_offset = static_cast<size_t>(reader.readSU2());
         pc                 = base_addr + branch_offset;
       } break;
       case GOTO_W: {
         auto base_addr     = pc - 1;
-        auto branch_offset = reader.readSU4();
+        auto branch_offset = static_cast<size_t>(reader.readSU4());
         pc                 = base_addr + branch_offset;
       } break;
       case JSR:
@@ -1100,30 +1100,30 @@ void Interpreter::interpret(runtime::Thread* thread) {
         // skip padding to make sure the defaultOffset' address in bytecode is always 4-byte aligned
         reader.align4();
         // defaultOffset, signed
-        auto default_offset = reader.readSU4();
+        auto default_offset = static_cast<size_t>(reader.readSU4());
         // low, signed
-        auto low_bytes = reader.readSU4();
-        // high, signed
-        auto high_bytes = reader.readSU4();
+        auto low  = reader.readSU4();
+        auto high = reader.readSU4();
         // jump_offsets
-        auto jump_offsets = std::vector<Jint>(high_bytes - low_bytes + 1);
+        auto range        = static_cast<size_t>(high) - static_cast<size_t>(low) + 1;
+        auto jump_offsets = std::vector<Jint>(range);
         for (size_t i = 0; i < jump_offsets.size(); i++) {
           jump_offsets[i] = reader.readSU4();
         }
         // pop index from operand stack
         auto index = op_stack.popInt();
-        if (index < low_bytes || index > high_bytes) {
+        if (index < low || index > high) {
           pc = base_addr + default_offset;
         } else {
-          pc = base_addr + jump_offsets[index - low_bytes];
+          pc = base_addr + static_cast<size_t>(jump_offsets[static_cast<size_t>(index - low)]);
         }
       } break;
       case LOOKUPSWITCH: {
         auto base_addr = pc - 1;
         // skip padding to make sure 4-byte alignment
         reader.align4();
-        auto default_bytes = reader.readSU4();
-        auto npairs_count  = reader.readSU4();
+        auto default_bytes = static_cast<size_t>(reader.readSU4());
+        auto npairs_count  = static_cast<size_t>(reader.readSU4());
         auto jump_offsets  = std::vector<std::pair<Jint, Jint>>(npairs_count);
         for (size_t i = 0; i < jump_offsets.size(); i++) {
           jump_offsets[i].first  = reader.readSU4();
@@ -1134,7 +1134,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         bool found = false;
         for (size_t i = 0; i < jump_offsets.size(); i++) {
           if (key == jump_offsets[i].first) {
-            pc    = base_addr + jump_offsets[i].second;
+            pc    = base_addr + static_cast<size_t>(jump_offsets[i].second);
             found = true;
             break;
           }
@@ -1319,7 +1319,8 @@ void Interpreter::interpret(runtime::Thread* thread) {
 
         U2 pos = signature.arg_slot_count + 1;
         for (int p = static_cast<int>(signature.params.size()) - 1; p >= 0; --p) {
-          if (descriptor::isCategory2(signature.params[p])) {
+          auto idx = static_cast<size_t>(p);
+          if (descriptor::isCategory2(signature.params[idx])) {
             pos -= 2;
             next_local_vars.setWide(pos, current_op_stack.popWide());
           } else {
@@ -1340,18 +1341,19 @@ void Interpreter::interpret(runtime::Thread* thread) {
           break;
         }
 
-        auto* method = rt_cp.resolveMethod(index);
-        LOG_DEBUG("INVOKESPECIAL ", method->getOwnerKlass()->getName(), ".", method->getName(), ".",
-                  method->getDescriptor());
+        auto* new_method = rt_cp.resolveMethod(index);
+        LOG_DEBUG("INVOKESPECIAL ", new_method->getOwnerKlass()->getName(), ".",
+                  new_method->getName(), ".", new_method->getDescriptor());
 
-        const auto&    signature = method->getSignature();
-        runtime::Frame next_frame(method);
+        const auto&    signature = new_method->getSignature();
+        runtime::Frame next_frame(new_method);
         auto&          current_op_stack = op_stack;  // current frame's operand stack
         auto&          next_local_vars  = next_frame.getLocalVariables();
 
         U2 pos = signature.arg_slot_count + 1;
         for (int p = static_cast<int>(signature.params.size()) - 1; p >= 0; --p) {
-          if (descriptor::isCategory2(signature.params[p])) {
+          auto idx = static_cast<size_t>(p);
+          if (descriptor::isCategory2(signature.params[idx])) {
             pos -= 2;
             next_local_vars.setWide(pos, current_op_stack.popWide());
           } else {
@@ -1409,7 +1411,8 @@ void Interpreter::interpret(runtime::Thread* thread) {
 
         U2 pos = signature.arg_slot_count;
         for (int p = static_cast<int>(signature.params.size()) - 1; p >= 0; --p) {
-          if (descriptor::isCategory2(signature.params[p])) {
+          auto idx = static_cast<size_t>(p);
+          if (descriptor::isCategory2(signature.params[idx])) {
             pos -= 2;
             next_local_vars.setWide(pos, current_op_stack.popWide());
           } else {
@@ -1458,7 +1461,8 @@ void Interpreter::interpret(runtime::Thread* thread) {
 
         U2 pos = signature.arg_slot_count + 1;
         for (int p = static_cast<int>(signature.params.size()) - 1; p >= 0; --p) {
-          if (descriptor::isCategory2(signature.params[p])) {
+          auto idx = static_cast<size_t>(p);
+          if (descriptor::isCategory2(signature.params[idx])) {
             pos -= 2;
             next_local_vars.setWide(pos, current_op_stack.popWide());
           } else {
