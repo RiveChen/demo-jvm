@@ -33,20 +33,20 @@ AllowShortLoopsOnASingleLine: true
 AllowShortCaseLabelsOnASingleLine: false
 
 # Column limit (matching your clang-tidy LineLength setting)
-ColumnLimit: 100
+ColumnLimit: 120
 
 # Includes
 IncludeBlocks: Regroup
 SortIncludes: true
 IncludeCategories:
-  - Regex: '^<.*'
-    Priority: 1
-    SortPriority: 0
-    CaseSensitive: false
-  - Regex: '^".*'
-    Priority: 2
-    SortPriority: 1
-    CaseSensitive: false
+- Regex: '^<.*'
+  Priority: 1
+  SortPriority: 0
+  CaseSensitive: false
+- Regex: '^".*'
+  Priority: 2
+  SortPriority: 1
+  CaseSensitive: false
 
 # Namespaces
 NamespaceIndentation: None
