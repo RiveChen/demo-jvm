@@ -65,8 +65,9 @@ class AttributeTable {
   template <typename T>
   T* getAttribute() {
     for (auto& attribute : attributes) {
-      if (dynamic_cast<T*>(attribute.get())) {
-        return dynamic_cast<T*>(attribute.get());
+      auto* p = dynamic_cast<T*>(attribute.get());
+      if (p != nullptr) {
+        return p;
       }
     }
     return nullptr;
