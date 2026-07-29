@@ -5,13 +5,20 @@
 
 #include "klass.hpp"
 
+#include <exception>
+#include <stdexcept>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "classfile/class_file.hpp"
 #include "classfile/class_loader.hpp"
+#include "classfile/constant_pool.hpp"
+#include "classfile/members.hpp"
 #include "constant_pool.hpp"
+#include "utilities/access_flags.hpp"
 #include "utilities/logger.hpp"
+#include "utilities/slot.hpp"
 
 namespace jvm::oops {
 Klass::Klass(classfile::ClassFile* class_file, classfile::ClassLoader* loader)
@@ -70,28 +77,28 @@ void Klass::prepareRuntimeConstantPool(classfile::ClassFile* class_file) {
     const auto* cpinfo = class_file->constant_pool.getConstantInfo(i);
     switch (cpinfo->tag) {
       case classfile::ConstantTag::kClass: {
-        const auto* info = dynamic_cast<const classfile::ClassInfo*>(cpinfo);
+        const auto* info = static_cast<const classfile::ClassInfo*>(cpinfo);
         // keep the internal slash form 'a/b/C' (loadClass normalizes on entry;
         // symbolic-intercept keys are slash too)
         constant_pool_.setConstant(
           i, SymRef_Class{.class_name = class_file->constant_pool.getUtf8String(info->name_index)});
       } break;
       case classfile::ConstantTag::kMethodref: {
-        const auto* info   = dynamic_cast<const classfile::MethodrefInfo*>(cpinfo);
+        const auto* info   = static_cast<const classfile::MethodrefInfo*>(cpinfo);
         auto name_and_type = class_file->constant_pool.getNameAndType(info->name_and_type_index);
         constant_pool_.setConstant(i, SymRef_Method{.class_cp_index = info->class_index,
                                                     .member_name    = name_and_type.first,
                                                     .descriptor     = name_and_type.second});
       } break;
       case classfile::ConstantTag::kFieldref: {
-        const auto* info   = dynamic_cast<const classfile::FieldrefInfo*>(cpinfo);
+        const auto* info   = static_cast<const classfile::FieldrefInfo*>(cpinfo);
         auto name_and_type = class_file->constant_pool.getNameAndType(info->name_and_type_index);
         constant_pool_.setConstant(i, SymRef_Field{.class_cp_index = info->class_index,
                                                    .member_name    = name_and_type.first,
                                                    .descriptor     = name_and_type.second});
       } break;
       case classfile::ConstantTag::kInterfaceMethodref: {
-        const auto* info   = dynamic_cast<const classfile::InterfaceMethodrefInfo*>(cpinfo);
+        const auto* info   = static_cast<const classfile::InterfaceMethodrefInfo*>(cpinfo);
         auto name_and_type = class_file->constant_pool.getNameAndType(info->name_and_type_index);
         constant_pool_.setConstant(i, SymRef_InterfaceMethod{.class_cp_index = info->class_index,
                                                              .member_name    = name_and_type.first,
@@ -99,22 +106,22 @@ void Klass::prepareRuntimeConstantPool(classfile::ClassFile* class_file) {
       } break;
 
       case classfile::ConstantTag::kInteger: {
-        auto rt_cpinfo = dynamic_cast<const classfile::IntegerInfo*>(cpinfo)->value;
+        auto rt_cpinfo = static_cast<const classfile::IntegerInfo*>(cpinfo)->value;
         constant_pool_.setConstant(i, rt_cpinfo);
       } break;
 
       case classfile::ConstantTag::kLong: {
-        auto rt_cpinfo = dynamic_cast<const classfile::LongInfo*>(cpinfo)->value;
+        auto rt_cpinfo = static_cast<const classfile::LongInfo*>(cpinfo)->value;
         constant_pool_.setConstant(i, rt_cpinfo);
         i++;
         constant_pool_.infos_[i] = std::monostate{};  // placeholder for the second slot
       } break;
       case classfile::ConstantTag::kFloat: {
-        auto rt_cpinfo = dynamic_cast<const classfile::FloatInfo*>(cpinfo)->value;
+        auto rt_cpinfo = static_cast<const classfile::FloatInfo*>(cpinfo)->value;
         constant_pool_.setConstant(i, rt_cpinfo);
       } break;
       case classfile::ConstantTag::kDouble: {
-        auto rt_cpinfo = dynamic_cast<const classfile::DoubleInfo*>(cpinfo)->value;
+        auto rt_cpinfo = static_cast<const classfile::DoubleInfo*>(cpinfo)->value;
         constant_pool_.setConstant(i, rt_cpinfo);
         i++;
         constant_pool_.infos_[i] = std::monostate{};  // placeholder for the second slot
@@ -122,7 +129,7 @@ void Klass::prepareRuntimeConstantPool(classfile::ClassFile* class_file) {
 
       case classfile::ConstantTag::kString: {
         // TODO: string intern
-        auto index     = dynamic_cast<const classfile::StringInfo*>(cpinfo)->string_index;
+        auto index     = static_cast<const classfile::StringInfo*>(cpinfo)->string_index;
         auto rt_cpinfo = class_file->constant_pool.getUtf8String(index);
         constant_pool_.setConstant(i, rt_cpinfo);
       } break;
@@ -159,7 +166,7 @@ void Klass::prepareMethods(classfile::ClassFile* class_file) {
     } else if (!access_flags.has(flags::Method::ABSTRACT)) {
       // if a method is not native and not abstract, it must have code
       // find Code attribute
-      auto* code_attribute = method_info->attributes.getAttribute<classfile::CodeAttribute>();
+      auto* code_attribute = method_info->attributes.findAttribute<classfile::CodeAttribute>();
       if (code_attribute != nullptr) {
         method.max_stack_  = code_attribute->max_stack;
         method.max_locals_ = code_attribute->max_locals;
@@ -174,8 +181,9 @@ void Klass::prepareMethods(classfile::ClassFile* class_file) {
 
 void Klass::prepareFieldsAndStatics(classfile::ClassFile* class_file) {
   // create fields
-  size_t instance_slot_count = 0;
-  size_t static_slot_count   = 0;
+  size_t                               instance_slot_count = 0;
+  size_t                               static_slot_count   = 0;
+  std::vector<std::pair<size_t, Slot>> static_inits;
   for (auto& member_info : class_file->fields.getMembers()) {
     auto* field_info   = dynamic_cast<classfile::FieldInfo*>(member_info.get());
     auto  access_flags = field_info->access_flags;
@@ -186,6 +194,39 @@ void Klass::prepareFieldsAndStatics(classfile::ClassFile* class_file) {
     if (access_flags.has(flags::Field::STATIC)) {
       field.slot_index_ = static_slot_count;
       static_slot_count += (descriptor == "J" || descriptor == "D") ? 2 : 1;
+      const auto* cv = field_info->attributes.findAttribute<classfile::ConstantValueAttribute>();
+      if (cv != nullptr) {
+        const auto* cp_info = class_file->constant_pool.getConstantInfo(cv->value);
+        switch (cp_info->tag) {
+          case classfile::ConstantTag::kInteger: {
+            static_inits.emplace_back(
+              field.slot_index_,
+              Slot{.i = static_cast<const classfile::IntegerInfo*>(cp_info)->value});
+          } break;
+          case classfile::ConstantTag::kFloat: {
+            static_inits.emplace_back(
+              field.slot_index_,
+              Slot{.f = static_cast<const classfile::FloatInfo*>(cp_info)->value});
+          } break;
+          case classfile::ConstantTag::kLong: {
+            static_inits.emplace_back(
+              field.slot_index_,
+              Slot{.l = static_cast<const classfile::LongInfo*>(cp_info)->value});
+            static_inits.emplace_back(field.slot_index_ + 1, Slot{.i = 0});
+          } break;
+          case classfile::ConstantTag::kDouble: {
+            static_inits.emplace_back(
+              field.slot_index_,
+              Slot{.d = static_cast<const classfile::DoubleInfo*>(cp_info)->value});
+            static_inits.emplace_back(field.slot_index_ + 1, Slot{.i = 0});
+          } break;
+          case classfile::ConstantTag::kString:
+            // TODO: string intern
+            break;
+          default:
+            throw std::runtime_error("invalid cp tag in preparing statics");
+        }
+      }
     } else {
       field.slot_index_ = instance_slot_count;
       instance_slot_count += (descriptor == "J" || descriptor == "D") ? 2 : 1;
@@ -196,6 +237,9 @@ void Klass::prepareFieldsAndStatics(classfile::ClassFile* class_file) {
   static_slot_count_   = static_slot_count;
   // Initialize the statics vector with the correct size
   statics_.resize(static_slot_count);
+  for (auto& p : static_inits) {
+    statics_[p.first] = p.second;
+  }
 }
 
 // NOLINTNEXTLINE(misc-no-recursion)

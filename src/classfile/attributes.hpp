@@ -63,7 +63,7 @@ class AttributeTable {
   /// @tparam T The attribute subclass to look for.
   /// @return Pointer to the attribute, or nullptr if not found.
   template <typename T>
-  T* getAttribute() {
+  T* findAttribute() {
     for (auto& attribute : attributes) {
       auto* p = dynamic_cast<T*>(attribute.get());
       if (p != nullptr) {
