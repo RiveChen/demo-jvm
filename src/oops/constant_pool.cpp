@@ -13,9 +13,9 @@
 
 namespace jvm::oops {
 
-Klass* RuntimeConstantPool::resolveClass(U2 index) {
+InstanceKlass* RuntimeConstantPool::resolveClass(U2 index) {
   auto& slot = infos_.at(index);
-  if (auto* klass = std::get_if<Klass*>(&slot)) {
+  if (auto* klass = std::get_if<InstanceKlass*>(&slot)) {
     return *klass;
   }
 
@@ -25,8 +25,8 @@ Klass* RuntimeConstantPool::resolveClass(U2 index) {
   }
 
   // class_name is already baked to slash-form at prepare time
-  Klass* k = owner_klass_->getClassLoader()->loadClass(sym_ref->class_name);
-  slot     = k;
+  InstanceKlass* k = owner_klass_->getClassLoader()->loadClass(sym_ref->class_name);
+  slot             = k;
   return k;
 }
 
@@ -44,7 +44,7 @@ Field* RuntimeConstantPool::resolveField(U2 index) {
     throw std::runtime_error("Invalid symbol reference");
   }
 
-  Klass* target_klass = this->resolveClass(sym_ref->class_cp_index);
+  InstanceKlass* target_klass = this->resolveClass(sym_ref->class_cp_index);
 
   Field* resolved_field = target_klass->findField(sym_ref->member_name, sym_ref->descriptor);
   slot                  = resolved_field;
@@ -59,16 +59,16 @@ Method* RuntimeConstantPool::resolveMethod(U2 index) {
   }
 
   if (auto* sym_ref = std::get_if<SymRef_Method>(&slot)) {
-    Klass*  target = resolveClass(sym_ref->class_cp_index);
-    Method* m      = target->findMethod(sym_ref->member_name, sym_ref->descriptor);
-    slot           = m;
+    InstanceKlass* target = resolveClass(sym_ref->class_cp_index);
+    Method*        m      = target->findMethod(sym_ref->member_name, sym_ref->descriptor);
+    slot                  = m;
     return m;
   }
 
   if (auto* im_ref = std::get_if<SymRef_InterfaceMethod>(&slot)) {
-    Klass*  target = resolveClass(im_ref->class_cp_index);
-    Method* m      = target->findMethod(im_ref->member_name, im_ref->descriptor);
-    slot           = m;
+    InstanceKlass* target = resolveClass(im_ref->class_cp_index);
+    Method*        m      = target->findMethod(im_ref->member_name, im_ref->descriptor);
+    slot                  = m;
     return m;
   }
 

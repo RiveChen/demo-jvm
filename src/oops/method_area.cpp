@@ -11,7 +11,7 @@ void MethodArea::addClass(ClassIdentifier identifier, ClassData class_data) {
   classes_.emplace(std::move(identifier), std::move(class_data));
 }
 
-Klass* MethodArea::getClass(const ClassIdentifier& identifier) {
+InstanceKlass* MethodArea::getClass(const ClassIdentifier& identifier) {
   auto it = classes_.find(identifier);
   if (it != classes_.end()) {
     return it->second.first.get();

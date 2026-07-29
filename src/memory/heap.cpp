@@ -23,7 +23,7 @@ void* Heap::allocate(size_t bytes) {
   return p;
 }
 
-oops::InstanceOopDesc* Heap::newInstance(oops::Klass* klass) {
+oops::InstanceOopDesc* Heap::newInstance(oops::InstanceKlass* klass) {
   size_t n    = klass->getInstanceSlotCount();
   size_t size = sizeof(oops::InstanceOopDesc) + (n * sizeof(Slot));
   LOG_TRACE("Heap newInstance: ", klass->getName(), " (", n, " slots, ", size, " bytes)");

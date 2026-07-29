@@ -49,7 +49,7 @@ struct SymRef_InterfaceMethod {
 };
 ///@}
 
-class Klass;
+class InstanceKlass;
 class Method;
 class Field;
 
@@ -62,8 +62,8 @@ class Field;
 /// - Unresolved symbolic references: SymRef_Class, SymRef_Field, SymRef_Method,
 /// SymRef_InterfaceMethod
 using RtCpInfo =
-  std::variant<std::monostate, Jint, Jfloat, Jlong, Jdouble, std::string, Klass*, Method*, Field*,
-               SymRef_Class, SymRef_Field, SymRef_Method, SymRef_InterfaceMethod>;
+  std::variant<std::monostate, Jint, Jfloat, Jlong, Jdouble, std::string, InstanceKlass*, Method*,
+               Field*, SymRef_Class, SymRef_Field, SymRef_Method, SymRef_InterfaceMethod>;
 
 /**
  * @brief The runtime constant pool for a class.
@@ -76,7 +76,7 @@ using RtCpInfo =
  */
 class RuntimeConstantPool {
  public:
-  explicit RuntimeConstantPool(Klass* owner_klass) : owner_klass_(owner_klass) {}
+  explicit RuntimeConstantPool(InstanceKlass* owner_klass) : owner_klass_(owner_klass) {}
 
   /// @brief Set an entry at the given constant pool index.
   void setConstant(U2 index, RtCpInfo info) { infos_.at(index) = std::move(info); }
@@ -87,9 +87,9 @@ class RuntimeConstantPool {
   /// @name Lazy Resolution
   /// Resolve a symbolic reference into a concrete runtime pointer.
   ///@{
-  Klass*  resolveClass(U2 index);
-  Field*  resolveField(U2 index);
-  Method* resolveMethod(U2 index);
+  InstanceKlass* resolveClass(U2 index);
+  Field*         resolveField(U2 index);
+  Method*        resolveMethod(U2 index);
   ///@}
 
   /// @brief Resolve the symbolic key string for an entry (e.g. for error messages).
@@ -97,9 +97,9 @@ class RuntimeConstantPool {
 
  private:
   std::vector<RtCpInfo> infos_;        ///< The constant pool entries.
-  Klass*                owner_klass_;  ///< The class that owns this constant pool.
+  InstanceKlass*        owner_klass_;  ///< The class that owns this constant pool.
 
-  friend class Klass;
+  friend class InstanceKlass;
 };
 
 }  // namespace jvm::oops

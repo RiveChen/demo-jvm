@@ -15,7 +15,7 @@
 #include <string>
 
 namespace jvm::oops {
-class Klass;
+class InstanceKlass;
 
 /**
  * @brief Runtime representation of a single field in a class.
@@ -33,7 +33,7 @@ class Field {
   /// @brief The parsed field type.
   descriptor::TypeKind getSignature() const { return signature_; }
   /// @brief The class that owns this field.
-  Klass* getOwnerKlass() const { return owner_klass_; }
+  InstanceKlass* getOwnerKlass() const { return owner_klass_; }
   /// @brief The index of this field in the instance or static slot array.
   size_t getSlotIndex() const { return slot_index_; }
 
@@ -41,7 +41,7 @@ class Field {
   /// Fields can only be constructed by Klass (friend).
   Field() = default;
   Field(AccessFlags<flags::Field> access_flags, std::string name, std::string descriptor,
-        Klass* owner_klass)
+        InstanceKlass* owner_klass)
     : access_flags_(access_flags),
       name_(std::move(name)),
       descriptor_(std::move(descriptor)),
@@ -52,11 +52,11 @@ class Field {
   std::string               name_;
   std::string               descriptor_;
 
-  Klass*               owner_klass_{nullptr};
+  InstanceKlass*       owner_klass_{nullptr};
   descriptor::TypeKind signature_{};
   size_t               slot_index_{};
 
-  friend class Klass;
+  friend class InstanceKlass;
 };
 
 }  // namespace jvm::oops

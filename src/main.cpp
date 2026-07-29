@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
   std::vector<std::string>    classpath_list{classpath};
   jvm::classfile::ClassLoader loader(nullptr, classpath_list);
 
-  jvm::oops::Klass* klass = loader.loadClass(main_class);
+  jvm::oops::InstanceKlass* klass = loader.loadClass(main_class);
   if (klass == nullptr) {
     std::cerr << "Error: class not found: " << main_class << '\n';
     return 1;

@@ -1,6 +1,6 @@
 /**
  * @file klass.cpp
- * @brief Klass construction, method and field preparation, and runtime constant pool setup.
+ * @brief InstanceKlass construction, linking, and ArrayKlass isInstanceOf.
  */
 
 #include "klass.hpp"
@@ -21,17 +21,20 @@
 #include <vector>
 
 namespace jvm::oops {
-Klass::Klass(classfile::ClassFile* class_file, classfile::ClassLoader* loader)
-  : state_(Allocated),
-    loader_(loader),
-    name_(class_file->constant_pool.getClassName(class_file->this_class_index)),
-    access_flags_(class_file->access_flags),
-    super_class_(nullptr),
-    interfaces_(class_file->interfaces_count),
-    constant_pool_(this),
-    mirror_class_object_(nullptr) {}
 
-void Klass::link(classfile::ClassFile* cf, classfile::ClassLoader* loader) {
+// ============================================================================
+// InstanceKlass
+// ============================================================================
+
+InstanceKlass::InstanceKlass(classfile::ClassFile* class_file, classfile::ClassLoader* loader)
+  : Klass(Klass::Kind::Instance,
+          class_file->constant_pool.getClassName(class_file->this_class_index),
+          class_file->access_flags),
+    loader_(loader),
+    interfaces_(class_file->interfaces_count),
+    constant_pool_(this) {}
+
+void InstanceKlass::link(classfile::ClassFile* cf, classfile::ClassLoader* loader) {
   linkSuperClass(cf, loader);
   linkInterfaces(cf, loader);
   prepareRuntimeConstantPool(cf);
@@ -40,26 +43,17 @@ void Klass::link(classfile::ClassFile* cf, classfile::ClassLoader* loader) {
   state_ = Linked;
 }
 
-void Klass::initialize(runtime::Thread* thread) {
-  // check if it has been initialized
-  if (state_ == FullyInitialized) {
-    return;
-  }
-  // check if is recursiving
-  if (state_ == BeingInitialized) {
-    return;
-  }
-  if (state_ == InitializationError) {
-    throw std::runtime_error("no class def found");
-  }
+void InstanceKlass::initialize(runtime::Thread* thread) {
+  if (state_ == FullyInitialized)  return;
+  if (state_ == BeingInitialized)  return;
+  if (state_ == InitializationError)
+    throw std::runtime_error("NoClassDefFoundError: initialization error");
 
-  // make sure the super class has been initialized
-  if (super_class_ != nullptr) {
-    super_class_->initialize(thread);
-  }
+  // super first
+  if (super_class_ != nullptr)
+    static_cast<InstanceKlass*>(super_class_)->initialize(thread);
 
-  // initializing
-  state_         = BeingInitialized;
+  state_ = BeingInitialized;
   Method* clinit = findMethod("<clinit>", "()V");
   if (clinit == nullptr) {
     state_ = FullyInitialized;
@@ -69,104 +63,97 @@ void Klass::initialize(runtime::Thread* thread) {
   thread->pushFrame(std::move(frame));
 }
 
-Method* Klass::findMethod(const std::string& name, const std::string& descriptor) {
-  for (auto& method : methods_) {
-    if (method.getName() == name && method.getDescriptor() == descriptor) {
-      return &method;
-    }
-  }
-  if (super_class_ != nullptr) {
-    return super_class_->findMethod(name, descriptor);
-  }
+Method* InstanceKlass::findMethod(const std::string& name, const std::string& descriptor) {
+  for (auto& m : methods_)
+    if (m.getName() == name && m.getDescriptor() == descriptor) return &m;
+  if (super_class_ != nullptr)
+    return static_cast<InstanceKlass*>(super_class_)->findMethod(name, descriptor);
   return nullptr;
 }
 
-Field* Klass::findField(const std::string& name, const std::string& descriptor) {
-  for (auto& field : fields_) {
-    if (field.getName() == name && field.getDescriptor() == descriptor) {
-      return &field;
-    }
-  }
-  if (super_class_ != nullptr) {
-    return super_class_->findField(name, descriptor);
-  }
+Field* InstanceKlass::findField(const std::string& name, const std::string& descriptor) {
+  for (auto& f : fields_)
+    if (f.getName() == name && f.getDescriptor() == descriptor) return &f;
+  if (super_class_ != nullptr)
+    return static_cast<InstanceKlass*>(super_class_)->findField(name, descriptor);
   return nullptr;
 }
 
-void Klass::prepareRuntimeConstantPool(classfile::ClassFile* class_file) {
+bool InstanceKlass::isInstanceOf(const Klass* target) const {
+  if (this == target) return true;
+  for (const Klass* s = super_class_; s != nullptr; s = s->getSuperClass())
+    if (s == target) return true;
+  for (const auto* iface : interfaces_)
+    if (iface != nullptr && iface->isInstanceOf(target)) return true;
+  return false;
+}
+
+// ============================================================================
+//  Linking helpers
+// ============================================================================
+
+void InstanceKlass::prepareRuntimeConstantPool(classfile::ClassFile* class_file) {
   LOG_DEBUG("Preparing runtime constant pool for ", name_, " (", class_file->constant_pool.size(),
             " entries)");
-  // create runtime constant pool
   size_t cp_count = class_file->constant_pool.size();
   constant_pool_.infos_.resize(cp_count);
-  constant_pool_.infos_[0] = std::monostate{};  // placeholder for the first slot
+  constant_pool_.infos_[0] = std::monostate{};
   for (U2 i = 1; i < cp_count; i++) {
     const auto* cpinfo = class_file->constant_pool.getConstantInfo(i);
     switch (cpinfo->tag) {
       case classfile::ConstantTag::kClass: {
         const auto* info = static_cast<const classfile::ClassInfo*>(cpinfo);
-        // keep the internal slash form 'a/b/C' (loadClass normalizes on entry;
-        // symbolic-intercept keys are slash too)
         constant_pool_.setConstant(
           i, SymRef_Class{.class_name = class_file->constant_pool.getUtf8String(info->name_index)});
       } break;
       case classfile::ConstantTag::kMethodref: {
         const auto* info   = static_cast<const classfile::MethodrefInfo*>(cpinfo);
         auto name_and_type = class_file->constant_pool.getNameAndType(info->name_and_type_index);
-        constant_pool_.setConstant(i, SymRef_Method{.class_cp_index = info->class_index,
-                                                    .member_name    = name_and_type.first,
-                                                    .descriptor     = name_and_type.second});
+        constant_pool_.setConstant(
+          i, SymRef_Method{.class_cp_index = info->class_index,
+                           .member_name    = name_and_type.first,
+                           .descriptor     = name_and_type.second});
       } break;
       case classfile::ConstantTag::kFieldref: {
         const auto* info   = static_cast<const classfile::FieldrefInfo*>(cpinfo);
         auto name_and_type = class_file->constant_pool.getNameAndType(info->name_and_type_index);
-        constant_pool_.setConstant(i, SymRef_Field{.class_cp_index = info->class_index,
-                                                   .member_name    = name_and_type.first,
-                                                   .descriptor     = name_and_type.second});
+        constant_pool_.setConstant(
+          i, SymRef_Field{.class_cp_index = info->class_index,
+                          .member_name    = name_and_type.first,
+                          .descriptor     = name_and_type.second});
       } break;
       case classfile::ConstantTag::kInterfaceMethodref: {
         const auto* info   = static_cast<const classfile::InterfaceMethodrefInfo*>(cpinfo);
         auto name_and_type = class_file->constant_pool.getNameAndType(info->name_and_type_index);
-        constant_pool_.setConstant(i, SymRef_InterfaceMethod{.class_cp_index = info->class_index,
-                                                             .member_name    = name_and_type.first,
-                                                             .descriptor = name_and_type.second});
+        constant_pool_.setConstant(
+          i, SymRef_InterfaceMethod{.class_cp_index = info->class_index,
+                                    .member_name    = name_and_type.first,
+                                    .descriptor     = name_and_type.second});
       } break;
-
       case classfile::ConstantTag::kInteger: {
-        auto rt_cpinfo = static_cast<const classfile::IntegerInfo*>(cpinfo)->value;
-        constant_pool_.setConstant(i, rt_cpinfo);
+        constant_pool_.setConstant(i, static_cast<const classfile::IntegerInfo*>(cpinfo)->value);
       } break;
-
       case classfile::ConstantTag::kLong: {
-        auto rt_cpinfo = static_cast<const classfile::LongInfo*>(cpinfo)->value;
-        constant_pool_.setConstant(i, rt_cpinfo);
+        constant_pool_.setConstant(i, static_cast<const classfile::LongInfo*>(cpinfo)->value);
         i++;
-        constant_pool_.infos_[i] = std::monostate{};  // placeholder for the second slot
+        constant_pool_.infos_[i] = std::monostate{};
       } break;
       case classfile::ConstantTag::kFloat: {
-        auto rt_cpinfo = static_cast<const classfile::FloatInfo*>(cpinfo)->value;
-        constant_pool_.setConstant(i, rt_cpinfo);
+        constant_pool_.setConstant(i, static_cast<const classfile::FloatInfo*>(cpinfo)->value);
       } break;
       case classfile::ConstantTag::kDouble: {
-        auto rt_cpinfo = static_cast<const classfile::DoubleInfo*>(cpinfo)->value;
-        constant_pool_.setConstant(i, rt_cpinfo);
+        constant_pool_.setConstant(i, static_cast<const classfile::DoubleInfo*>(cpinfo)->value);
         i++;
-        constant_pool_.infos_[i] = std::monostate{};  // placeholder for the second slot
+        constant_pool_.infos_[i] = std::monostate{};
       } break;
-
       case classfile::ConstantTag::kString: {
-        // TODO: string intern
         auto index     = static_cast<const classfile::StringInfo*>(cpinfo)->string_index;
         auto rt_cpinfo = class_file->constant_pool.getUtf8String(index);
         constant_pool_.setConstant(i, rt_cpinfo);
       } break;
-
-      // TODO: dynamic language support
       case classfile::ConstantTag::kMethodHandle:
       case classfile::ConstantTag::kMethodType:
       case classfile::ConstantTag::kInvokeDynamic:
-
-      // just ignore these constant pool entries
       case classfile::ConstantTag::kNameAndType:
       case classfile::ConstantTag::kUtf8:
         break;
@@ -177,22 +164,17 @@ void Klass::prepareRuntimeConstantPool(classfile::ClassFile* class_file) {
   }
 }
 
-void Klass::prepareMethods(classfile::ClassFile* class_file) {
+void InstanceKlass::prepareMethods(classfile::ClassFile* class_file) {
   LOG_DEBUG("Preparing methods for class ", name_);
-  // create methods
   for (auto& member_info : class_file->methods.getMembers()) {
     auto* method_info  = dynamic_cast<classfile::MethodInfo*>(member_info.get());
     auto  access_flags = method_info->access_flags;
-    // optimize after string intern
-    auto   name       = class_file->constant_pool.getUtf8String(method_info->name_index);
-    auto   descriptor = class_file->constant_pool.getUtf8String(method_info->descriptor_index);
+    auto  name         = class_file->constant_pool.getUtf8String(method_info->name_index);
+    auto  descriptor   = class_file->constant_pool.getUtf8String(method_info->descriptor_index);
     Method method(access_flags, name, descriptor, this);
     if (access_flags.has(flags::Method::NATIVE)) {
       // TODO: native method binding
-      // this->linkNativeMethods(&method);
     } else if (!access_flags.has(flags::Method::ABSTRACT)) {
-      // if a method is not native and not abstract, it must have code
-      // find Code attribute
       auto* code_attribute = method_info->attributes.findAttribute<classfile::CodeAttribute>();
       if (code_attribute != nullptr) {
         method.max_stack_  = code_attribute->max_stack;
@@ -206,17 +188,16 @@ void Klass::prepareMethods(classfile::ClassFile* class_file) {
   }
 }
 
-void Klass::prepareFieldsAndStatics(classfile::ClassFile* class_file) {
-  // create fields; start from super class's instance slot count
-  size_t instance_slot_count = (super_class_ != nullptr) ? super_class_->getInstanceSlotCount() : 0;
-  size_t static_slot_count   = 0;
+void InstanceKlass::prepareFieldsAndStatics(classfile::ClassFile* class_file) {
+  size_t instance_slot_count = (super_class_ != nullptr)
+    ? static_cast<InstanceKlass*>(super_class_)->getInstanceSlotCount() : 0;
+  size_t static_slot_count = 0;
   std::vector<std::pair<size_t, Slot>> static_inits;
   for (auto& member_info : class_file->fields.getMembers()) {
     auto* field_info   = dynamic_cast<classfile::FieldInfo*>(member_info.get());
     auto  access_flags = field_info->access_flags;
-    // optimize after string intern
-    auto  name       = class_file->constant_pool.getUtf8String(field_info->name_index);
-    auto  descriptor = class_file->constant_pool.getUtf8String(field_info->descriptor_index);
+    auto  name         = class_file->constant_pool.getUtf8String(field_info->name_index);
+    auto  descriptor   = class_file->constant_pool.getUtf8String(field_info->descriptor_index);
     Field field(access_flags, name, descriptor, this);
     if (access_flags.has(flags::Field::STATIC)) {
       field.slot_index_ = static_slot_count;
@@ -225,28 +206,24 @@ void Klass::prepareFieldsAndStatics(classfile::ClassFile* class_file) {
       if (cv != nullptr) {
         const auto* cp_info = class_file->constant_pool.getConstantInfo(cv->value);
         switch (cp_info->tag) {
-          case classfile::ConstantTag::kInteger: {
-            static_inits.emplace_back(
-              field.slot_index_,
+          case classfile::ConstantTag::kInteger:
+            static_inits.emplace_back(field.slot_index_,
               Slot{.i = static_cast<const classfile::IntegerInfo*>(cp_info)->value});
-          } break;
-          case classfile::ConstantTag::kFloat: {
-            static_inits.emplace_back(
-              field.slot_index_,
+            break;
+          case classfile::ConstantTag::kFloat:
+            static_inits.emplace_back(field.slot_index_,
               Slot{.f = static_cast<const classfile::FloatInfo*>(cp_info)->value});
-          } break;
-          case classfile::ConstantTag::kLong: {
-            static_inits.emplace_back(
-              field.slot_index_,
+            break;
+          case classfile::ConstantTag::kLong:
+            static_inits.emplace_back(field.slot_index_,
               Slot{.l = static_cast<const classfile::LongInfo*>(cp_info)->value});
             static_inits.emplace_back(field.slot_index_ + 1, Slot{.i = 0});
-          } break;
-          case classfile::ConstantTag::kDouble: {
-            static_inits.emplace_back(
-              field.slot_index_,
+            break;
+          case classfile::ConstantTag::kDouble:
+            static_inits.emplace_back(field.slot_index_,
               Slot{.d = static_cast<const classfile::DoubleInfo*>(cp_info)->value});
             static_inits.emplace_back(field.slot_index_ + 1, Slot{.i = 0});
-          } break;
+            break;
           case classfile::ConstantTag::kString:
             // TODO: string intern
             break;
@@ -262,70 +239,64 @@ void Klass::prepareFieldsAndStatics(classfile::ClassFile* class_file) {
   }
   instance_slot_count_ = instance_slot_count;
   static_slot_count_   = static_slot_count;
-  // Initialize the statics vector with the correct size
   statics_.resize(static_slot_count);
-  for (auto& p : static_inits) {
+  for (auto& p : static_inits)
     statics_[p.first] = p.second;
-  }
 }
 
-void Klass::linkSuperClass(classfile::ClassFile* cf, classfile::ClassLoader* loader) {
+void InstanceKlass::linkSuperClass(classfile::ClassFile* cf, classfile::ClassLoader* loader) {
   U2 super_class_index = cf->super_class_index;
-
   if (super_class_index == 0) {
-    // only `java.lang.Object` has no super class
     this->setSuperClass(nullptr);
     return;
   }
-
   const auto& cp               = cf->constant_pool;
-  std::string super_class_name = cp.getClassName(super_class_index);  // internal slash form
-
+  std::string super_class_name = cp.getClassName(super_class_index);
   if (super_class_name == "java/lang/Object") {
-    // suspend the support of Object for now
     this->setSuperClass(nullptr);
     return;
   }
-
   auto* super_klass = loader->loadClass(super_class_name);
-
-  this->setSuperClass(super_klass);
+  // loadClass returns Klass*; the super of an InstanceKlass is always an InstanceKlass
+  this->setSuperClass(static_cast<InstanceKlass*>(super_klass));
 }
 
-void Klass::linkInterfaces(classfile::ClassFile* cf, classfile::ClassLoader* loader) {
+void InstanceKlass::linkInterfaces(classfile::ClassFile* cf, classfile::ClassLoader* loader) {
   auto        interfaces = cf->interfaces;
   const auto& cp         = cf->constant_pool;
   for (U2 i = 0; i < interfaces.size(); i++) {
     U2          interface_index = interfaces[i];
-    std::string interface_name  = cp.getClassName(interface_index);  // internal slash form
+    std::string interface_name  = cp.getClassName(interface_index);
     auto*       interface_klass = loader->loadClass(interface_name);
-    this->setInterface(i, interface_klass);
+    this->setInterface(i, static_cast<InstanceKlass*>(interface_klass));
   }
 }
 
-bool Klass::isInstanceOf(Klass* target) const {
-  if (this == target) {
-    return true;
-  }
-  for (Klass* s = super_class_; s != nullptr; s = s->getSuperClass()) {
-    if (s == target) {
-      return true;
-    }
-  }
-  for (Klass* iface : interfaces_) {
-    if (iface != nullptr && iface->isInstanceOf(target)) {
-      return true;
-    }
-  }
+// ============================================================================
+// TypeArrayKlass  isInstanceOf
+// ============================================================================
+
+bool TypeArrayKlass::isInstanceOf(const Klass* target) const {
+  if (this == target) return true;
+  // All arrays are instances of java.lang.Object
+  if (target != nullptr && target->getName() == "java/lang/Object") return true;
   return false;
 }
 
-// void Klass::linkNativeMethods(runtime::Method* method) {
-//   std::string key        = this->name_ + "::" + method->getName() + ":" +
-//   method->getDescriptor(); auto        native_ptr =
-//   native::NativeRegistry::getInstance().findNativeMethod(key); if (native_ptr) {
-//     method->native_function = native_ptr;
-//   }
-// }
+// ============================================================================
+// ObjArrayKlass  isInstanceOf
+// ============================================================================
+
+bool ObjArrayKlass::isInstanceOf(const Klass* target) const {
+  if (this == target) return true;
+  if (target != nullptr && target->getName() == "java/lang/Object") return true;
+  // Covariant array assignment: String[] is Object[]
+  if (target != nullptr && target->kind() == Klass::Kind::ObjArray) {
+    const auto* target_arr = static_cast<const ObjArrayKlass*>(target);
+    // Element-level check (currently exact only, no recursive covariance)
+    if (element_klass_ == target_arr->element_klass_) return true;
+  }
+  return false;
+}
 
 }  // namespace jvm::oops

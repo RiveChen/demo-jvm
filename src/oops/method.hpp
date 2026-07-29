@@ -18,7 +18,7 @@
 namespace jvm::oops {
 
 class Frame;
-class Klass;
+class InstanceKlass;
 
 /**
  * @brief Runtime representation of a single Java method.
@@ -43,7 +43,7 @@ class Method {
   ///@}
 
   /// @brief The class that owns this method.
-  Klass* getOwnerKlass() const { return owner_klass_; }
+  InstanceKlass* getOwnerKlass() const { return owner_klass_; }
 
   /// @name Bytecode and Frame Layout
   ///@{
@@ -56,7 +56,7 @@ class Method {
   /// Methods can only be constructed by Klass (friend).
   Method() = default;
   Method(AccessFlags<flags::Method> access_flags, std::string name, std::string descriptor,
-         Klass* owner_klass)
+         InstanceKlass* owner_klass)
     : access_flags_(access_flags),
       name_(std::move(name)),
       descriptor_(std::move(descriptor)),
@@ -67,14 +67,14 @@ class Method {
   std::string                name_;
   std::string                descriptor_;
 
-  Klass*                 owner_klass_{nullptr};
+  InstanceKlass*         owner_klass_{nullptr};
   descriptor::MethodType signature_;
 
   U2              max_stack_{};
   U2              max_locals_{};
   std::vector<U1> code_;
 
-  friend class Klass;
+  friend class InstanceKlass;
 };
 
 }  // namespace jvm::oops

@@ -13,7 +13,7 @@
 #include <cstddef>
 #include <cstdint>
 namespace jvm::oops {
-class Klass;
+class InstanceKlass;
 
 /**
  * @brief The MarkWord of a Java object header.
@@ -34,15 +34,15 @@ class MarkWord {
 
 class OopDesc {
  protected:
-  Klass*   klass_;  ///< Pointer to the object's runtime class (Klass).
-  MarkWord mark_;   ///< Object header metadata.
+  InstanceKlass* klass_;  ///< Pointer to the object's runtime class (Klass).
+  MarkWord       mark_;   ///< Object header metadata.
  public:
-  explicit OopDesc(Klass* klass) : klass_(klass), mark_({}) {};
-  OopDesc(Klass* klass, MarkWord mark) : klass_(klass), mark_(mark) {}
+  explicit OopDesc(InstanceKlass* klass) : klass_(klass), mark_({}) {};
+  OopDesc(InstanceKlass* klass, MarkWord mark) : klass_(klass), mark_(mark) {}
 
   /// @brief The runtime class of this object.
-  Klass*    getKlass() const { return klass_; }
-  MarkWord& getMarkword() { return mark_; }
+  InstanceKlass* getKlass() const { return klass_; }
+  MarkWord&      getMarkword() { return mark_; }
 };
 
 /**
@@ -59,7 +59,7 @@ class OopDesc {
 // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic,cppcoreguidelines-pro-type-reinterpret-cast)
 class InstanceOopDesc : public OopDesc {
  public:
-  explicit InstanceOopDesc(Klass* klass) : OopDesc(klass) {}
+  explicit InstanceOopDesc(InstanceKlass* klass) : OopDesc(klass) {}
 
   /// @brief Access a field slot by index.
   Slot& fieldSlot(size_t i) { return fields()[i]; }

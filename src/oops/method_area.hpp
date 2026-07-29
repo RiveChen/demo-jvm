@@ -40,7 +40,8 @@ struct ClassIdentifierHash {
 class MethodArea {
  public:
   using ClassIdentifier = std::pair<classfile::ClassLoader*, std::string>;
-  using ClassData       = std::pair<std::unique_ptr<Klass>, std::unique_ptr<classfile::ClassFile>>;
+  using ClassData =
+    std::pair<std::unique_ptr<InstanceKlass>, std::unique_ptr<classfile::ClassFile>>;
 
   /// Meyer's singleton (thread-safe since C++11).
   static MethodArea& getSingleton() {
@@ -53,7 +54,7 @@ class MethodArea {
 
   /// @brief Look up a class by (ClassLoader, name).
   /// @return nullptr if the class is not found.
-  Klass* getClass(const ClassIdentifier& identifier);
+  InstanceKlass* getClass(const ClassIdentifier& identifier);
 
   /// @brief Check if a class has been loaded.
   bool hasClass(const ClassIdentifier& identifier) const;

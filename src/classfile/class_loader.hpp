@@ -18,7 +18,7 @@
 #include <vector>
 
 namespace jvm::oops {
-class Klass;
+class InstanceKlass;
 }  // namespace jvm::oops
 
 namespace jvm::classfile {
@@ -39,7 +39,7 @@ class ClassLoader {
  private:
   ClassLoader*             parent_;      ///< Parent loader for delegation.
   std::vector<std::string> classpaths_;  ///< Directories to search for .class files.
-  std::unordered_map<std::string, oops::Klass*>
+  std::unordered_map<std::string, oops::InstanceKlass*>
     cache_;  ///< Loaded class cache (raw ptr, not owning).
 
   /// @brief Read raw class file bytes from the classpath.
@@ -52,7 +52,7 @@ class ClassLoader {
   /// @brief Load (or find already-loaded) a class by fully qualified name.
   /// @param fully_qualified_name Fully qualified class name (e.g. "java.lang.Object").
   /// @return The Klass object, or nullptr if the class cannot be found.
-  oops::Klass* loadClass(const std::string& fully_qualified_name);
+  oops::InstanceKlass* loadClass(const std::string& fully_qualified_name);
 };
 
 }  // namespace jvm::classfile

@@ -1,12 +1,15 @@
 /**
  * @file klass.h
- * @brief Runtime representation of a loaded Java class.
+ * @brief Runtime representation of a loaded Java class (Klass hierarchy).
  *
- * "Klass" is the HotSpot JVM term for the in-memory representation
- * of a Java class. After a class file is parsed by the class file
- * parser, a Klass object is constructed to represent the class
- * at runtime, holding its methods, fields, constant pool,
- * and class hierarchy information.
+ * Mirrors HotSpot's klass-oop split: Klass (metadata, in MethodArea)
+ * vs OopDesc (object header, on heap).
+ *
+ * Klass hierarchy:
+ *   Klass (base: name, super_class, kind, state)
+ *   ├── InstanceKlass (from .class files: methods, fields, constant pool)
+ *   ├── TypeArrayKlass (primitive arrays: int[], byte[], ...)
+ *   └── ObjArrayKlass (reference arrays: Object[], String[], ...)
  */
 
 #pragma once
@@ -17,6 +20,7 @@
 #include "runtime/thread.hpp"
 #include "utilities/access_flags.hpp"
 #include "utilities/slot.hpp"
+#include "utilities/types.hpp"
 
 #include <cassert>
 #include <cstdint>
@@ -31,17 +35,15 @@ class MethodInfo;
 
 namespace jvm::oops {
 
-class InstanceOopDesc;
+class OopDesc;
 
-/**
- * @brief Runtime representation of a loaded Java class.
- *
- * Created by ClassLoader::defineClass() after parsing a .class file.
- * Holds the resolved constant pool, methods, fields, static variables,
- * and links to super class and interfaces.
- */
+// ============================================================================
+//  Klass  —  abstract base of the Klass hierarchy
+// ============================================================================
+
 class Klass {
  public:
+  enum class Kind : uint8_t { Instance, TypeArray, ObjArray };
   enum ClassState : uint8_t {
     Allocated,
     Loaded,
@@ -51,13 +53,27 @@ class Klass {
     InitializationError,
   };
 
-  /// @brief Construct a Klass from a parsed class file.
-  /// @param class_file The parsed class file (ownership transferred).
-  /// @param loader The class loader that loaded this class.
-  explicit Klass(classfile::ClassFile* class_file, classfile::ClassLoader* loader);
+ protected:
+  Kind                      kind_;
+  ClassState                state_;
+  std::string               name_;
+  AccessFlags<flags::Class> access_flags_;
+  Klass*                    super_class_;
 
+  Klass(Kind kind, std::string name, AccessFlags<flags::Class> flags)
+    : kind_(kind),
+      state_(Allocated),
+      name_(std::move(name)),
+      access_flags_(flags),
+      super_class_(nullptr) {}
+
+ public:
+  virtual ~Klass() = default;
+
+  Kind       kind() const { return kind_; }
   ClassState getState() const { return state_; }
-  void       markLoaded() {
+
+  void markLoaded() {
     assert(state_ == Allocated);
     state_ = Loaded;
   }
@@ -66,69 +82,121 @@ class Klass {
     state_ = FullyInitialized;
   }
 
-  /// @name Class Hierarchy
-  ///@{
-  classfile::ClassLoader* getClassLoader() const { return loader_; }
-  void                    setSuperClass(Klass* super_class) { super_class_ = super_class; }
-  Klass*                  getSuperClass() const { return super_class_; }
-  void setInterface(U2 index, Klass* interface) { interfaces_.at(index) = interface; }
-  const std::vector<Klass*>& getInterfaces() const { return interfaces_; }
-  ///@}
+  // -- Virtual interface (overridden by InstanceKlass / ArrayKlass) --
 
-  /// @name Runtime Constant Pool
+  virtual const std::string&      getName() const { return name_; }
+  virtual Klass*                  getSuperClass() const { return super_class_; }
+  virtual classfile::ClassLoader* getClassLoader() const                  = 0;
+  virtual bool                    isInstanceOf(const Klass* target) const = 0;
+};
+
+// ============================================================================
+//  InstanceKlass  —  a regular class loaded from a .class file
+// ============================================================================
+
+class InstanceKlass : public Klass {
+ public:
+  explicit InstanceKlass(classfile::ClassFile* class_file, classfile::ClassLoader* loader);
+
+  // -- Klass virtual overrides --
+  classfile::ClassLoader* getClassLoader() const override { return loader_; }
+  bool                    isInstanceOf(const Klass* target) const override;
+
+  // -- Class hierarchy (well-typed for InstanceKlass) --
+  void setSuperClass(InstanceKlass* super) { super_class_ = super; }
+  void setInterface(U2 index, InstanceKlass* iface) { interfaces_.at(index) = iface; }
+  const std::vector<InstanceKlass*>& getInterfaces() const { return interfaces_; }
+
+  // -- Runtime constant pool --
   RuntimeConstantPool& getRuntimeConstantPool() { return constant_pool_; }
 
-  /// @name Instance and Static Layout
-  ///@{
+  // -- Slot layout --
   size_t getInstanceSlotCount() const { return instance_slot_count_; }
   size_t getStaticSlotCount() const { return static_slot_count_; }
-  bool   isInstanceOf(Klass* target) const;
-  ///@}
+  Slot&  getStaticSlot(size_t index) { return statics_.at(index); }
 
-  /// @name Member Lookup
-  ///@{
+  // -- Member lookup --
   Method* findMethod(const std::string& name, const std::string& descriptor);
   Field*  findField(const std::string& name, const std::string& descriptor);
-  ///@}
 
-  /// @name Static Field Access
-  ///@{
-  Slot& getStaticSlot(size_t index) { return statics_.at(index); }
-  ///@}
-
-  /// @brief The fully qualified class name (e.g. "java.lang.Object").
-  const std::string& getName() const { return name_; }
-
+  // -- Linking & initialization --
   void link(classfile::ClassFile* cf, classfile::ClassLoader* loader);
   void initialize(runtime::Thread* thread);
 
  private:
-  ClassState state_;
+  classfile::ClassLoader* loader_{nullptr};
 
-  classfile::ClassLoader* loader_;
-
-  std::string               name_;
-  AccessFlags<flags::Class> access_flags_;
-  Klass*                    super_class_;
-  std::vector<Klass*>       interfaces_;
-  RuntimeConstantPool       constant_pool_;
-  std::vector<Method>       methods_;
-  std::vector<Field>        fields_;
-  std::vector<Slot>         statics_;
+  std::vector<InstanceKlass*> interfaces_;
+  RuntimeConstantPool         constant_pool_;
+  std::vector<Method>         methods_;
+  std::vector<Field>          fields_;
+  std::vector<Slot>           statics_;
 
   size_t instance_slot_count_{};
   size_t static_slot_count_{};
 
-  InstanceOopDesc* mirror_class_object_;
+  OopDesc* mirror_class_object_{nullptr};
 
-  /// @name Linking Helpers
-  ///@{
+  // -- Linking helpers --
   void prepareRuntimeConstantPool(classfile::ClassFile* class_file);
   void prepareMethods(classfile::ClassFile* class_file);
   void prepareFieldsAndStatics(classfile::ClassFile* class_file);
   void linkSuperClass(classfile::ClassFile*, classfile::ClassLoader*);
   void linkInterfaces(classfile::ClassFile*, classfile::ClassLoader*);
-  ///@}
+};
+
+// ============================================================================
+//  ArrayKlass  —  intermediate base for array classes
+// ============================================================================
+
+class ArrayKlass : public Klass {
+ protected:
+  Jint element_size_{0};
+
+  ArrayKlass(Kind kind, std::string name, Jint elem_size, AccessFlags<flags::Class> flags)
+    : Klass(kind, std::move(name), flags), element_size_(elem_size) {}
+
+ public:
+  Jint                    elementSize() const { return element_size_; }
+  classfile::ClassLoader* getClassLoader() const override { return nullptr; }
+};
+
+// ============================================================================
+//  TypeArrayKlass  —  primitive arrays (int[], byte[], ...)
+// ============================================================================
+
+class TypeArrayKlass : public ArrayKlass {
+ public:
+  TypeArrayKlass(Jint elem_size, std::string name)
+    : ArrayKlass(Klass::Kind::TypeArray, std::move(name), elem_size,
+                 AccessFlags<flags::Class>(flags::Class::PUBLIC | flags::Class::FINAL |
+                                           flags::Class::ABSTRACT)) {
+    // Arrays are always fully initialized immediately
+    state_ = FullyInitialized;
+  }
+
+  bool isInstanceOf(const Klass* target) const override;
+};
+
+// ============================================================================
+//  ObjArrayKlass  —  reference arrays (Object[], String[], ...)
+// ============================================================================
+
+class ObjArrayKlass : public ArrayKlass {
+  Klass* element_klass_{nullptr};
+
+ public:
+  ObjArrayKlass(Klass* element, std::string name)
+    : ArrayKlass(Klass::Kind::ObjArray, std::move(name), static_cast<Jint>(sizeof(void*)),
+                 AccessFlags<flags::Class>(flags::Class::PUBLIC | flags::Class::FINAL |
+                                           flags::Class::ABSTRACT)),
+      element_klass_(element) {
+    // Arrays are always fully initialized immediately
+    state_ = FullyInitialized;
+  }
+
+  Klass* elementKlass() const { return element_klass_; }
+  bool   isInstanceOf(const Klass* target) const override;
 };
 
 }  // namespace jvm::oops

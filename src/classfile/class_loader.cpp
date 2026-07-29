@@ -69,7 +69,7 @@ std::optional<std::vector<std::byte>> ClassLoader::readClassFile(const std::stri
 
 // (documentation in class_loader.h)
 // NOLINTNEXTLINE(misc-no-recursion)
-oops::Klass* ClassLoader::loadClass(const std::string& fully_qualified_name) {
+oops::InstanceKlass* ClassLoader::loadClass(const std::string& fully_qualified_name) {
   LOG_DEBUG("Loading class: ", fully_qualified_name);
   // Normalize to the internal (slash) form; callers may pass '.' or '/'.
   // From here on, slash is the single canonical class-name form (cache key,
@@ -101,8 +101,8 @@ oops::Klass* ClassLoader::loadClass(const std::string& fully_qualified_name) {
   auto* cf_ptr    = cf_unique.get();
 
   // Create new Klass object from the parsed class file
-  auto         klass     = std::make_unique<oops::Klass>(cf_ptr, this);
-  oops::Klass* klass_ptr = klass.get();
+  auto                 klass     = std::make_unique<oops::InstanceKlass>(cf_ptr, this);
+  oops::InstanceKlass* klass_ptr = klass.get();
 
   // Register the class in the method area with this class loader
   oops::MethodArea::getSingleton().addClass({this, name}, {std::move(klass), std::move(cf_unique)});

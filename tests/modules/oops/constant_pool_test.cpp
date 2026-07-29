@@ -49,7 +49,7 @@ TEST_F(ConstantPoolTest, ResolveClassCachesResult) {
   EXPECT_EQ(resolved_first, klass);
   EXPECT_EQ(resolved_first, resolved_second);
   // resolved result is cached back into the slot
-  EXPECT_TRUE(std::holds_alternative<oops::Klass*>(rcp.getConstant(1)));
+  EXPECT_TRUE(std::holds_alternative<oops::InstanceKlass*>(rcp.getConstant(1)));
 }
 
 TEST_F(ConstantPoolTest, ResolveMethodAndCache) {

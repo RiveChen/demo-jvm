@@ -1234,7 +1234,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
 
         auto* field = rt_cp.resolveField(index);
         auto* klass = field->getOwnerKlass();
-        if (klass->getState() == oops::Klass::Linked) {
+        if (klass->getState() == oops::InstanceKlass::Linked) {
           thread->getCurrentFrame().setPC(pc - 3);
           klass->initialize(thread);
           pc = 0;
@@ -1248,7 +1248,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         auto  index = reader.readU2();
         auto* field = rt_cp.resolveField(index);
         auto* klass = field->getOwnerKlass();
-        if (klass->getState() == oops::Klass::Linked) {
+        if (klass->getState() == oops::InstanceKlass::Linked) {
           thread->getCurrentFrame().setPC(pc - 3);
           klass->initialize(thread);
           pc = 0;
@@ -1304,7 +1304,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         if (recv == nullptr) {
           throw std::runtime_error("NPE");
         }
-        oops::Klass* recv_klass = recv->getKlass();
+        oops::InstanceKlass* recv_klass = recv->getKlass();
 
         oops::Method* actual =
           recv_klass->findMethod(resolved->getName(), resolved->getDescriptor());
@@ -1382,7 +1382,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
 
         // if the class is not initialied, initialize it
         auto* klass = new_method->getOwnerKlass();
-        if (klass->getState() == oops::Klass::Linked) {
+        if (klass->getState() == oops::InstanceKlass::Linked) {
           thread->getCurrentFrame().setPC(pc - 3);
           klass->initialize(thread);
           pc = 0;
@@ -1446,7 +1446,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         if (recv == nullptr) {
           throw std::runtime_error("NPE");
         }
-        oops::Klass* recv_klass = recv->getKlass();
+        oops::InstanceKlass* recv_klass = recv->getKlass();
 
         oops::Method* actual =
           recv_klass->findMethod(resolved->getName(), resolved->getDescriptor());
@@ -1486,9 +1486,9 @@ void Interpreter::interpret(runtime::Thread* thread) {
       // Function: Object creation and type checking
       // Components: rt_cp, op_stack, thread (PC)
       case NEW: {
-        auto         index = reader.readU2();
-        oops::Klass* klass = rt_cp.resolveClass(index);
-        if (klass->getState() == oops::Klass::Linked) {
+        auto                 index = reader.readU2();
+        oops::InstanceKlass* klass = rt_cp.resolveClass(index);
+        if (klass->getState() == oops::InstanceKlass::Linked) {
           thread->getCurrentFrame().setPC(pc - 3);
           klass->initialize(thread);
           pc = 0;

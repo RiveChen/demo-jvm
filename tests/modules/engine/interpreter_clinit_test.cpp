@@ -73,7 +73,7 @@ TEST_F(InterpreterClinitTest, KlassStateAfterLoad) {
   ASSERT_NE(klass, nullptr);
 
   // After loadClass + link, the class should be Linked, not yet initialized
-  EXPECT_EQ(klass->getState(), oops::Klass::Linked);
+  EXPECT_EQ(klass->getState(), oops::InstanceKlass::Linked);
 }
 
 TEST_F(InterpreterClinitTest, KlassStateAfterFirstActiveUse) {
@@ -81,13 +81,13 @@ TEST_F(InterpreterClinitTest, KlassStateAfterFirstActiveUse) {
   auto* klass = loader_->loadClass(kClassName);
   ASSERT_NE(klass, nullptr);
 
-  EXPECT_EQ(klass->getState(), oops::Klass::Linked);
+  EXPECT_EQ(klass->getState(), oops::InstanceKlass::Linked);
 
   // Trigger <clinit> by executing a method that reads a field initialized in <clinit>
   executeStaticMethod<Jint>(kClassName, "getIntFromClinit");
 
   // After first access, class should be fully initialized
-  EXPECT_EQ(klass->getState(), oops::Klass::FullyInitialized);
+  EXPECT_EQ(klass->getState(), oops::InstanceKlass::FullyInitialized);
 }
 
 // ============================================================================
@@ -99,11 +99,11 @@ TEST_F(InterpreterClinitTest, ClassWithoutClinitStaysLinked) {
   ASSERT_NE(klass, nullptr);
 
   // StaticFieldTest has no <clinit>, so it stays Linked until a trigger.
-  EXPECT_EQ(klass->getState(), oops::Klass::Linked);
+  EXPECT_EQ(klass->getState(), oops::InstanceKlass::Linked);
 
   // First active use should initialize it immediately (no <clinit> to run).
   executeStaticMethod<Jint>(kFieldClass, "testGetStaticInt");
-  EXPECT_EQ(klass->getState(), oops::Klass::FullyInitialized);
+  EXPECT_EQ(klass->getState(), oops::InstanceKlass::FullyInitialized);
 }
 
 }  // namespace

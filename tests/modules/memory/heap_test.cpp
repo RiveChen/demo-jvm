@@ -34,7 +34,7 @@ class HeapTest : public ::testing::Test {
   size_t yIndex() const { return klass_->findField("y", "J")->getSlotIndex(); }
   size_t zIndex() const { return klass_->findField("dz", "D")->getSlotIndex(); }
 
-  oops::Klass*                            klass_ = nullptr;
+  oops::InstanceKlass*                    klass_ = nullptr;
   std::string                             test_classpath_;
   std::vector<std::string>                classpath_list_;
   std::unique_ptr<classfile::ClassLoader> loader_;
