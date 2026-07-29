@@ -24,7 +24,7 @@ Klass* RuntimeConstantPool::resolveClass(U2 index) {
     throw std::runtime_error("Invalid symbol reference");
   }
 
-  // class_name is already baked to dot-form at prepare time
+  // class_name is already baked to slash-form at prepare time
   Klass* k = owner_klass_->getClassLoader()->loadClass(sym_ref->class_name);
   slot     = k;
   return k;
