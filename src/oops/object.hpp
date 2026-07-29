@@ -8,12 +8,15 @@
  */
 
 #pragma once
+
+#include "klass.hpp"
 #include "utilities/slot.hpp"
+#include "utilities/types.hpp"
 
 #include <cstddef>
 #include <cstdint>
+
 namespace jvm::oops {
-class InstanceKlass;
 
 /**
  * @brief The MarkWord of a Java object header.
@@ -25,24 +28,33 @@ class InstanceKlass;
 class MarkWord {
  public:
   MarkWord() = default;
-  explicit MarkWord(uintptr_t data) : bits_(data) {};
+  explicit MarkWord(uintptr_t data) : bits_(data) {}
   uintptr_t raw() const { return bits_; }
 
  private:
   uintptr_t bits_{};
 };
 
+/**
+ * @brief Base class for all heap-allocated objects.
+ *
+ * Every Java object (both instances and arrays) starts with
+ * a Klass pointer and a MarkWord, matching HotSpot's two-word header.
+ */
+// NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic,
+//              cppcoreguidelines-pro-type-reinterpret-cast)
 class OopDesc {
  protected:
-  InstanceKlass* klass_;  ///< Pointer to the object's runtime class (Klass).
-  MarkWord       mark_;   ///< Object header metadata.
+  Klass*   klass_;  ///< Pointer to the object's runtime class (any Klass subtype).
+  MarkWord mark_;   ///< Object header metadata.
+
  public:
-  explicit OopDesc(InstanceKlass* klass) : klass_(klass), mark_({}) {};
-  OopDesc(InstanceKlass* klass, MarkWord mark) : klass_(klass), mark_(mark) {}
+  explicit OopDesc(Klass* klass) : klass_(klass), mark_({}) {}
+  OopDesc(Klass* klass, MarkWord mark) : klass_(klass), mark_(mark) {}
 
   /// @brief The runtime class of this object.
-  InstanceKlass* getKlass() const { return klass_; }
-  MarkWord&      getMarkword() { return mark_; }
+  Klass*  getKlass() const { return klass_; }
+  MarkWord& getMarkword() { return mark_; }
 };
 
 /**
@@ -56,7 +68,6 @@ class OopDesc {
  * The field slots are accessed via pointer arithmetic:
  * `fields() = reinterpret_cast<Slot*>(this + 1)`
  */
-// NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic,cppcoreguidelines-pro-type-reinterpret-cast)
 class InstanceOopDesc : public OopDesc {
  public:
   explicit InstanceOopDesc(InstanceKlass* klass) : OopDesc(klass) {}
@@ -90,13 +101,25 @@ class InstanceOopDesc : public OopDesc {
   Slot*       fields() { return reinterpret_cast<Slot*>(this + 1); }
   const Slot* fields() const { return reinterpret_cast<const Slot*>(this + 1); }
 };
-// NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic,cppcoreguidelines-pro-type-reinterpret-cast)
 
+/**
+ * @brief A Java array on the heap.
+ *
+ * Layout: [ Klass* | MarkWord | Jint length | element[N] ]
+ * The `base()` method returns the address of element[0].
+ */
 class ArrayOopDesc : public OopDesc {
  public:
+  explicit ArrayOopDesc(Klass* klass) : OopDesc(klass) {}
+
+  /// @brief The number of elements in this array.
   Jint  length() { return *reinterpret_cast<Jint*>(this + 1); }
-  void  setLength(int l) { *reinterpret_cast<Jint*>(this + 1) = l; }
+  void  setLength(Jint l) { *reinterpret_cast<Jint*>(this + 1) = l; }
+
+  /// @brief Pointer to the first element (after the length field).
   void* base() { return reinterpret_cast<char*>(this + 1) + sizeof(Jint); }
 };
+// NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic,
+//            cppcoreguidelines-pro-type-reinterpret-cast)
 
 }  // namespace jvm::oops

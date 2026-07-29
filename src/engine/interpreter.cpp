@@ -1304,7 +1304,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         if (recv == nullptr) {
           throw std::runtime_error("NPE");
         }
-        oops::InstanceKlass* recv_klass = recv->getKlass();
+        oops::InstanceKlass* recv_klass = static_cast<oops::InstanceKlass*>(recv->getKlass());
 
         oops::Method* actual =
           recv_klass->findMethod(resolved->getName(), resolved->getDescriptor());
@@ -1446,7 +1446,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         if (recv == nullptr) {
           throw std::runtime_error("NPE");
         }
-        oops::InstanceKlass* recv_klass = recv->getKlass();
+        oops::InstanceKlass* recv_klass = static_cast<oops::InstanceKlass*>(recv->getKlass());
 
         oops::Method* actual =
           recv_klass->findMethod(resolved->getName(), resolved->getDescriptor());
