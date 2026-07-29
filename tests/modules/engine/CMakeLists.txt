@@ -158,6 +158,19 @@ target_compile_definitions(
   PRIVATE TEST_CLASS_PATH="${CMAKE_BINARY_DIR}/test_classes")
 gtest_discover_tests(test_interpreter_clinit)
 
+# Init/type-check regression tests (B1 pc-reset, B2 super-interface instanceof,
+# B3 inherited <clinit>, B4 super/sub <clinit> order)
+add_executable(test_interpreter_init_type_regression
+               interpreter_init_type_regression_test.cpp)
+target_link_libraries(test_interpreter_init_type_regression
+                      PRIVATE jvm_engine jvm_classfile GTest::gtest_main)
+target_include_directories(test_interpreter_init_type_regression PRIVATE ${TEST_BASE_DIR})
+add_dependencies(test_interpreter_init_type_regression compile_test_classes)
+target_compile_definitions(
+  test_interpreter_init_type_regression
+  PRIVATE TEST_CLASS_PATH="${CMAKE_BINARY_DIR}/test_classes")
+gtest_discover_tests(test_interpreter_init_type_regression)
+
 # CHECKCAST / INSTANCEOF tests
 add_executable(test_interpreter_type_check interpreter_type_check_test.cpp)
 target_link_libraries(test_interpreter_type_check

@@ -15,6 +15,7 @@
 #include "utilities/logger.hpp"
 #include "utilities/slot.hpp"
 
+#include <cstddef>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -53,28 +54,28 @@ void InstanceKlass::initialize(runtime::Thread* thread) {
     throw std::runtime_error("NoClassDefFoundError: initialization error");
   }
 
-  // super first
-  if (super_class_ != nullptr) {
-    static_cast<InstanceKlass*>(super_class_)->initialize(thread);
-  }
-
   state_         = BeingInitialized;
-  Method* clinit = findMethod("<clinit>", "()V");
+  Method* clinit = findMethod("<clinit>", "()V", false);
   if (clinit == nullptr) {
     state_ = FullyInitialized;
     return;
   }
   runtime::Frame frame(clinit);
   thread->pushFrame(std::move(frame));
+
+  // super's frame first
+  if (super_class_ != nullptr) {
+    static_cast<InstanceKlass*>(super_class_)->initialize(thread);
+  }
 }
 
-Method* InstanceKlass::findMethod(const std::string& name, const std::string& descriptor) {
+Method* InstanceKlass::findMethod(const std::string& name, const std::string& descriptor, bool find_in_super) {
   for (auto& m : methods_) {
     if (m.getName() == name && m.getDescriptor() == descriptor) {
       return &m;
     }
   }
-  if (super_class_ != nullptr) {
+  if (find_in_super && super_class_ != nullptr) {
     return static_cast<InstanceKlass*>(super_class_)->findMethod(name, descriptor);
   }
   return nullptr;
@@ -96,11 +97,10 @@ bool InstanceKlass::isInstanceOf(const Klass* target) const {
   if (this == target) {
     return true;
   }
-  for (const Klass* s = super_class_; s != nullptr; s = s->getSuperClass()) {
-    if (s == target) {
-      return true;
-    }
+  if (super_class_ != nullptr && super_class_->isInstanceOf(target)) {
+    return true;
   }
+
   for (const auto* iface : interfaces_) {
     if (iface != nullptr && iface->isInstanceOf(target)) {
       return true;

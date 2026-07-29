@@ -64,8 +64,8 @@ void Interpreter::interpret(runtime::Thread* thread) {
     // fetch opcode
     BytecodeReader reader(code, pc);          // note we pass pc by ref here
     auto           opcode = reader.readU1();  // note pc incremented by 1 here
-    LOG_TRACE("pc=", (pc - 1), " 0x", "0123456789abcdef"[opcode >> 4U],
-              "0123456789abcdef"[opcode & 0x0FU], " (", opcode_name(opcode), ")");
+    LOG_TRACE("pc=", (pc - 1), " 0x", "0123456789abcdef"[opcode >> 4U], "0123456789abcdef"[opcode & 0x0FU], " (",
+              opcode_name(opcode), ")");
 
     // NOLINTBEGIN(bugprone-branch-clone)
     // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
@@ -149,8 +149,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         } else if (std::holds_alternative<Jfloat>(constant)) {
           op_stack.pushFloat(std::get<Jfloat>(constant));
         } else if (std::holds_alternative<std::string>(constant)) {
-          const std::string* s =
-            oops::StringPool::getSingleton().intern(std::get<std::string>(constant));
+          const std::string* s = oops::StringPool::getSingleton().intern(std::get<std::string>(constant));
           op_stack.pushRef(const_cast<std::string*>(s));
         }
       } break;
@@ -162,8 +161,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         } else if (std::holds_alternative<Jfloat>(constant)) {
           op_stack.pushFloat(std::get<Jfloat>(constant));
         } else if (std::holds_alternative<std::string>(constant)) {
-          const std::string* s =
-            oops::StringPool::getSingleton().intern(std::get<std::string>(constant));
+          const std::string* s = oops::StringPool::getSingleton().intern(std::get<std::string>(constant));
           op_stack.pushRef(const_cast<std::string*>(s));
         }
       } break;
@@ -1237,7 +1235,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         if (klass->getState() == oops::InstanceKlass::Linked) {
           thread->getCurrentFrame().setPC(pc - 3);
           klass->initialize(thread);
-          pc = 0;
+          pc = thread->getCurrentFrame().getPC();
           break;
         }
         auto& slot      = klass->getStaticSlot(field->getSlotIndex());
@@ -1251,12 +1249,12 @@ void Interpreter::interpret(runtime::Thread* thread) {
         if (klass->getState() == oops::InstanceKlass::Linked) {
           thread->getCurrentFrame().setPC(pc - 3);
           klass->initialize(thread);
-          pc = 0;
+          pc = thread->getCurrentFrame().getPC();
           break;
         }
         auto& slot      = klass->getStaticSlot(field->getSlotIndex());
         auto  signature = field->getSignature();
-        slot = descriptor::isCategory2(signature) ? op_stack.popWide() : op_stack.popSlot();
+        slot            = descriptor::isCategory2(signature) ? op_stack.popWide() : op_stack.popSlot();
       } break;
       case GETFIELD: {
         auto  index = reader.readU2();
@@ -1296,18 +1294,16 @@ void Interpreter::interpret(runtime::Thread* thread) {
         }
 
         auto* resolved = rt_cp.resolveMethod(index);
-        LOG_DEBUG("INVOKEVIRTUAL ", resolved->getOwnerKlass()->getName(), ".", resolved->getName(),
-                  ".", resolved->getDescriptor());
-        auto* recv = static_cast<oops::InstanceOopDesc*>(
-          op_stack.peekRef(resolved->getSignature().arg_slot_count));
+        LOG_DEBUG("INVOKEVIRTUAL ", resolved->getOwnerKlass()->getName(), ".", resolved->getName(), ".",
+                  resolved->getDescriptor());
+        auto* recv = static_cast<oops::InstanceOopDesc*>(op_stack.peekRef(resolved->getSignature().arg_slot_count));
 
         if (recv == nullptr) {
           throw std::runtime_error("NPE");
         }
         oops::InstanceKlass* recv_klass = static_cast<oops::InstanceKlass*>(recv->getKlass());
 
-        oops::Method* actual =
-          recv_klass->findMethod(resolved->getName(), resolved->getDescriptor());
+        oops::Method* actual = recv_klass->findMethod(resolved->getName(), resolved->getDescriptor());
         if (actual == nullptr) {
           throw std::runtime_error("NPE");
         }
@@ -1342,8 +1338,8 @@ void Interpreter::interpret(runtime::Thread* thread) {
         }
 
         auto* new_method = rt_cp.resolveMethod(index);
-        LOG_DEBUG("INVOKESPECIAL ", new_method->getOwnerKlass()->getName(), ".",
-                  new_method->getName(), ".", new_method->getDescriptor());
+        LOG_DEBUG("INVOKESPECIAL ", new_method->getOwnerKlass()->getName(), ".", new_method->getName(), ".",
+                  new_method->getDescriptor());
 
         const auto&    signature = new_method->getSignature();
         runtime::Frame next_frame(new_method);
@@ -1377,15 +1373,15 @@ void Interpreter::interpret(runtime::Thread* thread) {
         }
 
         auto* new_method = rt_cp.resolveMethod(index);
-        LOG_DEBUG("INVOKESTATIC ", new_method->getOwnerKlass()->getName(), ".",
-                  new_method->getName(), ".", new_method->getDescriptor());
+        LOG_DEBUG("INVOKESTATIC ", new_method->getOwnerKlass()->getName(), ".", new_method->getName(), ".",
+                  new_method->getDescriptor());
 
         // if the class is not initialied, initialize it
         auto* klass = new_method->getOwnerKlass();
         if (klass->getState() == oops::InstanceKlass::Linked) {
           thread->getCurrentFrame().setPC(pc - 3);
           klass->initialize(thread);
-          pc = 0;
+          pc = thread->getCurrentFrame().getPC();
           break;
         }
 
@@ -1394,9 +1390,9 @@ void Interpreter::interpret(runtime::Thread* thread) {
         }
 
         if (new_method->isNative()) {
-          auto key = new_method->getOwnerKlass()->getName() + "." + new_method->getName() + "." +
-                     new_method->getDescriptor();
-          auto fn  = NativeRegistry::getSingleton().find(key);
+          auto key =
+            new_method->getOwnerKlass()->getName() + "." + new_method->getName() + "." + new_method->getDescriptor();
+          auto fn = NativeRegistry::getSingleton().find(key);
           if (fn == nullptr) {
             throw std::runtime_error("unbound native: " + key);
           }
@@ -1438,18 +1434,16 @@ void Interpreter::interpret(runtime::Thread* thread) {
         }
 
         auto* resolved = rt_cp.resolveMethod(index);
-        LOG_DEBUG("INVOKEINTERFACE ", resolved->getOwnerKlass()->getName(), ".",
-                  resolved->getName(), ".", resolved->getDescriptor());
-        auto* recv = static_cast<oops::InstanceOopDesc*>(
-          op_stack.peekRef(resolved->getSignature().arg_slot_count));
+        LOG_DEBUG("INVOKEINTERFACE ", resolved->getOwnerKlass()->getName(), ".", resolved->getName(), ".",
+                  resolved->getDescriptor());
+        auto* recv = static_cast<oops::InstanceOopDesc*>(op_stack.peekRef(resolved->getSignature().arg_slot_count));
 
         if (recv == nullptr) {
           throw std::runtime_error("NPE");
         }
         oops::InstanceKlass* recv_klass = static_cast<oops::InstanceKlass*>(recv->getKlass());
 
-        oops::Method* actual =
-          recv_klass->findMethod(resolved->getName(), resolved->getDescriptor());
+        oops::Method* actual = recv_klass->findMethod(resolved->getName(), resolved->getDescriptor());
         if (actual == nullptr) {
           throw std::runtime_error("NPE");
         }
@@ -1491,7 +1485,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         if (klass->getState() == oops::InstanceKlass::Linked) {
           thread->getCurrentFrame().setPC(pc - 3);
           klass->initialize(thread);
-          pc = 0;
+          pc = thread->getCurrentFrame().getPC();
           break;
         }
         Jref obj_ref = memory::Heap::getSingleton().newInstance(klass);
@@ -1617,8 +1611,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
             break;
           }
           default:
-            throw std::runtime_error("Unsupported widened opcode: " +
-                                     std::to_string(widened_opcode));
+            throw std::runtime_error("Unsupported widened opcode: " + std::to_string(widened_opcode));
         }
       } break;
 

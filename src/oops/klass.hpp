@@ -112,7 +112,7 @@ class InstanceKlass : public Klass {
   Slot&  getStaticSlot(size_t index) { return statics_.at(index); }
 
   // -- Member lookup --
-  Method* findMethod(const std::string& name, const std::string& descriptor);
+  Method* findMethod(const std::string& name, const std::string& descriptor, bool find_in_super = true);
   Field*  findField(const std::string& name, const std::string& descriptor);
 
   // -- Linking & initialization --
