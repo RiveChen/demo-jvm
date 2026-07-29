@@ -5,7 +5,6 @@
 
 #include "klass.hpp"
 
-#include <exception>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -180,9 +179,9 @@ void Klass::prepareMethods(classfile::ClassFile* class_file) {
 }
 
 void Klass::prepareFieldsAndStatics(classfile::ClassFile* class_file) {
-  // create fields
-  size_t                               instance_slot_count = 0;
-  size_t                               static_slot_count   = 0;
+  // create fields; start from super class's instance slot count
+  size_t instance_slot_count = (super_class_ != nullptr) ? super_class_->getInstanceSlotCount() : 0;
+  size_t static_slot_count   = 0;
   std::vector<std::pair<size_t, Slot>> static_inits;
   for (auto& member_info : class_file->fields.getMembers()) {
     auto* field_info   = dynamic_cast<classfile::FieldInfo*>(member_info.get());

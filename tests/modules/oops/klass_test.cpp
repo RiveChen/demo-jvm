@@ -112,6 +112,44 @@ TEST_F(KlassTest, SlotCountsAndStatics) {
   EXPECT_EQ(klass->getStaticSlotCount(), 3);
 }
 
+TEST_F(KlassTest, InheritedSlotCount) {
+  // KlassTestDataChild extends KlassTestData:
+  //   parent instance slots: x(int)=1, y(long)=2, dz(double)=2 → 5
+  //   child  instance slots: extraInt(int)=1, extraLong(long)=2 → +3
+  //   total instance slot count = 8
+  std::string class_name = "tests.data.java.KlassTestDataChild";
+  auto*       klass      = loader_->loadClass(class_name);
+  ASSERT_NE(klass, nullptr);
+
+  EXPECT_EQ(klass->getInstanceSlotCount(), 8);
+
+  // Check child field slot indices are offset past parent fields
+  auto* extra_int = klass->findField("extraInt", "I");
+  ASSERT_NE(extra_int, nullptr);
+  EXPECT_EQ(extra_int->getSlotIndex(), 5);  // starts after parent's 5 slots
+
+  auto* extra_long = klass->findField("extraLong", "J");
+  ASSERT_NE(extra_long, nullptr);
+  EXPECT_EQ(extra_long->getSlotIndex(), 6);  // 5 + 1 (extraInt at 5)
+}
+
+TEST_F(KlassTest, InheritedFindField) {
+  // findField on child class should find parent's fields too
+  std::string class_name = "tests.data.java.KlassTestDataChild";
+  auto*       child      = loader_->loadClass(class_name);
+  ASSERT_NE(child, nullptr);
+
+  // can find parent instance field
+  auto* parent_field = child->findField("x", "I");
+  ASSERT_NE(parent_field, nullptr);
+  EXPECT_EQ(parent_field->getName(), "x");
+
+  // can find parent static field
+  auto* parent_static = child->findField("sx", "I");
+  ASSERT_NE(parent_static, nullptr);
+  EXPECT_TRUE(parent_static->isStatic());
+}
+
 TEST_F(KlassTest, InterfacesAndSuperClassDefaults) {
   std::string class_name = "tests.data.java.HelloWorld";
   auto*       klass      = loader_->loadClass(class_name);
