@@ -23,11 +23,11 @@ void* Heap::allocate(size_t bytes) {
   return p;
 }
 
-oops::Object* Heap::newInstance(oops::Klass* klass) {
+oops::InstanceOopDesc* Heap::newInstance(oops::Klass* klass) {
   size_t n    = klass->getInstanceSlotCount();
-  size_t size = sizeof(oops::Object) + (n * sizeof(Slot));
+  size_t size = sizeof(oops::InstanceOopDesc) + (n * sizeof(Slot));
   LOG_TRACE("Heap newInstance: ", klass->getName(), " (", n, " slots, ", size, " bytes)");
   void* mem = allocate(size);
-  return new (mem) oops::Object(klass);  // placement-new
+  return new (mem) oops::InstanceOopDesc(klass);  // placement-new
 }
 }  // namespace jvm::memory

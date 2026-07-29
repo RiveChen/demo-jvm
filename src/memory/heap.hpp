@@ -16,7 +16,7 @@
 
 namespace jvm::oops {
 class Klass;
-class Object;
+class InstanceOopDesc;
 }  // namespace jvm::oops
 namespace jvm::memory {
 
@@ -43,7 +43,7 @@ class Heap {
   /// @brief Allocate and construct a new Object of the given class.
   /// @param klass The runtime class of the object to create.
   /// @return Pointer to the newly allocated object.
-  oops::Object* newInstance(oops::Klass* klass);
+  oops::InstanceOopDesc* newInstance(oops::Klass* klass);
 
   /// @brief Allocate raw memory of the given size (aligned).
   /// @param bytes Number of bytes to allocate.

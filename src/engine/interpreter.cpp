@@ -1261,7 +1261,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
       case GETFIELD: {
         auto  index = reader.readU2();
         auto* field = rt_cp.resolveField(index);
-        auto* obj   = static_cast<oops::Object*>(op_stack.popRef());
+        auto* obj   = static_cast<oops::InstanceOopDesc*>(op_stack.popRef());
         if (obj == nullptr) {
           throw std::runtime_error("NPE");
         }
@@ -1275,7 +1275,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         auto  signature = field->getSignature();
         // stack: ..., objectref, value  (value on top) -> pop value first, then objectref
         Slot  value = descriptor::isCategory2(signature) ? op_stack.popWide() : op_stack.popSlot();
-        auto* obj   = static_cast<oops::Object*>(op_stack.popRef());
+        auto* obj   = static_cast<oops::InstanceOopDesc*>(op_stack.popRef());
         if (obj == nullptr) {
           throw std::runtime_error("NPE");
         }
@@ -1298,8 +1298,8 @@ void Interpreter::interpret(runtime::Thread* thread) {
         auto* resolved = rt_cp.resolveMethod(index);
         LOG_DEBUG("INVOKEVIRTUAL ", resolved->getOwnerKlass()->getName(), ".", resolved->getName(),
                   ".", resolved->getDescriptor());
-        auto* recv =
-          static_cast<oops::Object*>(op_stack.peekRef(resolved->getSignature().arg_slot_count));
+        auto* recv = static_cast<oops::InstanceOopDesc*>(
+          op_stack.peekRef(resolved->getSignature().arg_slot_count));
 
         if (recv == nullptr) {
           throw std::runtime_error("NPE");
@@ -1440,8 +1440,8 @@ void Interpreter::interpret(runtime::Thread* thread) {
         auto* resolved = rt_cp.resolveMethod(index);
         LOG_DEBUG("INVOKEINTERFACE ", resolved->getOwnerKlass()->getName(), ".",
                   resolved->getName(), ".", resolved->getDescriptor());
-        auto* recv =
-          static_cast<oops::Object*>(op_stack.peekRef(resolved->getSignature().arg_slot_count));
+        auto* recv = static_cast<oops::InstanceOopDesc*>(
+          op_stack.peekRef(resolved->getSignature().arg_slot_count));
 
         if (recv == nullptr) {
           throw std::runtime_error("NPE");
@@ -1500,7 +1500,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
 
       case CHECKCAST: {
         auto  index = reader.readU2();
-        auto* obj   = static_cast<oops::Object*>(op_stack.popRef());
+        auto* obj   = static_cast<oops::InstanceOopDesc*>(op_stack.popRef());
         if (obj == nullptr) {
           op_stack.pushRef(nullptr);
           break;
@@ -1514,7 +1514,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
 
       case INSTANCEOF: {
         auto  index = reader.readU2();
-        auto* obj   = static_cast<oops::Object*>(op_stack.popRef());
+        auto* obj   = static_cast<oops::InstanceOopDesc*>(op_stack.popRef());
         if (obj == nullptr) {
           op_stack.pushInt(0);
           break;

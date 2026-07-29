@@ -32,6 +32,19 @@ class MarkWord {
   uintptr_t bits_{};
 };
 
+class OopDesc {
+ protected:
+  Klass*   klass_;  ///< Pointer to the object's runtime class (Klass).
+  MarkWord mark_;   ///< Object header metadata.
+ public:
+  explicit OopDesc(Klass* klass) : klass_(klass), mark_({}) {};
+  OopDesc(Klass* klass, MarkWord mark) : klass_(klass), mark_(mark) {}
+
+  /// @brief The runtime class of this object.
+  Klass*    getKlass() const { return klass_; }
+  MarkWord& getMarkword() { return mark_; }
+};
+
 /**
  * @brief A Java object instance on the heap.
  *
@@ -44,12 +57,9 @@ class MarkWord {
  * `fields() = reinterpret_cast<Slot*>(this + 1)`
  */
 // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic,cppcoreguidelines-pro-type-reinterpret-cast)
-class Object {
+class InstanceOopDesc : public OopDesc {
  public:
-  explicit Object(Klass* klass) : klass_(klass), mark_(0) {}
-
-  /// @brief The runtime class of this object.
-  Klass* getKlass() const { return klass_; }
+  explicit InstanceOopDesc(Klass* klass) : OopDesc(klass) {}
 
   /// @brief Access a field slot by index.
   Slot& fieldSlot(size_t i) { return fields()[i]; }
@@ -75,13 +85,18 @@ class Object {
   ///@}
 
  private:
-  Klass*   klass_;  ///< Pointer to the object's runtime class (Klass).
-  MarkWord mark_;   ///< Object header metadata.
   // Followed by instance_slot_count * Slot inline
-
   /// Compute the pointer to the first field slot (after the header).
   Slot*       fields() { return reinterpret_cast<Slot*>(this + 1); }
   const Slot* fields() const { return reinterpret_cast<const Slot*>(this + 1); }
 };
 // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic,cppcoreguidelines-pro-type-reinterpret-cast)
+
+class ArrayOopDesc : public OopDesc {
+ public:
+  Jint  length() { return *reinterpret_cast<Jint*>(this + 1); }
+  void  setLength(int l) { *reinterpret_cast<Jint*>(this + 1) = l; }
+  void* base() { return reinterpret_cast<char*>(this + 1) + sizeof(Jint); }
+};
+
 }  // namespace jvm::oops

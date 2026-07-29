@@ -31,7 +31,7 @@ class MethodInfo;
 
 namespace jvm::oops {
 
-class Object;
+class InstanceOopDesc;
 
 /**
  * @brief Runtime representation of a loaded Java class.
@@ -119,7 +119,7 @@ class Klass {
   size_t instance_slot_count_{};
   size_t static_slot_count_{};
 
-  Object* mirror_class_object_;
+  InstanceOopDesc* mirror_class_object_;
 
   /// @name Linking Helpers
   ///@{
