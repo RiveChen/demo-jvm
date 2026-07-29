@@ -19,6 +19,7 @@
 #include "constant_pool.hpp"
 #include "field.hpp"
 #include "method.hpp"
+#include "runtime/thread.hpp"
 #include "utilities/access_flags.hpp"
 #include "utilities/slot.hpp"
 
@@ -56,9 +57,13 @@ class Klass {
   explicit Klass(classfile::ClassFile* class_file, classfile::ClassLoader* loader);
 
   ClassState getState() const { return state_; }
-  void       markLoaded() {
+  void markLoaded() {
     assert(state_ == Allocated);
     state_ = Loaded;
+  }
+  void markFullyInitialized() {
+    assert(state_ == BeingInitialized);
+    state_ = FullyInitialized;
   }
 
   /// @name Class Hierarchy
@@ -95,6 +100,7 @@ class Klass {
   const std::string& getName() const { return name_; }
 
   void link(classfile::ClassFile* cf, classfile::ClassLoader* loader);
+  void initialize(runtime::Thread* thread);
 
  private:
   ClassState state_;

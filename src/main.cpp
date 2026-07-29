@@ -15,8 +15,6 @@
 #include <string>
 #include <vector>
 
-#include "utilities/logger.hpp"
-
 #include "classfile/class_loader.hpp"
 #include "engine/interpreter.hpp"
 #include "engine/stub_intercepts.hpp"
@@ -24,6 +22,7 @@
 #include "oops/method.hpp"
 #include "runtime/frame.hpp"
 #include "runtime/thread.hpp"
+#include "utilities/logger.hpp"
 
 /**
  * @brief Program entry point.
@@ -68,6 +67,7 @@ int main(int argc, char** argv) {
   jvm::runtime::Frame frame(entry);
   frame.getLocalVariables().setRef(0, nullptr);
   thread.pushFrame(std::move(frame));
+  klass->initialize(&thread);
 
   interpreter.interpret(&thread);
   LOG_INFO("Interpretation finished");

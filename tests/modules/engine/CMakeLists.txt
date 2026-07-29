@@ -147,6 +147,17 @@ target_compile_definitions(
   PRIVATE TEST_CLASS_PATH="${CMAKE_BINARY_DIR}/test_classes")
 gtest_discover_tests(test_interpreter_interface_invoke)
 
+# <clinit> class initialization tests
+add_executable(test_interpreter_clinit interpreter_clinit_test.cpp)
+target_link_libraries(test_interpreter_clinit PRIVATE jvm_engine jvm_classfile
+                                                          GTest::gtest_main)
+target_include_directories(test_interpreter_clinit PRIVATE ${TEST_BASE_DIR})
+add_dependencies(test_interpreter_clinit compile_test_classes)
+target_compile_definitions(
+  test_interpreter_clinit
+  PRIVATE TEST_CLASS_PATH="${CMAKE_BINARY_DIR}/test_classes")
+gtest_discover_tests(test_interpreter_clinit)
+
 # CHECKCAST / INSTANCEOF tests
 add_executable(test_interpreter_type_check interpreter_type_check_test.cpp)
 target_link_libraries(test_interpreter_type_check

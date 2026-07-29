@@ -1208,10 +1208,13 @@ void Interpreter::interpret(runtime::Thread* thread) {
       } break;
       case RETURN: {
         LOG_DEBUG("return from ", method->getName());
+        // If the returned method was <clinit>, mark the class as fully initialized
+        if (method->getName() == "<clinit>") {
+          method->getOwnerKlass()->markFullyInitialized();
+        }
         thread->popFrame();
         if (!thread->isStackEmpty()) {
           pc = thread->getCurrentFrame().getPC();
-
         } else {
           return;
         }
@@ -1229,15 +1232,29 @@ void Interpreter::interpret(runtime::Thread* thread) {
           break;
         }
 
-        auto* field     = rt_cp.resolveField(index);
-        auto& slot      = field->getOwnerKlass()->getStaticSlot(field->getSlotIndex());
+        auto* field = rt_cp.resolveField(index);
+        auto* klass = field->getOwnerKlass();
+        if (klass->getState() == oops::Klass::Linked) {
+          thread->getCurrentFrame().setPC(pc - 3);
+          klass->initialize(thread);
+          pc = 0;
+          break;
+        }
+        auto& slot      = klass->getStaticSlot(field->getSlotIndex());
         auto  signature = field->getSignature();
         descriptor::isCategory2(signature) ? op_stack.pushWide(slot) : op_stack.pushSlot(slot);
       } break;
       case PUTSTATIC: {
-        auto  index     = reader.readU2();
-        auto* field     = rt_cp.resolveField(index);
-        auto& slot      = field->getOwnerKlass()->getStaticSlot(field->getSlotIndex());
+        auto  index = reader.readU2();
+        auto* field = rt_cp.resolveField(index);
+        auto* klass = field->getOwnerKlass();
+        if (klass->getState() == oops::Klass::Linked) {
+          thread->getCurrentFrame().setPC(pc - 3);
+          klass->initialize(thread);
+          pc = 0;
+          break;
+        }
+        auto& slot      = klass->getStaticSlot(field->getSlotIndex());
         auto  signature = field->getSignature();
         slot = descriptor::isCategory2(signature) ? op_stack.popWide() : op_stack.popSlot();
       } break;
@@ -1361,7 +1378,14 @@ void Interpreter::interpret(runtime::Thread* thread) {
         LOG_DEBUG("INVOKESTATIC ", method->getOwnerKlass()->getName(), ".", method->getName(), ".",
                   method->getDescriptor());
 
-        // TODO: if the klass is not initialized, call <clinit>
+        // if the class is not initialied, initialize it
+        auto* klass = method->getOwnerKlass();
+        if (klass->getState() == oops::Klass::Linked) {
+          thread->getCurrentFrame().setPC(pc - 3);
+          klass->initialize(thread);
+          pc = 0;
+          break;
+        }
 
         if (!method->isStatic()) {
           throw std::runtime_error("Cannot invoke non-static method as static");
@@ -1458,9 +1482,15 @@ void Interpreter::interpret(runtime::Thread* thread) {
       // Function: Object creation and type checking
       // Components: rt_cp, op_stack, thread (PC)
       case NEW: {
-        auto         index   = reader.readU2();
-        oops::Klass* klass   = rt_cp.resolveClass(index);
-        Jref         obj_ref = memory::Heap::getSingleton().newInstance(klass);
+        auto         index = reader.readU2();
+        oops::Klass* klass = rt_cp.resolveClass(index);
+        if (klass->getState() == oops::Klass::Linked) {
+          thread->getCurrentFrame().setPC(pc - 3);
+          klass->initialize(thread);
+          pc = 0;
+          break;
+        }
+        Jref obj_ref = memory::Heap::getSingleton().newInstance(klass);
         op_stack.pushRef(obj_ref);
       } break;
 

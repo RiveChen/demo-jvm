@@ -15,6 +15,7 @@
 #include "classfile/constant_pool.hpp"
 #include "classfile/members.hpp"
 #include "constant_pool.hpp"
+#include "runtime/frame.hpp"
 #include "utilities/access_flags.hpp"
 #include "utilities/logger.hpp"
 #include "utilities/slot.hpp"
@@ -39,7 +40,35 @@ void Klass::link(classfile::ClassFile* cf, classfile::ClassLoader* loader) {
   state_ = Linked;
 }
 
-// NOLINTNEXTLINE(misc-no-recursion)
+void Klass::initialize(runtime::Thread* thread) {
+  // check if it has been initialized
+  if (state_ == FullyInitialized) {
+    return;
+  }
+  // check if is recursiving
+  if (state_ == BeingInitialized) {
+    return;
+  }
+  if (state_ == InitializationError) {
+    throw std::runtime_error("no class def found");
+  }
+
+  // make sure the super class has been initialized
+  if (super_class_ != nullptr) {
+    super_class_->initialize(thread);
+  }
+
+  // initializing
+  state_         = BeingInitialized;
+  Method* clinit = findMethod("<clinit>", "()V");
+  if (clinit == nullptr) {
+    state_ = FullyInitialized;
+    return;
+  }
+  runtime::Frame frame(clinit);
+  thread->pushFrame(std::move(frame));
+}
+
 Method* Klass::findMethod(const std::string& name, const std::string& descriptor) {
   for (auto& method : methods_) {
     if (method.getName() == name && method.getDescriptor() == descriptor) {
@@ -52,7 +81,6 @@ Method* Klass::findMethod(const std::string& name, const std::string& descriptor
   return nullptr;
 }
 
-// NOLINTNEXTLINE(misc-no-recursion)
 Field* Klass::findField(const std::string& name, const std::string& descriptor) {
   for (auto& field : fields_) {
     if (field.getName() == name && field.getDescriptor() == descriptor) {
@@ -241,7 +269,6 @@ void Klass::prepareFieldsAndStatics(classfile::ClassFile* class_file) {
   }
 }
 
-// NOLINTNEXTLINE(misc-no-recursion)
 void Klass::linkSuperClass(classfile::ClassFile* cf, classfile::ClassLoader* loader) {
   U2 super_class_index = cf->super_class_index;
 
@@ -265,7 +292,6 @@ void Klass::linkSuperClass(classfile::ClassFile* cf, classfile::ClassLoader* loa
   this->setSuperClass(super_klass);
 }
 
-// NOLINTNEXTLINE(misc-no-recursion)
 void Klass::linkInterfaces(classfile::ClassFile* cf, classfile::ClassLoader* loader) {
   auto        interfaces = cf->interfaces;
   const auto& cp         = cf->constant_pool;
@@ -277,7 +303,6 @@ void Klass::linkInterfaces(classfile::ClassFile* cf, classfile::ClassLoader* loa
   }
 }
 
-// NOLINTNEXTLINE(misc-no-recursion)
 bool Klass::isInstanceOf(Klass* target) const {
   if (this == target) {
     return true;
