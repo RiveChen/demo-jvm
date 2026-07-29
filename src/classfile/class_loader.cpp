@@ -82,6 +82,10 @@ oops::Klass* ClassLoader::loadClass(const std::string& fully_qualified_name) {
     return cache_[name];
   }
 
+  if (parent_ != nullptr) {
+    return parent_->loadClass(name);
+  }
+
   // Read class file from classpath
   auto class_file_data = readClassFile(name);
   if (!class_file_data) {

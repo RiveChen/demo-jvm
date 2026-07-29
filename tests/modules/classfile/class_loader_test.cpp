@@ -110,12 +110,12 @@ TEST_F(ClassLoaderTest, ClassRegisteredInMethodArea) {
 }
 
 TEST_F(ClassLoaderTest, ParentClassLoader) {
-  // Test parent class loader
+  // Test parent class loader delegation:
+  // child delegates to parent → child returns parent's cached instance
   auto parent_loader = std::make_unique<classfile::ClassLoader>(nullptr, classpath_list_);
   auto child_loader =
     std::make_unique<classfile::ClassLoader>(parent_loader.get(), classpath_list_);
 
-  // Both should be able to load classes independently
   std::string class_name   = "tests.data.java.HelloWorld";
   auto*       parent_klass = parent_loader->loadClass(class_name);
   auto*       child_klass  = child_loader->loadClass(class_name);
@@ -123,9 +123,43 @@ TEST_F(ClassLoaderTest, ParentClassLoader) {
   ASSERT_NE(parent_klass, nullptr);
   ASSERT_NE(child_klass, nullptr);
 
-  // They should be different instances (different class loaders)
-  EXPECT_NE(parent_klass, child_klass)
-    << "Different class loaders should create different instances";
+  // With parent delegation, child should return the same instance as parent
+  EXPECT_EQ(parent_klass, child_klass)
+    << "Child with parent delegation should return parent's cached instance";
+}
+
+TEST_F(ClassLoaderTest, ParentDelegationCachesToParent) {
+  // After child loadClass via parent delegation, the class should be cached
+  // in the parent's cache (not the child's), since parent actually loaded it.
+  auto parent_loader = std::make_unique<classfile::ClassLoader>(nullptr, classpath_list_);
+  auto child_loader =
+    std::make_unique<classfile::ClassLoader>(parent_loader.get(), classpath_list_);
+
+  std::string class_name = "tests.data.java.HelloWorld";
+  // Child loads first — delegates to parent, parent does the real loading
+  auto* child_first = child_loader->loadClass(class_name);
+  ASSERT_NE(child_first, nullptr);
+
+  // Parent can find it in its own cache (loaded during delegation)
+  auto* parent_from_cache = parent_loader->loadClass(class_name);
+  ASSERT_NE(parent_from_cache, nullptr);
+  EXPECT_EQ(child_first, parent_from_cache);
+
+  // Child cache is empty for this class (child never loaded directly),
+  // but loadClass still succeeds via delegation to parent
+  auto* child_second = child_loader->loadClass(class_name);
+  ASSERT_NE(child_second, nullptr);
+  EXPECT_EQ(child_second, parent_from_cache);
+}
+
+TEST_F(ClassLoaderTest, DelegationFailurePropagates) {
+  // child delegates to parent, parent can't find it → parent throws
+  auto parent_loader = std::make_unique<classfile::ClassLoader>(nullptr, classpath_list_);
+  auto child_loader =
+    std::make_unique<classfile::ClassLoader>(parent_loader.get(), classpath_list_);
+
+  // Parent's classpath doesn't have this, so parent throws, child propagates
+  EXPECT_THROW(child_loader->loadClass("NonExistentClass"), std::runtime_error);
 }
 
 TEST_F(ClassLoaderTest, EmptyClasspath) {
