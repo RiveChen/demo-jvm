@@ -26,6 +26,13 @@ _更新于 2026-07-12。`[x]` 已完成,`[ ]` 待办,引用处标注 `文件:行
 - [x] **M3 native 机制** — `engine/native_registry.h`(key `类/方.描述符`→`NativeFn`),INVOKESTATIC 的 isNative 查表分派;`interpreter_native_test`。
 - [x] **M6 System.out/println 符号拦截** — GETSTATIC 认 `java.lang.System.out` 压哨兵、INVOKEVIRTUAL 认 `java.io.PrintStream.println:(Ljava/lang/String;)V`→`std::cout`,均在 resolve 之前。
 - [x] **M7 桩接版 hello world 端到端 🎉** — `main.cpp` 加载主类→驱动真 `main`;`interpreter_hello_world_test` 抓 cout 断言 `"Hello, World!\n"`。
+- [x] **R1 符号拦截抽离** — 独立 `StubIntercepts` 表 + `RuntimeConstantPool::symbolicKey` + `tryStubIntercept`,三站点统一;与 NativeRegistry 分开;顶部 burn-down 列表。修了 symbolicKey 对已解析目标类的 `bad_variant_access`。
+- [x] **R2 类名斜杠统一** — 见下(斜杠为唯一内部规范,loadClass 入口归一化)。
+- [x] **R3 logger** — `utilities/logger.h`:5 级 + `JVM_LOG_LEVEL` 运行期 + `JVM_LOG_MAX_LEVEL` 编译期裁剪 + `file:line`;VM 生命周期已铺日志。
+- [x] **WIDE 指令** — 宽索引前缀。
+- [x] **D5 invoke 全齐** — INVOKESTATIC/SPECIAL/VIRTUAL/**INTERFACE** 全实现(接口按 receiver 实际类分派);修了接口解析/链接索引顺序。
+- [x] **CHECKCAST / INSTANCEOF** — `isInstanceOf` 沿继承/接口链判断。
+- [x] **stub 方法家桶(Tier 1 部分)** — `System.err` 哨兵;`PrintStream.print/println` 各原始类型(I/J/F/D/…)+ String,按 receiver 哨兵选 cout/cerr。
 
 ---
 
@@ -53,23 +60,21 @@ _更新于 2026-07-12。`[x]` 已完成,`[ ]` 待办,引用处标注 `文件:行
 
 ## 下一阶段:走向更完整的 JVM
 
-### R. 先重构(在加更多特性前收拾干净)
+### R. 重构 / 收尾(R1/R2/R3 已完成,见上方 ✅)
 
-- [ ] **R1. 抽象符号拦截**(你想做的)—— 把散在 GETSTATIC/INVOKEVIRTUAL/INVOKESPECIAL 里的内联 `if (class_name=="..." && member=="...")` 收进一张**独立的 `StubIntercepts` 表**:`{class(点),member,descriptor} → handler(op_stack)`,resolve 前查表命中即走 handler。**与 NativeRegistry 分开**(两者语义/生命周期相反:native 永久且正规、拦截是可烧毁的 workaround)。表顶维护 burn-down 列表(Object.<init>/System.out/println),随真类库/桩类到位逐条删除。
-- [x] **R2. 类名斜杠/点统一(斜杠为唯一内部规范)** —— `loadClass` 入口 `.`→`/` 归一化一次;删掉 super/interface/kClass 烘焙里散落的 `/`→`.`;`"java/lang/Object"` 判定、stub key、`symbolicKey`、native key 全斜杠;点只在 CLI/API 边界。
-- [ ] **(远期)NativeRegistry 向 JNI 演进** —— native fn 签名从裸 `OperandStack&` 走向 `JNIEnv*` + 参数编组,做到规范。独立于"删拦截"。
-- [ ] **C2. 拆解释器大 switch** — 单函数已很长;按指令组拆 TU、抽 invoke 建帧/return 退帧到 runtime。
-- [ ] **R3. 极简 `JVM_TRACE`** — `utilities/log.h` 一个 env 门控宏(`JVM_TRACE=1` 时输出到 `std::cerr`),先给解释器循环一条 opcode 执行轨迹(`pc`/op/栈深)+ 类加载/resolve/拦截命中几点。**不引框架、不分 level/category**;错误报告维持异常。VM 长大到多子系统后再演进成 `-Xlog` 式分类日志。
+- [ ] **C2. 拆解释器大 switch** — 单函数已很长;方案:保留 switch 做薄分派,执行态放 Interpreter 成员(或 ExecContext),handler 按类别分散到 `engine/ops/*.cpp` 并参数化指令族;**先抽 invoke 建帧 + return 退帧两块**(最肥、最重复),再搬机械组。不 computed-goto。
+- [ ] **(远期)NativeRegistry 向 JNI 演进** — native fn 签名从裸 `OperandStack&` 走向 `JNIEnv*` + 参数编组。独立于"删拦截"。
+- [ ] **logger 小改**:`LOG_*` 宏在判等级**之前**短路(`do{ if(enabled) log(...);}while(0)`),运行期关闭时不求值实参(热路径 opcode trace 有用)。
 - [ ] **`slotCount` 补 `return`**、**B5 debug tag**(小项,随时)。
 
 ### D. 功能(按价值/依赖)
 
-- [ ] **D4. 数组** —— **推荐下一个大特性**。NEWARRAY/ANEWARRAY/\*ALOAD/\*ASTORE/ARRAYLENGTH;解锁真 `String[] args`、真 String(char[]/byte[])、大量普通程序。建在现有 heap 上,自洽。
-- [ ] **`<clinit>` 类初始化** — 首次主动使用触发 `<clinit>`(Klass 加 initialized 状态 + 递归守卫);补 INVOKESTATIC/GETSTATIC 的触发点。修正"`static int x = 5;` 仍是 0"这类静态初始化缺口。
-- [ ] **D6. 异常处理** — ATHROW + 异常表 + 真 Java 异常,替换会打挂 VM 的 `std::runtime_error`(除零/NPE)。解锁 try/catch。
-- [ ] **INVOKEINTERFACE** — 接口方法分派。
+- [ ] **D4. 数组** —— **推荐下一个大特性**。NEWARRAY/ANEWARRAY/\*ALOAD/\*ASTORE/ARRAYLENGTH;解锁真 `String[] args`、真 String(char[])、大量普通程序。建在现有 heap 上,自洽。也是"自写真类"路线的硬前提。
+- [ ] **`<clinit>` 类初始化** —— **已可实现(自洽,前提就绪)**。加 Klass 初始化状态(`uninit→in-progress→inited`)+ 递归守卫;NEW/GETSTATIC/PUTSTATIC/INVOKESTATIC + main 入口前触发;super 先于 sub;复用现有 invoke/帧机制跑 `<clinit>()V`。**唯一设计决定**:如何"指令中途"跑 clinit(嵌套 interpret 调用 vs 压帧后回退 pc 重执行触发指令)。不依赖数组/异常。修正"`static int x=5` 仍是 0"缺口,也是"自写真类"的前提。
+- [ ] **D6. 异常处理** — ATHROW + 异常表 + 真 Java 异常,替换会打挂 VM 的 `std::runtime_error`(除零/NPE/越界)。解锁 try/catch,也是真 String 方法错误路径的前提。
+- [ ] **stub 家桶续做(Tier 1/2)** — String 只读方法(length/charAt/equals/hashCode…)、静态工具(Integer.parseInt、Math.\*、System.currentTimeMillis;需 INVOKESTATIC 加 `tryStubIntercept`)、返回 String 的方法(intern 结果)、`+` 拼接(StringBuilder 桩 + NEW 拦截)。纯加 handler,不碰 switch。
+- [ ] **自写最小真类** — 编译自己的最小 `Object/String/StringBuilder.java`(char[] 后端、无 Unsafe),加载真字节码逐条烧掉对应 stub。前提:D4 数组 + `<clinit>` + 一小撮 native(arraycopy)+(可选)D6。
 - [ ] **D7. GC** — mark-sweep(非移动,直接指针不变);再远才是移动 + oopmap。
-- [ ] **旁支:INVOKESTATIC 的 `<clinit>` + native 分支**(现有两处 TODO);`natives.cpp` 进 CMake + `registerBuiltins` 在 main 调。
 
 ---
 
@@ -82,9 +87,9 @@ _更新于 2026-07-12。`[x]` 已完成,`[ ]` 待办,引用处标注 `文件:行
 
 ## 建议下一步
 
-hello world 已达成 🎉。建议:
+hello world + R1/R2/R3 + 四种 invoke + CHECKCAST/INSTANCEOF + WIDE + print 家桶都已完成 🎉。接下来两条主线,可并行/择一:
 
-1. **先重构 R1**:把三处内联符号拦截抽成一张拦截表(你想做的),顺带 R2 统一类名斜杠/点形式——趁只有三处、上下文还热,先收拾干净,再加特性。
-2. **再上 D4 数组**:解锁真 `String[]`、真 String、大量普通程序,是最高价值的下一个大特性,且干净地建在现有 heap 上。
-3. 之后按需:**`<clinit>` 类初始化**(修静态初始化)→ **D6 异常**(try/catch,别再 crash)→ INVOKEINTERFACE → 最后 **GC(mark-sweep)**。
-4. 设计已稳,**E3 `ARCHITECTURE.md`** 是个好时机——把 slot(64 位裸 union)、pc 归属、引用模型、拦截机制、边界检查策略记下来。
+1. **广度(能跑更多程序,纯加 handler,不碰 switch)**:续做 **stub 家桶 Tier 1/2**(String 只读方法、Integer/Math 静态、`+` 拼接)。ROI 高、低风险。
+2. **深度(走向真类/正确性)**:**`<clinit>`**(已可做、自洽,修静态初始化)→ **D4 数组**(硬前提)→ **D6 异常** → **自写最小真类**(逐条烧 stub)→ 最后 **GC(mark-sweep)**。
+
+**`<clinit>` 现在就能做**(不依赖数组/异常),若你的测试程序开始用 `static int x=5;` 这类初始化,它就是最该补的正确性缺口。**C2 拆 switch** 建议放在这些特性之后(handler 更多、分组更有料);`slotCount return`、logger 短路那两个小项随时穿插。
