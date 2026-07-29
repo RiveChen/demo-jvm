@@ -13,12 +13,9 @@
 
 #pragma once
 
-#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
-
-#include "class_file.hpp"
 
 namespace jvm::oops {
 class Klass;
@@ -47,12 +44,6 @@ class ClassLoader {
 
   /// @brief Read raw class file bytes from the classpath.
   std::optional<std::vector<std::byte>> readClassFile(const std::string& name);
-  /// @brief Parse a ClassFile and create the corresponding Klass in the MethodArea.
-  oops::Klass* defineClass(std::unique_ptr<ClassFile> class_file, const std::string& name);
-  /// @brief Link the super class of a newly-defined Klass.
-  void linkSuperClass(oops::Klass* klass, classfile::ClassFile* cf);
-  /// @brief Link implemented interfaces of a newly-defined Klass.
-  void linkInterfaces(oops::Klass* klass, classfile::ClassFile* cf);
 
  public:
   explicit ClassLoader(ClassLoader* parent = nullptr, std::vector<std::string> classpaths = {})

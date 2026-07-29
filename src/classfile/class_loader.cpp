@@ -13,7 +13,6 @@
 #include <span>
 #include <vector>
 
-#include "class_file.hpp"
 #include "class_file_parser.hpp"
 #include "oops/klass.hpp"
 #include "oops/method_area.hpp"
@@ -65,74 +64,6 @@ std::optional<std::vector<std::byte>> ClassLoader::readClassFile(const std::stri
   return std::nullopt;
 }
 
-/**
- * @brief Defines a new class from a parsed ClassFile and registers it in the method area
- *
- * This method creates a new Klass object from the parsed class file data and registers
- * it in the method area with the current class loader. The class becomes available
- * for use by the JVM runtime.
- *
- * @param class_file A unique pointer to the parsed ClassFile containing class metadata
- * @param name The fully qualified name of the class being defined
- * @return oops::Klass* A pointer to the newly created and registered Klass object
- *
- * @note The method takes ownership of the ClassFile and transfers it to the method area
- * @note The created Klass object is associated with this ClassLoader instance
- * @note The class is registered in the method area using a key of (ClassLoader*, name)
- */
-// NOLINTNEXTLINE(misc-no-recursion)
-oops::Klass* ClassLoader::defineClass(std::unique_ptr<classfile::ClassFile> class_file,
-                                      const std::string&                    name) {
-  // Create new Klass object from the parsed class file
-  auto         klass     = std::make_unique<oops::Klass>(class_file.get(), this);
-  oops::Klass* klass_ptr = klass.get();
-  auto*        cf        = class_file.get();
-
-  linkSuperClass(klass_ptr, cf);
-  linkInterfaces(klass_ptr, cf);
-
-  // Register the class in the method area with this class loader
-  oops::MethodArea::getSingleton().addClass(
-    std::make_pair(this, name), std::make_pair(std::move(klass), std::move(class_file)));
-  return klass_ptr;
-}
-
-// NOLINTNEXTLINE(misc-no-recursion)
-void ClassLoader::linkSuperClass(oops::Klass* klass, classfile::ClassFile* cf) {
-  U2 super_class_index = cf->super_class_index;
-
-  if (super_class_index == 0) {
-    // only `java.lang.Object` has no super class
-    klass->setSuperClass(nullptr);
-    return;
-  }
-
-  const auto& cp               = cf->constant_pool;
-  std::string super_class_name = cp.getClassName(super_class_index);  // internal slash form
-
-  if (super_class_name == "java/lang/Object") {
-    // suspend the support of Object for now
-    klass->setSuperClass(nullptr);
-    return;
-  }
-
-  auto* super_klass = this->loadClass(super_class_name);
-
-  klass->setSuperClass(super_klass);
-}
-
-// NOLINTNEXTLINE(misc-no-recursion)
-void ClassLoader::linkInterfaces(oops::Klass* klass, classfile::ClassFile* cf) {
-  auto        interfaces = cf->interfaces;
-  const auto& cp         = cf->constant_pool;
-  for (U2 i = 0; i < interfaces.size(); i++) {
-    U2          interface_index = interfaces[i];
-    std::string interface_name  = cp.getClassName(interface_index);  // internal slash form
-    auto*       interface_klass = loadClass(interface_name);
-    klass->setInterface(i, interface_klass);
-  }
-}
-
 // (documentation in class_loader.h)
 // NOLINTNEXTLINE(misc-no-recursion)
 oops::Klass* ClassLoader::loadClass(const std::string& fully_qualified_name) {
@@ -160,17 +91,24 @@ oops::Klass* ClassLoader::loadClass(const std::string& fully_qualified_name) {
   auto  class_file = parser.parse();
   auto* cf = class_file.get();  // grab before the move (pointee stays put; MethodArea owns it)
 
-  auto* klass = defineClass(std::move(class_file), name);
+  // Create new Klass object from the parsed class file
+  auto         klass     = std::make_unique<oops::Klass>(class_file.get(), this);
+  oops::Klass* klass_ptr = klass.get();
 
-  // Prepare the class
-  klass->prepareRuntimeConstantPool(cf);
-  klass->prepareMethods(cf);
-  klass->prepareFieldsAndStatics(cf);
-  LOG_INFO("Class loaded: ", name);
+  // Register the class in the method area with this class loader
+  oops::MethodArea::getSingleton().addClass(
+    std::make_pair(this, name), std::make_pair(std::move(klass), std::move(class_file)));
 
   // Cache the loaded class for future access
-  cache_[name] = klass;
-  return klass;
+  cache_[name] = klass_ptr;
+
+  klass_ptr->markLoaded();
+
+  // Link the class
+  klass_ptr->link(cf, this);
+  LOG_INFO("Class loaded: ", name);
+
+  return klass_ptr;
 }
 
 }  // namespace jvm::classfile

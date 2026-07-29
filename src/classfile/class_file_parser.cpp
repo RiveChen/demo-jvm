@@ -140,7 +140,7 @@ AccessFlags<flags::Class> ClassFileParser::parseAccessFlags() {
 MemberTable ClassFileParser::parseFields() {
   U2   count  = reader_.read<U2>();
   auto fields = std::vector<std::unique_ptr<MemberInfo>>(count);
-  for (auto i = 0; i < count; i++) {
+  for (U2 i = 0; i < count; i++) {
     fields[i] = createFieldInfo();
   }
   return MemberTable(std::move(fields));
@@ -149,7 +149,7 @@ MemberTable ClassFileParser::parseFields() {
 MemberTable ClassFileParser::parseMethods() {
   U2   count   = reader_.read<U2>();
   auto methods = std::vector<std::unique_ptr<MemberInfo>>(count);
-  for (auto i = 0; i < count; i++) {
+  for (U2 i = 0; i < count; i++) {
     methods[i] = createMethodInfo();
   }
   return MemberTable(std::move(methods));

@@ -11,6 +11,8 @@
 
 #pragma once
 
+#include <cassert>
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -39,10 +41,25 @@ class Object;
  */
 class Klass {
  public:
+  enum ClassState : uint8_t {
+    Allocated,
+    Loaded,
+    Linked,
+    BeingInitialized,
+    FullyInitialized,
+    InitializationError,
+  };
+
   /// @brief Construct a Klass from a parsed class file.
   /// @param class_file The parsed class file (ownership transferred).
   /// @param loader The class loader that loaded this class.
   explicit Klass(classfile::ClassFile* class_file, classfile::ClassLoader* loader);
+
+  ClassState getState() const { return state_; }
+  void       markLoaded() {
+    assert(state_ == Allocated);
+    state_ = Loaded;
+  }
 
   /// @name Class Hierarchy
   ///@{
@@ -77,7 +94,11 @@ class Klass {
   /// @brief The fully qualified class name (e.g. "java.lang.Object").
   const std::string& getName() const { return name_; }
 
+  void link(classfile::ClassFile* cf, classfile::ClassLoader* loader);
+
  private:
+  ClassState state_;
+
   classfile::ClassLoader* loader_;
 
   std::string               name_;
@@ -94,14 +115,14 @@ class Klass {
 
   Object* mirror_class_object_;
 
-  /// @name Initialization Helpers (called by ClassLoader::defineClass)
+  /// @name Linking Helpers
   ///@{
   void prepareRuntimeConstantPool(classfile::ClassFile* class_file);
   void prepareMethods(classfile::ClassFile* class_file);
   void prepareFieldsAndStatics(classfile::ClassFile* class_file);
+  void linkSuperClass(classfile::ClassFile*, classfile::ClassLoader*);
+  void linkInterfaces(classfile::ClassFile*, classfile::ClassLoader*);
   ///@}
-
-  friend class classfile::ClassLoader;
 };
 
 }  // namespace jvm::oops

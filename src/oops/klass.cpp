@@ -9,18 +9,29 @@
 #include <utility>
 
 #include "classfile/class_file.hpp"
+#include "classfile/class_loader.hpp"
 #include "constant_pool.hpp"
 #include "utilities/logger.hpp"
 
 namespace jvm::oops {
 Klass::Klass(classfile::ClassFile* class_file, classfile::ClassLoader* loader)
-  : loader_(loader),
+  : state_(Allocated),
+    loader_(loader),
     name_(class_file->constant_pool.getClassName(class_file->this_class_index)),
     access_flags_(class_file->access_flags),
     super_class_(nullptr),
     interfaces_(class_file->interfaces_count),
     constant_pool_(this),
     mirror_class_object_(nullptr) {}
+
+void Klass::link(classfile::ClassFile* cf, classfile::ClassLoader* loader) {
+  linkSuperClass(cf, loader);
+  linkInterfaces(cf, loader);
+  prepareRuntimeConstantPool(cf);
+  prepareMethods(cf);
+  prepareFieldsAndStatics(cf);
+  state_ = Linked;
+}
 
 // NOLINTNEXTLINE(misc-no-recursion)
 Method* Klass::findMethod(const std::string& name, const std::string& descriptor) {
@@ -203,6 +214,43 @@ void Klass::prepareFieldsAndStatics(classfile::ClassFile* class_file) {
   statics_.resize(static_slot_count);
 }
 
+// NOLINTNEXTLINE(misc-no-recursion)
+void Klass::linkSuperClass(classfile::ClassFile* cf, classfile::ClassLoader* loader) {
+  U2 super_class_index = cf->super_class_index;
+
+  if (super_class_index == 0) {
+    // only `java.lang.Object` has no super class
+    this->setSuperClass(nullptr);
+    return;
+  }
+
+  const auto& cp               = cf->constant_pool;
+  std::string super_class_name = cp.getClassName(super_class_index);  // internal slash form
+
+  if (super_class_name == "java/lang/Object") {
+    // suspend the support of Object for now
+    this->setSuperClass(nullptr);
+    return;
+  }
+
+  auto* super_klass = loader->loadClass(super_class_name);
+
+  this->setSuperClass(super_klass);
+}
+
+// NOLINTNEXTLINE(misc-no-recursion)
+void Klass::linkInterfaces(classfile::ClassFile* cf, classfile::ClassLoader* loader) {
+  auto        interfaces = cf->interfaces;
+  const auto& cp         = cf->constant_pool;
+  for (U2 i = 0; i < interfaces.size(); i++) {
+    U2          interface_index = interfaces[i];
+    std::string interface_name  = cp.getClassName(interface_index);  // internal slash form
+    auto*       interface_klass = loader->loadClass(interface_name);
+    this->setInterface(i, interface_klass);
+  }
+}
+
+// NOLINTNEXTLINE(misc-no-recursion)
 bool Klass::isInstanceOf(Klass* target) const {
   if (this == target) {
     return true;
