@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
@@ -17,7 +18,7 @@
 
 namespace jvm::log {
 
-enum class Level : int { TRACE = 0, DEBUG = 1, INFO = 2, WARN = 3, ERROR = 4, OFF = 5 };
+enum class Level : uint8_t { TRACE = 0, DEBUG = 1, INFO = 2, WARN = 3, ERROR = 4, OFF = 5 };
 
 /// @brief Resolve the minimum output level from environment variable JVM_LOG_LEVEL.
 inline Level min_level() {
