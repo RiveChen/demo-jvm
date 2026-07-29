@@ -12,7 +12,7 @@ FormatStyle: file
 # 8. Disable checks that conflict with JVM implementation needs
 Checks: >
   -*, bugprone-*, -bugprone-easily-swappable-parameters, cert-*, clang-analyzer-*, concurrency-*, cppcoreguidelines-*, -cppcoreguidelines-pro-type-union-access,
-    -cppcoreguidelines-avoid-c-arrays,
+    -cppcoreguidelines-avoid-c-arrays, -portability-avoid-pragma-once,
   hicpp-*, misc-*, -misc-non-private-member-variables-in-classes,
     -misc-no-recursion,
   modernize-*, -modernize-use-trailing-return-type,
