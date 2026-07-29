@@ -9,11 +9,14 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <optional>
 #include <span>
+#include <utility>
 #include <vector>
 
 #include "class_file_parser.hpp"
+#include "classfile/class_file.hpp"
 #include "oops/klass.hpp"
 #include "oops/method_area.hpp"
 #include "utilities/logger.hpp"
@@ -85,19 +88,21 @@ oops::Klass* ClassLoader::loadClass(const std::string& fully_qualified_name) {
     throw std::runtime_error("Class " + name + " not found");
   }
 
-  // Parse the class file and create Klass object
+  // Parse the class file
   auto  parser = ClassFileParser(std::span<U1>(std::bit_cast<U1*>(class_file_data.value().data()),
                                                class_file_data.value().size()));
-  auto  class_file = parser.parse();
-  auto* cf = class_file.get();  // grab before the move (pointee stays put; MethodArea owns it)
+  auto  cf        = parser.parse();
+  // Wrap in unique_ptr for MethodArea ownership; keep a raw pointer for the link phase.
+  auto  cf_unique = std::make_unique<ClassFile>(std::move(cf));
+  auto* cf_ptr    = cf_unique.get();
 
   // Create new Klass object from the parsed class file
-  auto         klass     = std::make_unique<oops::Klass>(class_file.get(), this);
+  auto         klass     = std::make_unique<oops::Klass>(cf_ptr, this);
   oops::Klass* klass_ptr = klass.get();
 
   // Register the class in the method area with this class loader
   oops::MethodArea::getSingleton().addClass(
-    std::make_pair(this, name), std::make_pair(std::move(klass), std::move(class_file)));
+    {this, name}, {std::move(klass), std::move(cf_unique)});
 
   // Cache the loaded class for future access
   cache_[name] = klass_ptr;
@@ -105,7 +110,7 @@ oops::Klass* ClassLoader::loadClass(const std::string& fully_qualified_name) {
   klass_ptr->markLoaded();
 
   // Link the class
-  klass_ptr->link(cf, this);
+  klass_ptr->link(cf_ptr, this);
   LOG_INFO("Class loaded: ", name);
 
   return klass_ptr;

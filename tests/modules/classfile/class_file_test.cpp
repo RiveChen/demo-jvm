@@ -43,13 +43,13 @@ TEST_F(ClassFileTest, InvalidMagic) {
 }
 
 TEST_F(ClassFileTest, ParseVersion) {
-  auto class_file = parser_->parse();
-  EXPECT_EQ(class_file->version.toString(), "52.0");
+  classfile::ClassFile class_file = parser_->parse();
+  EXPECT_EQ(class_file.version.toString(), "52.0");
 }
 
 TEST_F(ClassFileTest, ParseConstantPool) {
-  auto  class_file    = parser_->parse();
-  auto& constant_pool = class_file->constant_pool;
+  classfile::ClassFile class_file    = parser_->parse();
+  auto&                constant_pool = class_file.constant_pool;
   EXPECT_EQ(constant_pool.size(), 26);
   EXPECT_EQ(constant_pool.getUtf8String(4), "java/lang/Object");
   EXPECT_EQ(constant_pool.getClassName(2), "java/lang/Object");
@@ -57,48 +57,48 @@ TEST_F(ClassFileTest, ParseConstantPool) {
 }
 
 TEST_F(ClassFileTest, ParseAccessFlags) {
-  auto class_file = parser_->parse();
-  EXPECT_EQ(class_file->access_flags.getFlags(), 0x0021);
-  EXPECT_TRUE(class_file->access_flags.has(flags::Class::PUBLIC));
-  EXPECT_TRUE(class_file->access_flags.has(flags::Class::SUPER));
-  EXPECT_FALSE(class_file->access_flags.has(flags::Class::ABSTRACT));
+  classfile::ClassFile class_file = parser_->parse();
+  EXPECT_EQ(class_file.access_flags.getFlags(), 0x0021);
+  EXPECT_TRUE(class_file.access_flags.has(flags::Class::PUBLIC));
+  EXPECT_TRUE(class_file.access_flags.has(flags::Class::SUPER));
+  EXPECT_FALSE(class_file.access_flags.has(flags::Class::ABSTRACT));
 }
 
 TEST_F(ClassFileTest, ParseClassIndex) {
-  auto class_file = parser_->parse();
-  EXPECT_EQ(class_file->this_class_index, 21);
-  EXPECT_EQ(class_file->constant_pool.getClassName(class_file->this_class_index),
+  classfile::ClassFile class_file = parser_->parse();
+  EXPECT_EQ(class_file.this_class_index, 21);
+  EXPECT_EQ(class_file.constant_pool.getClassName(class_file.this_class_index),
             "tests/data/java/HelloWorld");
 }
 
 TEST_F(ClassFileTest, ParseSuperClassIndex) {
-  auto class_file = parser_->parse();
-  EXPECT_EQ(class_file->super_class_index, 2);
-  EXPECT_EQ(class_file->constant_pool.getClassName(class_file->super_class_index),
+  classfile::ClassFile class_file = parser_->parse();
+  EXPECT_EQ(class_file.super_class_index, 2);
+  EXPECT_EQ(class_file.constant_pool.getClassName(class_file.super_class_index),
             "java/lang/Object");
 }
 
 TEST_F(ClassFileTest, ParseInterfaces) {
-  auto class_file = parser_->parse();
-  EXPECT_EQ(class_file->interfaces_count, 0);
-  EXPECT_EQ(class_file->interfaces, std::vector<U2>());
+  classfile::ClassFile class_file = parser_->parse();
+  EXPECT_EQ(class_file.interfaces_count, 0);
+  EXPECT_EQ(class_file.interfaces, std::vector<U2>());
 }
 
 TEST_F(ClassFileTest, ParseFields) {
-  auto class_file = parser_->parse();
-  EXPECT_EQ(class_file->fields.getMembers().size(), 0);
+  classfile::ClassFile class_file = parser_->parse();
+  EXPECT_EQ(class_file.fields.getMembers().size(), 0);
 }
 
 TEST_F(ClassFileTest, ParseMethods) {
-  auto class_file = parser_->parse();
-  EXPECT_EQ(class_file->methods.getMembers().size(), 2);
-  EXPECT_EQ(class_file->methods.getMembers()[0]->name, "<init>");
+  classfile::ClassFile class_file = parser_->parse();
+  EXPECT_EQ(class_file.methods.getMembers().size(), 2);
+  EXPECT_EQ(class_file.methods.getMembers()[0]->name, "<init>");
   EXPECT_EQ(
-    class_file->constant_pool.getUtf8String(class_file->methods.getMembers()[0]->descriptor_index),
+    class_file.constant_pool.getUtf8String(class_file.methods.getMembers()[0]->descriptor_index),
     "()V");
 }
 
 TEST_F(ClassFileTest, ParseAttributes) {
-  auto class_file = parser_->parse();
-  EXPECT_EQ(class_file->attributes.getAttributes().size(), 0);
+  classfile::ClassFile class_file = parser_->parse();
+  EXPECT_EQ(class_file.attributes.getAttributes().size(), 0);
 }

@@ -33,9 +33,9 @@ class ClassFileParser {
 
   /**
    * @brief Parse the class file data into a ClassFile structure.
-   * @return std::unique_ptr<ClassFile> The parsed result.
+   * @return ClassFile The parsed result.
    */
-  std::unique_ptr<ClassFile> parse();
+  ClassFile parse();
 
   /// @brief Access the underlying byte reader (e.g. for nested attribute parsing).
   ByteReader& getReader() { return reader_; }

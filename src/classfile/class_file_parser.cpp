@@ -13,7 +13,7 @@
 
 namespace jvm::classfile {
 
-std::unique_ptr<ClassFile> ClassFileParser::parse() {
+ClassFile ClassFileParser::parse() {
   parseMagic();
   auto version           = parseVersion();
   auto constant_pool     = parseConstantPool();
@@ -30,10 +30,9 @@ std::unique_ptr<ClassFile> ClassFileParser::parse() {
   auto methods    = parseMethods();
   auto attributes = parseAttributes();
   LOG_DEBUG("Parsed: version=", version.toString(), ", cp_size=", constant_pool.size());
-  return std::make_unique<ClassFile>(std::move(version), std::move(constant_pool), access_flags,
-                                     this_class_index, super_class_index, interfaces_count,
-                                     std::move(interfaces), std::move(fields), std::move(methods),
-                                     std::move(attributes));
+  return {std::move(version), std::move(constant_pool), access_flags,          this_class_index,
+          super_class_index,  interfaces_count,         std::move(interfaces), std::move(fields),
+          std::move(methods), std::move(attributes)};
 }
 
 void ClassFileParser::parseMagic() {
