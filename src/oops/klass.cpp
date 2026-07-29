@@ -59,22 +59,6 @@ Field* Klass::findField(const std::string& name, const std::string& descriptor) 
   return nullptr;
 }
 
-namespace {
-std::pair<std::string, std::string> resolveNameAndType(classfile::ClassFile* classfile, U2 index) {
-  const auto& cf_cp = classfile->constant_pool;
-  const auto* nt_info =
-    dynamic_cast<const classfile::NameAndTypeInfo*>(cf_cp.getConstantInfo(index));
-  if (nt_info == nullptr) {
-    throw std::runtime_error("Invalid name and type info");
-  }
-
-  std::string name       = cf_cp.getUtf8String(nt_info->name_index);
-  std::string descriptor = cf_cp.getUtf8String(nt_info->descriptor_index);
-
-  return std::make_pair(name, descriptor);
-}
-}  // namespace
-
 void Klass::prepareRuntimeConstantPool(classfile::ClassFile* class_file) {
   LOG_DEBUG("Preparing runtime constant pool for ", name_, " (", class_file->constant_pool.size(),
             " entries)");
@@ -82,7 +66,7 @@ void Klass::prepareRuntimeConstantPool(classfile::ClassFile* class_file) {
   size_t cp_count = class_file->constant_pool.size();
   constant_pool_.infos_.resize(cp_count);
   constant_pool_.infos_[0] = std::monostate{};  // placeholder for the first slot
-  for (size_t i = 1; i < cp_count; i++) {
+  for (U2 i = 1; i < cp_count; i++) {
     const auto* cpinfo = class_file->constant_pool.getConstantInfo(i);
     switch (cpinfo->tag) {
       case classfile::ConstantTag::kClass: {
@@ -93,22 +77,22 @@ void Klass::prepareRuntimeConstantPool(classfile::ClassFile* class_file) {
           i, SymRef_Class{.class_name = class_file->constant_pool.getUtf8String(info->name_index)});
       } break;
       case classfile::ConstantTag::kMethodref: {
-        const auto* info          = dynamic_cast<const classfile::MethodrefInfo*>(cpinfo);
-        auto        name_and_type = resolveNameAndType(class_file, info->name_and_type_index);
+        const auto* info   = dynamic_cast<const classfile::MethodrefInfo*>(cpinfo);
+        auto name_and_type = class_file->constant_pool.getNameAndType(info->name_and_type_index);
         constant_pool_.setConstant(i, SymRef_Method{.class_cp_index = info->class_index,
                                                     .member_name    = name_and_type.first,
                                                     .descriptor     = name_and_type.second});
       } break;
       case classfile::ConstantTag::kFieldref: {
-        const auto* info          = dynamic_cast<const classfile::FieldrefInfo*>(cpinfo);
-        auto        name_and_type = resolveNameAndType(class_file, info->name_and_type_index);
+        const auto* info   = dynamic_cast<const classfile::FieldrefInfo*>(cpinfo);
+        auto name_and_type = class_file->constant_pool.getNameAndType(info->name_and_type_index);
         constant_pool_.setConstant(i, SymRef_Field{.class_cp_index = info->class_index,
                                                    .member_name    = name_and_type.first,
                                                    .descriptor     = name_and_type.second});
       } break;
       case classfile::ConstantTag::kInterfaceMethodref: {
-        const auto* info          = dynamic_cast<const classfile::InterfaceMethodrefInfo*>(cpinfo);
-        auto        name_and_type = resolveNameAndType(class_file, info->name_and_type_index);
+        const auto* info   = dynamic_cast<const classfile::InterfaceMethodrefInfo*>(cpinfo);
+        auto name_and_type = class_file->constant_pool.getNameAndType(info->name_and_type_index);
         constant_pool_.setConstant(i, SymRef_InterfaceMethod{.class_cp_index = info->class_index,
                                                              .member_name    = name_and_type.first,
                                                              .descriptor = name_and_type.second});
