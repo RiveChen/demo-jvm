@@ -14,13 +14,13 @@
 
 #pragma once
 
-#include <memory>
-#include <string>
-#include <unordered_map>
-
 #include "classfile/class_file.hpp"
 #include "classfile/class_loader.hpp"
 #include "klass.hpp"
+
+#include <memory>
+#include <string>
+#include <unordered_map>
 
 namespace jvm::oops {
 

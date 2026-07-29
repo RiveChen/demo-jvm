@@ -9,9 +9,9 @@
  */
 #pragma once
 
-#include <vector>
-
 #include "utilities/types.hpp"
+
+#include <vector>
 
 namespace jvm::classfile {
 

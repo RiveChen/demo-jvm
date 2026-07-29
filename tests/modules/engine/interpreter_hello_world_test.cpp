@@ -1,14 +1,13 @@
-#include <gtest/gtest.h>
-
-#include <iostream>
-#include <sstream>
-
 #include "engine/interpreter.hpp"
 #include "interpreter_test_base.hpp"
 #include "oops/klass.hpp"
 #include "oops/method.hpp"
 #include "runtime/frame.hpp"
 #include "runtime/thread.hpp"
+
+#include <gtest/gtest.h>
+#include <iostream>
+#include <sstream>
 
 using namespace jvm;
 

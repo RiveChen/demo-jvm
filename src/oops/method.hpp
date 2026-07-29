@@ -9,11 +9,11 @@
 
 #pragma once
 
-#include <string>
-#include <vector>
-
 #include "utilities/access_flags.hpp"
 #include "utilities/descriptor.hpp"
+
+#include <string>
+#include <vector>
 
 namespace jvm::oops {
 

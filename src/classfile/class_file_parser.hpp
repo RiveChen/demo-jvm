@@ -8,10 +8,10 @@
  */
 #pragma once
 
-#include <memory>
-
 #include "byte_reader.hpp"
 #include "class_file.hpp"
+
+#include <memory>
 
 namespace jvm::classfile {
 

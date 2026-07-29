@@ -5,12 +5,12 @@
 
 #include "descriptor.hpp"
 
+#include "utilities/types.hpp"
+
 #include <cassert>
 #include <cstddef>
 #include <stdexcept>
 #include <vector>
-
-#include "utilities/types.hpp"
 
 namespace jvm::descriptor {
 

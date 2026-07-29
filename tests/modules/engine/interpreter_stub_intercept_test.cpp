@@ -1,8 +1,3 @@
-#include <gtest/gtest.h>
-
-#include <iostream>
-#include <sstream>
-
 #include "engine/interpreter.hpp"
 #include "interpreter_test_base.hpp"
 #include "oops/klass.hpp"
@@ -10,6 +5,10 @@
 #include "oops/string_pool.hpp"
 #include "runtime/frame.hpp"
 #include "runtime/thread.hpp"
+
+#include <gtest/gtest.h>
+#include <iostream>
+#include <sstream>
 
 using namespace jvm;
 
@@ -49,8 +48,8 @@ TEST_F(InterpreterStubInterceptTest, PrintlnInt) {
 }
 
 TEST_F(InterpreterStubInterceptTest, PrintlnLong) {
-  auto* klass  = loader_->loadClass(kClassName);
-  auto* method = klass->findMethod("printlnLong", "()V");
+  auto*               klass  = loader_->loadClass(kClassName);
+  auto*               method = klass->findMethod("printlnLong", "()V");
   runtime::Thread     thread;
   engine::Interpreter interpreter;
   runtime::Frame      frame(method);
@@ -65,8 +64,8 @@ TEST_F(InterpreterStubInterceptTest, PrintlnLong) {
 }
 
 TEST_F(InterpreterStubInterceptTest, PrintlnFloat) {
-  auto* klass  = loader_->loadClass(kClassName);
-  auto* method = klass->findMethod("printlnFloat", "()V");
+  auto*               klass  = loader_->loadClass(kClassName);
+  auto*               method = klass->findMethod("printlnFloat", "()V");
   runtime::Thread     thread;
   engine::Interpreter interpreter;
   runtime::Frame      frame(method);
@@ -81,8 +80,8 @@ TEST_F(InterpreterStubInterceptTest, PrintlnFloat) {
 }
 
 TEST_F(InterpreterStubInterceptTest, PrintlnDouble) {
-  auto* klass  = loader_->loadClass(kClassName);
-  auto* method = klass->findMethod("printlnDouble", "()V");
+  auto*               klass  = loader_->loadClass(kClassName);
+  auto*               method = klass->findMethod("printlnDouble", "()V");
   runtime::Thread     thread;
   engine::Interpreter interpreter;
   runtime::Frame      frame(method);
@@ -97,8 +96,8 @@ TEST_F(InterpreterStubInterceptTest, PrintlnDouble) {
 }
 
 TEST_F(InterpreterStubInterceptTest, PrintlnBoolean) {
-  auto* klass  = loader_->loadClass(kClassName);
-  auto* method = klass->findMethod("printlnBoolean", "()V");
+  auto*               klass  = loader_->loadClass(kClassName);
+  auto*               method = klass->findMethod("printlnBoolean", "()V");
   runtime::Thread     thread;
   engine::Interpreter interpreter;
   runtime::Frame      frame(method);
@@ -113,8 +112,8 @@ TEST_F(InterpreterStubInterceptTest, PrintlnBoolean) {
 }
 
 TEST_F(InterpreterStubInterceptTest, PrintlnChar) {
-  auto* klass  = loader_->loadClass(kClassName);
-  auto* method = klass->findMethod("printlnChar", "()V");
+  auto*               klass  = loader_->loadClass(kClassName);
+  auto*               method = klass->findMethod("printlnChar", "()V");
   runtime::Thread     thread;
   engine::Interpreter interpreter;
   runtime::Frame      frame(method);
@@ -129,8 +128,8 @@ TEST_F(InterpreterStubInterceptTest, PrintlnChar) {
 }
 
 TEST_F(InterpreterStubInterceptTest, PrintConcatenated) {
-  auto* klass  = loader_->loadClass(kClassName);
-  auto* method = klass->findMethod("printConcatenated", "()V");
+  auto*               klass  = loader_->loadClass(kClassName);
+  auto*               method = klass->findMethod("printConcatenated", "()V");
   runtime::Thread     thread;
   engine::Interpreter interpreter;
   runtime::Frame      frame(method);
@@ -145,8 +144,8 @@ TEST_F(InterpreterStubInterceptTest, PrintConcatenated) {
 }
 
 TEST_F(InterpreterStubInterceptTest, PrintlnErr) {
-  auto* klass  = loader_->loadClass(kClassName);
-  auto* method = klass->findMethod("printlnErr", "()V");
+  auto*               klass  = loader_->loadClass(kClassName);
+  auto*               method = klass->findMethod("printlnErr", "()V");
   runtime::Thread     thread;
   engine::Interpreter interpreter;
   runtime::Frame      frame(method);
@@ -182,7 +181,7 @@ TEST_F(InterpreterStubInterceptTest, StringLength) {
 
   // Callee frame with argument
   runtime::Frame callee(method);
-  const auto* str = oops::StringPool::getSingleton().intern("hello");
+  const auto*    str = oops::StringPool::getSingleton().intern("hello");
   callee.getLocalVariables().setRef(0, const_cast<std::string*>(str));
   thread.pushFrame(std::move(callee));
 
@@ -204,7 +203,7 @@ TEST_F(InterpreterStubInterceptTest, StringCharAt) {
   thread.pushFrame(std::move(caller));
 
   runtime::Frame callee(method);
-  const auto* str = oops::StringPool::getSingleton().intern("hello");
+  const auto*    str = oops::StringPool::getSingleton().intern("hello");
   callee.getLocalVariables().setRef(0, const_cast<std::string*>(str));
   thread.pushFrame(std::move(callee));
 
@@ -226,7 +225,7 @@ TEST_F(InterpreterStubInterceptTest, StringIsEmpty) {
   thread.pushFrame(std::move(caller));
 
   runtime::Frame callee(method);
-  const auto* str = oops::StringPool::getSingleton().intern("");
+  const auto*    str = oops::StringPool::getSingleton().intern("");
   callee.getLocalVariables().setRef(0, const_cast<std::string*>(str));
   thread.pushFrame(std::move(callee));
 
@@ -238,8 +237,7 @@ TEST_F(InterpreterStubInterceptTest, StringIsEmpty) {
 
 TEST_F(InterpreterStubInterceptTest, StringEquals) {
   auto* klass  = loader_->loadClass(kClassName);
-  auto* method = klass->findMethod("stringEquals",
-                                   "(Ljava/lang/String;Ljava/lang/String;)Z");
+  auto* method = klass->findMethod("stringEquals", "(Ljava/lang/String;Ljava/lang/String;)Z");
 
   runtime::Thread     thread;
   engine::Interpreter interpreter;
@@ -249,8 +247,8 @@ TEST_F(InterpreterStubInterceptTest, StringEquals) {
   thread.pushFrame(std::move(caller));
 
   runtime::Frame callee(method);
-  const auto* a = oops::StringPool::getSingleton().intern("hello");
-  const auto* b = oops::StringPool::getSingleton().intern("hello");
+  const auto*    a = oops::StringPool::getSingleton().intern("hello");
+  const auto*    b = oops::StringPool::getSingleton().intern("hello");
   callee.getLocalVariables().setRef(0, const_cast<std::string*>(a));
   callee.getLocalVariables().setRef(1, const_cast<std::string*>(b));
   thread.pushFrame(std::move(callee));
@@ -263,8 +261,7 @@ TEST_F(InterpreterStubInterceptTest, StringEquals) {
 
 TEST_F(InterpreterStubInterceptTest, StringEqualsFalse) {
   auto* klass  = loader_->loadClass(kClassName);
-  auto* method = klass->findMethod("stringEquals",
-                                   "(Ljava/lang/String;Ljava/lang/String;)Z");
+  auto* method = klass->findMethod("stringEquals", "(Ljava/lang/String;Ljava/lang/String;)Z");
 
   runtime::Thread     thread;
   engine::Interpreter interpreter;
@@ -274,8 +271,8 @@ TEST_F(InterpreterStubInterceptTest, StringEqualsFalse) {
   thread.pushFrame(std::move(caller));
 
   runtime::Frame callee(method);
-  const auto* a = oops::StringPool::getSingleton().intern("hello");
-  const auto* b = oops::StringPool::getSingleton().intern("world");
+  const auto*    a = oops::StringPool::getSingleton().intern("hello");
+  const auto*    b = oops::StringPool::getSingleton().intern("world");
   callee.getLocalVariables().setRef(0, const_cast<std::string*>(a));
   callee.getLocalVariables().setRef(1, const_cast<std::string*>(b));
   thread.pushFrame(std::move(callee));
@@ -298,7 +295,7 @@ TEST_F(InterpreterStubInterceptTest, StringHashCode) {
   thread.pushFrame(std::move(caller));
 
   runtime::Frame callee(method);
-  const auto* str = oops::StringPool::getSingleton().intern("abc");
+  const auto*    str = oops::StringPool::getSingleton().intern("abc");
   callee.getLocalVariables().setRef(0, const_cast<std::string*>(str));
   thread.pushFrame(std::move(callee));
 
@@ -314,7 +311,7 @@ TEST_F(InterpreterStubInterceptTest, StringHashCode) {
 // ============================================================
 
 TEST_F(InterpreterStubInterceptTest, SystemCurrentTimeMillis) {
-  auto* klass  = loader_->loadClass(kClassName);
+  auto* klass = loader_->loadClass(kClassName);
   // IMPORTANT: We test via execution of a method that calls
   // System.currentTimeMillis and returns. Since it returns a value
   // greater than 0, we can verify it's working.
@@ -348,7 +345,7 @@ TEST_F(InterpreterStubInterceptTest, ParseInt) {
   thread.pushFrame(std::move(caller));
 
   runtime::Frame callee(method);
-  const auto* str = oops::StringPool::getSingleton().intern("42");
+  const auto*    str = oops::StringPool::getSingleton().intern("42");
   callee.getLocalVariables().setRef(0, const_cast<std::string*>(str));
   thread.pushFrame(std::move(callee));
 

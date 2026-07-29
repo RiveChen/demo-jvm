@@ -1,7 +1,7 @@
-#include <gtest/gtest.h>
-
 #include "interpreter_test_base.hpp"
 #include "utilities/types.hpp"
+
+#include <gtest/gtest.h>
 
 using namespace jvm;
 

@@ -5,11 +5,11 @@
 
 #include "constant_pool.hpp"
 
-#include <stdexcept>
-#include <variant>
-
 #include "classfile/class_loader.hpp"
 #include "klass.hpp"
+
+#include <stdexcept>
+#include <variant>
 
 namespace jvm::oops {
 
@@ -60,15 +60,15 @@ Method* RuntimeConstantPool::resolveMethod(U2 index) {
 
   if (auto* sym_ref = std::get_if<SymRef_Method>(&slot)) {
     Klass*  target = resolveClass(sym_ref->class_cp_index);
-    Method* m = target->findMethod(sym_ref->member_name, sym_ref->descriptor);
-    slot = m;
+    Method* m      = target->findMethod(sym_ref->member_name, sym_ref->descriptor);
+    slot           = m;
     return m;
   }
 
   if (auto* im_ref = std::get_if<SymRef_InterfaceMethod>(&slot)) {
     Klass*  target = resolveClass(im_ref->class_cp_index);
-    Method* m = target->findMethod(im_ref->member_name, im_ref->descriptor);
-    slot = m;
+    Method* m      = target->findMethod(im_ref->member_name, im_ref->descriptor);
+    slot           = m;
     return m;
   }
 

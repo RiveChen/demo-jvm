@@ -9,10 +9,10 @@
  */
 #pragma once
 
+#include "utilities/slot.hpp"
+
 #include <cstddef>
 #include <vector>
-
-#include "utilities/slot.hpp"
 
 namespace jvm::runtime {
 

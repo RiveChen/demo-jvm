@@ -1,11 +1,5 @@
 #pragma once
 
-#include <gtest/gtest.h>
-
-#include <memory>
-#include <string>
-#include <vector>
-
 #include "classfile/class_loader.hpp"
 #include "engine/interpreter.hpp"
 #include "engine/native_registry.hpp"
@@ -13,6 +7,11 @@
 #include "oops/method_area.hpp"
 #include "runtime/frame.hpp"
 #include "runtime/thread.hpp"
+
+#include <gtest/gtest.h>
+#include <memory>
+#include <string>
+#include <vector>
 
 using namespace jvm;
 

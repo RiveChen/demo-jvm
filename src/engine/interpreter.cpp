@@ -11,10 +11,6 @@
 
 #include "interpreter.hpp"
 
-#include <cmath>
-#include <stdexcept>
-#include <vector>
-
 #include "bytecode_reader.hpp"
 #include "engine/stub_intercepts.hpp"
 #include "memory/heap.hpp"
@@ -29,6 +25,10 @@
 #include "utilities/descriptor.hpp"
 #include "utilities/logger.hpp"
 #include "utilities/types.hpp"
+
+#include <cmath>
+#include <stdexcept>
+#include <vector>
 
 namespace jvm::engine {
 
@@ -1374,12 +1374,12 @@ void Interpreter::interpret(runtime::Thread* thread) {
           break;
         }
 
-        auto* method = rt_cp.resolveMethod(index);
-        LOG_DEBUG("INVOKESTATIC ", method->getOwnerKlass()->getName(), ".", method->getName(), ".",
-                  method->getDescriptor());
+        auto* new_method = rt_cp.resolveMethod(index);
+        LOG_DEBUG("INVOKESTATIC ", new_method->getOwnerKlass()->getName(), ".",
+                  new_method->getName(), ".", new_method->getDescriptor());
 
         // if the class is not initialied, initialize it
-        auto* klass = method->getOwnerKlass();
+        auto* klass = new_method->getOwnerKlass();
         if (klass->getState() == oops::Klass::Linked) {
           thread->getCurrentFrame().setPC(pc - 3);
           klass->initialize(thread);
@@ -1387,13 +1387,13 @@ void Interpreter::interpret(runtime::Thread* thread) {
           break;
         }
 
-        if (!method->isStatic()) {
+        if (!new_method->isStatic()) {
           throw std::runtime_error("Cannot invoke non-static method as static");
         }
 
-        if (method->isNative()) {
-          auto key = method->getOwnerKlass()->getName() + "." + method->getName() + "." +
-                     method->getDescriptor();
+        if (new_method->isNative()) {
+          auto key = new_method->getOwnerKlass()->getName() + "." + new_method->getName() + "." +
+                     new_method->getDescriptor();
           auto fn  = NativeRegistry::getSingleton().find(key);
           if (fn == nullptr) {
             throw std::runtime_error("unbound native: " + key);
@@ -1402,8 +1402,8 @@ void Interpreter::interpret(runtime::Thread* thread) {
           break;
         }
 
-        const auto&    signature = method->getSignature();
-        runtime::Frame next_frame(method);
+        const auto&    signature = new_method->getSignature();
+        runtime::Frame next_frame(new_method);
         auto&          current_op_stack = op_stack;  // current frame's operand stack
         auto&          next_local_vars  = next_frame.getLocalVariables();
 

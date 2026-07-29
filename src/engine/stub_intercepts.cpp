@@ -13,16 +13,16 @@
 
 #include "stub_intercepts.hpp"
 
+#include "oops/string_pool.hpp"
+#include "runtime/operand_stack.hpp"
+#include "utilities/logger.hpp"
+#include "utilities/types.hpp"
+
 #include <chrono>
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
 #include <string>
-
-#include "oops/string_pool.hpp"
-#include "runtime/operand_stack.hpp"
-#include "utilities/logger.hpp"
-#include "utilities/types.hpp"
 
 namespace jvm::engine {
 namespace {

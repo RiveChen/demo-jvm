@@ -5,11 +5,6 @@
 
 #include "klass.hpp"
 
-#include <stdexcept>
-#include <string>
-#include <utility>
-#include <vector>
-
 #include "classfile/class_file.hpp"
 #include "classfile/class_loader.hpp"
 #include "classfile/constant_pool.hpp"
@@ -19,6 +14,11 @@
 #include "utilities/access_flags.hpp"
 #include "utilities/logger.hpp"
 #include "utilities/slot.hpp"
+
+#include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace jvm::oops {
 Klass::Klass(classfile::ClassFile* class_file, classfile::ClassLoader* loader)

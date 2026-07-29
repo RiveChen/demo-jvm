@@ -1,16 +1,15 @@
 #include "memory/heap.hpp"
 
-#include <gtest/gtest.h>
-
-#include <cstdint>
-#include <memory>
-#include <string>
-#include <vector>
-
 #include "classfile/class_loader.hpp"
 #include "oops/klass.hpp"
 #include "oops/method_area.hpp"
 #include "oops/object.hpp"
+
+#include <cstdint>
+#include <gtest/gtest.h>
+#include <memory>
+#include <string>
+#include <vector>
 
 using namespace jvm;
 

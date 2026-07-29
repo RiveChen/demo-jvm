@@ -6,6 +6,9 @@ BasedOnStyle: Google
 # Language: Cpp
 Language: Cpp
 
+# C++ Standard (mirrors CMakeLists.txt)
+Standard: c++20
+
 # Indentation
 IndentWidth: 2
 TabWidth: 2
@@ -35,6 +38,15 @@ ColumnLimit: 100
 # Includes
 IncludeBlocks: Regroup
 SortIncludes: true
+IncludeCategories:
+  - Regex: '^<.*'
+    Priority: 1
+    SortPriority: 0
+    CaseSensitive: false
+  - Regex: '^".*'
+    Priority: 2
+    SortPriority: 1
+    CaseSensitive: false
 
 # Namespaces
 NamespaceIndentation: None

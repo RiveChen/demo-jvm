@@ -6,34 +6,19 @@ FormatStyle: file
 # 2. Enable hicpp-* (High Integrity C++)
 # 3. Enable cert-* (CERT Security Standard)
 # 4. Enable concurrency-* (Concurrency checks)
-# 5. Disable specific platform rules (android, fuchsia, zircon, darwin) to avoid false positives
+# 5. Enable modernize-* (C++20 modernization)
+# 6. Enable misc-* (Miscellaneous checks)
+# 7. Disable specific platform rules (android, fuchsia, zircon, darwin) to avoid false positives
+# 8. Disable checks that conflict with JVM implementation needs
 Checks: >
-  -*,
-  bugprone-*,
-  -bugprone-easily-swappable-parameters,
-  cert-*,
-  clang-analyzer-*,
-  concurrency-*,
-  cppcoreguidelines-*,
-  -cppcoreguidelines-pro-type-union-access,
-  hicpp-*,
-  misc-*,
-  -misc-non-private-member-variables-in-classes,
-  modernize-*,
-  -modernize-use-trailing-return-type,
-  -modernize-use-nodiscard,
-  performance-*,
-  portability-*,
-  readability-*,
-  -readability-identifier-length,
-  -google-*,
-  -llvmlibc-*,
-  -fuchsia-*,
-  -android-*,
-  -zircon-*,
-  -abseil-*,
-  -darwin-*,
-  -objc-*,
+  -*, bugprone-*, -bugprone-easily-swappable-parameters, cert-*, clang-analyzer-*, concurrency-*, cppcoreguidelines-*, -cppcoreguidelines-pro-type-union-access,
+    -cppcoreguidelines-avoid-c-arrays,
+  hicpp-*, misc-*, -misc-non-private-member-variables-in-classes,
+    -misc-no-recursion,
+  modernize-*, -modernize-use-trailing-return-type,
+    -modernize-use-nodiscard,
+  performance-*, portability-*, readability-*, -readability-identifier-length, -google-*, -llvmlibc-*, -fuchsia-*, -android-*, -zircon-*, -abseil-*,
+    -darwin-*, -objc-*,
 
 # --- Zero Tolerance Policy ---
 # Treat all warnings as errors.
@@ -46,15 +31,9 @@ HeaderFilterRegex: "src/.*|include/.*"
 
 # --- Rule Fine-tuning ---
 CheckOptions:
-  # Enforce: All member variables must be initialized on declaration
-  - key: cppcoreguidelines-pro-type-member-init.IgnoreArrays
-    value: 0
-  # Enforce: Single-argument constructors must be marked explicit
-  - key: google-explicit-constructor.SingleArgument
-    value: 1
-  # Limit function complexity (cyclomatic complexity no more than 15)
-  - key: readability-function-cognitive-complexity.Threshold
-    value: 15
-  # Limit function line count
-  - key: readability-function-size.LineThreshold
-    value: 80
+# Limit function complexity (cyclomatic complexity no more than 15)
+- key: readability-function-cognitive-complexity.Threshold
+  value: 15
+# Limit function line count
+- key: readability-function-size.LineThreshold
+  value: 80

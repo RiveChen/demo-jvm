@@ -1,12 +1,11 @@
 #include "classfile/class_loader.hpp"
 
-#include <gtest/gtest.h>
-
-#include <string>
-#include <vector>
-
 #include "oops/klass.hpp"
 #include "oops/method_area.hpp"
+
+#include <gtest/gtest.h>
+#include <string>
+#include <vector>
 
 using namespace jvm;
 

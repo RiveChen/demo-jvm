@@ -11,17 +11,17 @@
 
 #pragma once
 
-#include <cassert>
-#include <cstdint>
-#include <string>
-#include <vector>
-
 #include "constant_pool.hpp"
 #include "field.hpp"
 #include "method.hpp"
 #include "runtime/thread.hpp"
 #include "utilities/access_flags.hpp"
 #include "utilities/slot.hpp"
+
+#include <cassert>
+#include <cstdint>
+#include <string>
+#include <vector>
 
 namespace jvm::classfile {
 class ClassLoader;
@@ -57,7 +57,7 @@ class Klass {
   explicit Klass(classfile::ClassFile* class_file, classfile::ClassLoader* loader);
 
   ClassState getState() const { return state_; }
-  void markLoaded() {
+  void       markLoaded() {
     assert(state_ == Allocated);
     state_ = Loaded;
   }

@@ -1,7 +1,7 @@
-#include <gtest/gtest.h>
-
 #include "interpreter_test_base.hpp"
 #include "utilities/types.hpp"
+
+#include <gtest/gtest.h>
 
 using namespace jvm;
 
@@ -78,7 +78,8 @@ TEST_F(InterpreterMethodInvocationTest, InvokeStatic_LongArgs_WideValueSurvives)
 TEST_F(InterpreterMethodInvocationTest, InvokeStatic_SecondLongArg_Offset) {
   // returns b: the second category-2 arg must land at the callee's slot 2
   EXPECT_EQ(
-    executeStaticMethod<Jlong>(kClassName, "testInvokePickSecondLong", Jlong{111}, Jlong{222}), 222);
+    executeStaticMethod<Jlong>(kClassName, "testInvokePickSecondLong", Jlong{111}, Jlong{222}),
+    222);
 }
 
 TEST_F(InterpreterMethodInvocationTest, InvokeStatic_DoubleArgs) {

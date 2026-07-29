@@ -9,10 +9,10 @@
 
 #pragma once
 
-#include <string>
-
 #include "utilities/access_flags.hpp"
 #include "utilities/descriptor.hpp"
+
+#include <string>
 
 namespace jvm::oops {
 class Klass;

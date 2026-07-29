@@ -11,11 +11,11 @@
 
 #pragma once
 
+#include "utilities/types.hpp"
+
 #include <cstdint>
 #include <string_view>
 #include <vector>
-
-#include "utilities/types.hpp"
 
 namespace jvm::descriptor {
 

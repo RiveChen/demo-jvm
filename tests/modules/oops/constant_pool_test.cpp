@@ -1,16 +1,15 @@
 #include "oops/constant_pool.hpp"
 
-#include <gtest/gtest.h>
+#include "classfile/class_loader.hpp"
+#include "oops/klass.hpp"
+#include "oops/method_area.hpp"
 
+#include <gtest/gtest.h>
 #include <memory>
 #include <optional>
 #include <string>
 #include <variant>
 #include <vector>
-
-#include "classfile/class_loader.hpp"
-#include "oops/klass.hpp"
-#include "oops/method_area.hpp"
 
 using namespace jvm;
 
@@ -127,10 +126,9 @@ TEST_F(ConstantPoolTest, SymbolicKeyNulloptForResolvedSlot) {
   auto& rcp = klass->getRuntimeConstantPool();
 
   rcp.setConstant(1, oops::SymRef_Class{.class_name = kClassName});
-  rcp.setConstant(2, oops::SymRef_Method{.class_cp_index = 1,
-                                         .member_name    = "add",
-                                         .descriptor     = "(II)I"});
-  ASSERT_TRUE(rcp.symbolicKey(2).has_value());  // symbolic before resolve
+  rcp.setConstant(
+    2, oops::SymRef_Method{.class_cp_index = 1, .member_name = "add", .descriptor = "(II)I"});
+  ASSERT_TRUE(rcp.symbolicKey(2).has_value());   // symbolic before resolve
   rcp.resolveMethod(2);                          // slot 2 now holds Method*
   EXPECT_FALSE(rcp.symbolicKey(2).has_value());  // resolved -> nullopt
 }
@@ -144,9 +142,8 @@ TEST_F(ConstantPoolTest, SymbolicKeyNoThrowWhenTargetClassResolved) {
   auto& rcp = klass->getRuntimeConstantPool();
 
   rcp.setConstant(1, oops::SymRef_Class{.class_name = kClassName});
-  rcp.setConstant(2, oops::SymRef_Method{.class_cp_index = 1,
-                                         .member_name    = "add",
-                                         .descriptor     = "(II)I"});
+  rcp.setConstant(
+    2, oops::SymRef_Method{.class_cp_index = 1, .member_name = "add", .descriptor = "(II)I"});
   rcp.resolveClass(1);  // slot 1 (class) -> Klass*, slot 2 still SymRef_Method
 
   std::optional<std::string> key;

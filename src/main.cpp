@@ -11,10 +11,6 @@
  * interpreter loop. This is the program entry point.
  */
 
-#include <iostream>
-#include <string>
-#include <vector>
-
 #include "classfile/class_loader.hpp"
 #include "engine/interpreter.hpp"
 #include "engine/stub_intercepts.hpp"
@@ -23,6 +19,10 @@
 #include "runtime/frame.hpp"
 #include "runtime/thread.hpp"
 #include "utilities/logger.hpp"
+
+#include <iostream>
+#include <string>
+#include <vector>
 
 /**
  * @brief Program entry point.

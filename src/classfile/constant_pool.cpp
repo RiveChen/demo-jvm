@@ -10,10 +10,10 @@
 
 #include "constant_pool.hpp"
 
-#include <bit>
-
 #include "byte_reader.hpp"
 #include "utilities/types.hpp"
+
+#include <bit>
 
 namespace jvm::classfile {
 

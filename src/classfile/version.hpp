@@ -8,9 +8,9 @@
  */
 #pragma once
 
-#include <string>
-
 #include "utilities/types.hpp"
+
+#include <string>
 
 namespace jvm::classfile {
 

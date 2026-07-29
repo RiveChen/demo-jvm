@@ -11,10 +11,10 @@
 
 #pragma once
 
+#include "oops/constant_pool.hpp"
+
 #include <string>
 #include <unordered_map>
-
-#include "oops/constant_pool.hpp"
 
 namespace jvm::runtime {
 class OperandStack;

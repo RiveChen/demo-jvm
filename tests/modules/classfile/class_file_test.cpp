@@ -1,12 +1,11 @@
 #include "classfile/class_file.hpp"
 
-#include <gtest/gtest.h>
+#include "classfile/class_file_parser.hpp"
 
 #include <fstream>
+#include <gtest/gtest.h>
 #include <memory>
 #include <string>
-
-#include "classfile/class_file_parser.hpp"
 
 using namespace jvm;
 

@@ -8,10 +8,10 @@
  */
 
 #pragma once
+#include "utilities/slot.hpp"
+
 #include <cstddef>
 #include <cstdint>
-
-#include "utilities/slot.hpp"
 namespace jvm::oops {
 class Klass;
 

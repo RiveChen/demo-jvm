@@ -5,11 +5,11 @@
 
 #include "heap.hpp"
 
-#include <new>
-
 #include "oops/klass.hpp"
 #include "oops/object.hpp"
 #include "utilities/logger.hpp"
+
+#include <new>
 
 namespace jvm::memory {
 void* Heap::allocate(size_t bytes) {

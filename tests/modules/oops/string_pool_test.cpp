@@ -1,7 +1,6 @@
 #include "oops/string_pool.hpp"
 
 #include <gtest/gtest.h>
-
 #include <string>
 
 using namespace jvm;
@@ -22,8 +21,8 @@ TEST_F(StringPoolTest, InternReturnsEqualContent) {
 }
 
 TEST_F(StringPoolTest, SameContentInternsToSamePointer) {
-  auto& sp = oops::StringPool::getSingleton();
-  const std::string* a = sp.intern("Hello, World!");
+  auto&              sp = oops::StringPool::getSingleton();
+  const std::string* a  = sp.intern("Hello, World!");
   // distinct source object, equal content -> must dedup to the same pointer
   const std::string* b = sp.intern(std::string("Hello, ") + "World!");
   EXPECT_EQ(a, b);

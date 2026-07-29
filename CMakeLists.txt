@@ -77,3 +77,24 @@ add_custom_target(
   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
   COMMENT "Running all tests (with output on failure)..."
   USES_TERMINAL)
+
+# Format all C++ source files with clang-format
+file(
+  GLOB_RECURSE ALL_SOURCE_FILES
+  ${CMAKE_SOURCE_DIR}/src/*.cpp ${CMAKE_SOURCE_DIR}/src/*.hpp
+  ${CMAKE_SOURCE_DIR}/include/*.hpp ${CMAKE_SOURCE_DIR}/include/*.h
+  ${CMAKE_SOURCE_DIR}/tests/*.cpp ${CMAKE_SOURCE_DIR}/tests/*.hpp)
+
+add_custom_target(
+  format
+  COMMAND clang-format -i ${ALL_SOURCE_FILES}
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  COMMENT "Formatting all source files with clang-format..."
+  USES_TERMINAL)
+
+add_custom_target(
+  check-format
+  COMMAND clang-format --dry-run --Werror ${ALL_SOURCE_FILES}
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  COMMENT "Checking format of all source files..."
+  USES_TERMINAL)

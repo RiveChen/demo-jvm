@@ -5,6 +5,12 @@
 
 #include "class_loader.hpp"
 
+#include "class_file_parser.hpp"
+#include "classfile/class_file.hpp"
+#include "oops/klass.hpp"
+#include "oops/method_area.hpp"
+#include "utilities/logger.hpp"
+
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
@@ -14,12 +20,6 @@
 #include <span>
 #include <utility>
 #include <vector>
-
-#include "class_file_parser.hpp"
-#include "classfile/class_file.hpp"
-#include "oops/klass.hpp"
-#include "oops/method_area.hpp"
-#include "utilities/logger.hpp"
 
 namespace jvm::classfile {
 
@@ -89,9 +89,9 @@ oops::Klass* ClassLoader::loadClass(const std::string& fully_qualified_name) {
   }
 
   // Parse the class file
-  auto  parser = ClassFileParser(std::span<U1>(std::bit_cast<U1*>(class_file_data.value().data()),
-                                               class_file_data.value().size()));
-  auto  cf        = parser.parse();
+  auto parser = ClassFileParser(std::span<U1>(std::bit_cast<U1*>(class_file_data.value().data()),
+                                              class_file_data.value().size()));
+  auto cf     = parser.parse();
   // Wrap in unique_ptr for MethodArea ownership; keep a raw pointer for the link phase.
   auto  cf_unique = std::make_unique<ClassFile>(std::move(cf));
   auto* cf_ptr    = cf_unique.get();
@@ -101,8 +101,7 @@ oops::Klass* ClassLoader::loadClass(const std::string& fully_qualified_name) {
   oops::Klass* klass_ptr = klass.get();
 
   // Register the class in the method area with this class loader
-  oops::MethodArea::getSingleton().addClass(
-    {this, name}, {std::move(klass), std::move(cf_unique)});
+  oops::MethodArea::getSingleton().addClass({this, name}, {std::move(klass), std::move(cf_unique)});
 
   // Cache the loaded class for future access
   cache_[name] = klass_ptr;

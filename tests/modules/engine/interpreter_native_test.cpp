@@ -1,9 +1,9 @@
-#include <gtest/gtest.h>
-
 #include "engine/native_registry.hpp"
 #include "interpreter_test_base.hpp"
 #include "runtime/operand_stack.hpp"
 #include "utilities/types.hpp"
+
+#include <gtest/gtest.h>
 
 using namespace jvm;
 

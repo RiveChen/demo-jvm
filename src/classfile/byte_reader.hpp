@@ -10,12 +10,12 @@
  */
 #pragma once
 
+#include "utilities/endian.hpp"
+
 #include <cstring>
 #include <span>
 #include <stdexcept>
 #include <vector>
-
-#include "utilities/endian.hpp"
 
 namespace jvm::classfile {
 

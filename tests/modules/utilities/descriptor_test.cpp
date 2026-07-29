@@ -1,7 +1,6 @@
 #include "utilities/descriptor.hpp"
 
 #include <gtest/gtest.h>
-
 #include <stdexcept>
 
 using namespace jvm::descriptor;

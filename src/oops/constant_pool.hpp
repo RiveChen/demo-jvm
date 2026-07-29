@@ -10,11 +10,11 @@
 
 #pragma once
 
+#include "utilities/types.hpp"
+
 #include <string>
 #include <variant>
 #include <vector>
-
-#include "utilities/types.hpp"
 
 namespace jvm::oops {
 

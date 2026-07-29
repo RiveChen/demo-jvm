@@ -9,10 +9,10 @@
 
 #pragma once
 
+#include "utilities/types.hpp"
+
 #include <stdexcept>
 #include <vector>
-
-#include "utilities/types.hpp"
 
 namespace jvm::engine {
 

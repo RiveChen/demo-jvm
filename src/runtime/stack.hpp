@@ -9,9 +9,9 @@
 
 #pragma once
 
-#include <stack>
-
 #include "frame.hpp"
+
+#include <stack>
 
 namespace jvm::runtime {
 

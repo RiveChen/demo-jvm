@@ -1,5 +1,4 @@
 #include <gtest/gtest.h>
-
 #include <vector>
 
 // 1. if macro TEST works

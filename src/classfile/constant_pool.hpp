@@ -9,11 +9,11 @@
  */
 #pragma once
 
+#include "utilities/types.hpp"
+
 #include <memory>
 #include <string>
 #include <vector>
-
-#include "utilities/types.hpp"
 
 namespace jvm::classfile {
 
