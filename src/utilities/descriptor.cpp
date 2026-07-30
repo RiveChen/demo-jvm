@@ -14,8 +14,7 @@
 
 namespace jvm::descriptor {
 
-namespace {
-TypeKind nextFieldType(std::string_view d, size_t& i) {  // NOLINT(misc-no-recursion)
+static TypeKind nextFieldType(std::string_view d, size_t& i) {  // NOLINT(misc-no-recursion)
   assert(i < d.size());
   char c = d[i];
   switch (c) {
@@ -57,7 +56,6 @@ TypeKind nextFieldType(std::string_view d, size_t& i) {  // NOLINT(misc-no-recur
       throw std::runtime_error("invalid descriptor");
   }
 }
-}  // namespace
 
 TypeKind parseFieldType(std::string_view desc) {
   size_t i    = 0;

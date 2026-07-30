@@ -49,6 +49,7 @@ struct SymRef_InterfaceMethod {
 };
 ///@}
 
+class Klass;
 class InstanceKlass;
 class Method;
 class Field;
@@ -61,9 +62,8 @@ class Field;
 /// - Resolved references: Klass*, Method*, Field*
 /// - Unresolved symbolic references: SymRef_Class, SymRef_Field, SymRef_Method,
 /// SymRef_InterfaceMethod
-using RtCpInfo =
-  std::variant<std::monostate, Jint, Jfloat, Jlong, Jdouble, std::string, InstanceKlass*, Method*,
-               Field*, SymRef_Class, SymRef_Field, SymRef_Method, SymRef_InterfaceMethod>;
+using RtCpInfo = std::variant<std::monostate, Jint, Jfloat, Jlong, Jdouble, std::string, Klass*, Method*, Field*,
+                              SymRef_Class, SymRef_Field, SymRef_Method, SymRef_InterfaceMethod>;
 
 /**
  * @brief The runtime constant pool for a class.
@@ -87,9 +87,9 @@ class RuntimeConstantPool {
   /// @name Lazy Resolution
   /// Resolve a symbolic reference into a concrete runtime pointer.
   ///@{
-  InstanceKlass* resolveClass(U2 index);
-  Field*         resolveField(U2 index);
-  Method*        resolveMethod(U2 index);
+  Klass*  resolveClass(U2 index);
+  Field*  resolveField(U2 index);
+  Method* resolveMethod(U2 index);
   ///@}
 
   /// @brief Resolve the symbolic key string for an entry (e.g. for error messages).

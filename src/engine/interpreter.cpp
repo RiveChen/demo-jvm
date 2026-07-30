@@ -1301,7 +1301,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         if (recv == nullptr) {
           throw std::runtime_error("NPE");
         }
-        oops::InstanceKlass* recv_klass = static_cast<oops::InstanceKlass*>(recv->getKlass());
+        auto* recv_klass = static_cast<oops::InstanceKlass*>(recv->getKlass());
 
         oops::Method* actual = recv_klass->findMethod(resolved->getName(), resolved->getDescriptor());
         if (actual == nullptr) {
@@ -1441,7 +1441,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         if (recv == nullptr) {
           throw std::runtime_error("NPE");
         }
-        oops::InstanceKlass* recv_klass = static_cast<oops::InstanceKlass*>(recv->getKlass());
+        auto* recv_klass = static_cast<oops::InstanceKlass*>(recv->getKlass());
 
         oops::Method* actual = recv_klass->findMethod(resolved->getName(), resolved->getDescriptor());
         if (actual == nullptr) {
@@ -1480,8 +1480,8 @@ void Interpreter::interpret(runtime::Thread* thread) {
       // Function: Object creation and type checking
       // Components: rt_cp, op_stack, thread (PC)
       case NEW: {
-        auto                 index = reader.readU2();
-        oops::InstanceKlass* klass = rt_cp.resolveClass(index);
+        auto  index = reader.readU2();
+        auto* klass = static_cast<oops::InstanceKlass*>(rt_cp.resolveClass(index));
         if (klass->getState() == oops::InstanceKlass::Linked) {
           thread->getCurrentFrame().setPC(pc - 3);
           klass->initialize(thread);

@@ -19,6 +19,7 @@
 #include "method.hpp"
 #include "runtime/thread.hpp"
 #include "utilities/access_flags.hpp"
+#include "utilities/basic_type.hpp"
 #include "utilities/slot.hpp"
 #include "utilities/types.hpp"
 
@@ -84,6 +85,7 @@ class Klass {
   virtual Klass*                  getSuperClass() const { return super_class_; }
   virtual classfile::ClassLoader* getClassLoader() const                  = 0;
   virtual bool                    isInstanceOf(const Klass* target) const = 0;
+  virtual std::string             getDescriptorName();
 };
 
 // ============================================================================
@@ -162,10 +164,14 @@ class ArrayKlass : public Klass {
 // ============================================================================
 
 class TypeArrayKlass : public ArrayKlass {
+ private:
+  BasicType type_;
+
  public:
-  TypeArrayKlass(Jint elem_size, std::string name)
+  TypeArrayKlass(BasicType type, Jint elem_size, std::string name)
     : ArrayKlass(Klass::Kind::TypeArray, std::move(name), elem_size,
-                 AccessFlags<flags::Class>(flags::Class::PUBLIC | flags::Class::FINAL | flags::Class::ABSTRACT)) {
+                 AccessFlags<flags::Class>(flags::Class::PUBLIC | flags::Class::FINAL | flags::Class::ABSTRACT)),
+      type_(type) {
     // Arrays are always fully initialized immediately
     state_ = FullyInitialized;
   }

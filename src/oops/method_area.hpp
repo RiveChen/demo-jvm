@@ -17,6 +17,7 @@
 #include "classfile/class_file.hpp"
 #include "classfile/class_loader.hpp"
 #include "klass.hpp"
+#include "utilities/basic_type.hpp"
 
 #include <memory>
 #include <string>
@@ -40,13 +41,12 @@ struct ClassIdentifierHash {
 class MethodArea {
  public:
   using ClassIdentifier = std::pair<classfile::ClassLoader*, std::string>;
-  using ClassData =
-    std::pair<std::unique_ptr<InstanceKlass>, std::unique_ptr<classfile::ClassFile>>;
+  using ClassData       = std::pair<std::unique_ptr<InstanceKlass>, std::unique_ptr<classfile::ClassFile>>;
 
   /// Meyer's singleton (thread-safe since C++11).
   static MethodArea& getSingleton() {
-    static MethodArea instance;
-    return instance;
+    static MethodArea singleton;
+    return singleton;
   }
 
   /// @brief Add a class to the method area.
@@ -59,8 +59,14 @@ class MethodArea {
   /// @brief Check if a class has been loaded.
   bool hasClass(const ClassIdentifier& identifier) const;
 
-  /// @brief Clear all loaded classes (for testing or reinitialization).
-  void reset() { classes_.clear(); }
+  /// @brief Clear all loaded classes (only for testing).
+  void reset() {
+    instance_klasses_.clear();
+    array_klasses_.clear();
+  }
+
+  TypeArrayKlass* getOrCreateTypeArrayKlass(BasicType type);
+  ObjArrayKlass*  getOrCreateObjArrayKlass(Klass* component);
 
   MethodArea(const MethodArea&)            = delete;
   MethodArea(MethodArea&&)                 = delete;
@@ -71,7 +77,8 @@ class MethodArea {
   MethodArea()  = default;
   ~MethodArea() = default;
 
-  std::unordered_map<ClassIdentifier, ClassData, ClassIdentifierHash> classes_;
+  std::unordered_map<ClassIdentifier, ClassData, ClassIdentifierHash> instance_klasses_;
+  std::unordered_map<std::string, std::unique_ptr<ArrayKlass>>        array_klasses_;
 };
 
 }  // namespace jvm::oops

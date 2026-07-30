@@ -23,6 +23,13 @@
 
 namespace jvm::oops {
 
+std::string Klass::getDescriptorName() {
+  if (kind_ == Kind::Instance) {
+    return "L" + name_ + ";";
+  }
+  return name_;
+}
+
 // ============================================================================
 // InstanceKlass
 // ============================================================================
