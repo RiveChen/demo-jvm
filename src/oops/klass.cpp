@@ -63,12 +63,14 @@ void InstanceKlass::initialize(runtime::Thread* thread) {
 
   state_         = BeingInitialized;
   Method* clinit = findMethod("<clinit>", "()V", false);
-  if (clinit == nullptr) {
+  if (clinit != nullptr) {
+    // push its own <clinit> method
+    runtime::Frame frame(clinit);
+    thread->pushFrame(std::move(frame));
+  } else {
+    // a subclass without its own <clinit> should also initializes its superclass
     state_ = FullyInitialized;
-    return;
   }
-  runtime::Frame frame(clinit);
-  thread->pushFrame(std::move(frame));
 
   // super's frame first
   if (super_class_ != nullptr) {
