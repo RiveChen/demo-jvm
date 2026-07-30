@@ -19,7 +19,8 @@ Checks: >
     -modernize-use-nodiscard,
   performance-*, portability-*, readability-*, -readability-identifier-length, -google-*, -llvmlibc-*, -fuchsia-*, -android-*, -zircon-*, -abseil-*,
     -darwin-*, -objc-*,
-    -cppcoreguidelines-pro-type-static-cast-downcast
+    -cppcoreguidelines-pro-type-static-cast-downcast,
+    -misc-use-anonymous-namespace,
 
 # --- Zero Tolerance Policy ---
 # Treat all warnings as errors.

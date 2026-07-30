@@ -1,0 +1,59 @@
+# ============================================================
+# clangd Configuration
+#
+# This file suppresses clangd built-in diagnostics that
+# contradict the project's .clang-tidy policy.
+#
+# .clang-tidy disables certain checks (e.g., readability-*,
+# modernize-use-nodiscard, etc.) via "Checks: -rule-name".
+# However, clangd's own diagnostic engine may still report
+# similar warnings because it does NOT fully inherit the
+# .clang-tidy "Checks" disable list for built-in diagnostics.
+#
+# This file bridges that gap.
+# ============================================================
+
+# -----------------------------------------------------------
+# Suppress clangd built-in diagnostics
+# (These are NOT controlled by .clang-tidy "Checks" field)
+# -----------------------------------------------------------
+Diagnostics:
+  Suppress:
+    - "readability-identifier-length"
+    - "misc-use-anonymous-namespace"
+    - "modernize-use-nodiscard"
+    - "cppcoreguidelines-pro-type-static-cast-downcast"
+  # Fine-tune clang-tidy behavior within clangd
+  ClangTidy:
+    FastCheckFilter: None
+    Remove:
+      - bugprone-easily-swappable-parameters
+      - cppcoreguidelines-pro-type-union-access
+      - cppcoreguidelines-avoid-c-arrays
+      - cppcoreguidelines-pro-type-static-cast-downcast
+      - cppcoreguidelines-avoid-magic-numbers
+      - portability-avoid-pragma-once
+      - misc-non-private-member-variables-in-classes
+      - misc-no-recursion
+      - misc-use-anonymous-namespace
+      - modernize-use-trailing-return-type
+      - modernize-use-nodiscard
+      - readability-identifier-length
+      - google-*
+      - llvmlibc-*
+      - fuchsia-*
+      - android-*
+      - zircon-*
+      - abseil-*
+      - darwin-*
+      - objc-*
+
+# -----------------------------------------------------------
+# Suppress ALL warnings in third-party dependencies
+# (googletest fetched via FetchContent into build/_deps/)
+# -----------------------------------------------------------
+If:
+  PathMatch: build/_deps/.*
+
+CompileFlags:
+  Add: [-w]
