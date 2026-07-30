@@ -2,6 +2,7 @@
 
 #include "classfile/class_loader.hpp"
 #include "oops/method_area.hpp"
+#include "oops_test_base.hpp"
 
 #include <gtest/gtest.h>
 #include <memory>
@@ -12,19 +13,7 @@ using namespace jvm;
 
 namespace {
 
-class KlassTest : public ::testing::Test {
- protected:
-  void SetUp() override {
-    test_classpath_ = TEST_CLASS_PATH;
-    classpath_list_ = {test_classpath_};
-    loader_         = std::make_unique<classfile::ClassLoader>(nullptr, classpath_list_);
-    oops::MethodArea::getSingleton().reset();
-  }
-
-  std::string                             test_classpath_;
-  std::vector<std::string>                classpath_list_;
-  std::unique_ptr<classfile::ClassLoader> loader_;
-};
+class KlassTest : public OopsTestBase {};
 
 }  // namespace
 

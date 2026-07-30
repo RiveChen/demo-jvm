@@ -3,6 +3,7 @@
 #include "classfile/class_loader.hpp"
 #include "oops/klass.hpp"
 #include "oops/method_area.hpp"
+#include "oops_test_base.hpp"
 
 #include <gtest/gtest.h>
 #include <memory>
@@ -15,20 +16,9 @@ using namespace jvm;
 
 namespace {
 
-class ConstantPoolTest : public ::testing::Test {
+class ConstantPoolTest : public OopsTestBase {
  protected:
-  void SetUp() override {
-    test_classpath_ = TEST_CLASS_PATH;
-    classpath_list_ = {test_classpath_};
-    loader_         = std::make_unique<classfile::ClassLoader>(nullptr, classpath_list_);
-    oops::MethodArea::getSingleton().reset();
-  }
-
   static constexpr const char* kClassName = "tests.data.java.KlassTestData";
-
-  std::string                             test_classpath_;
-  std::vector<std::string>                classpath_list_;
-  std::unique_ptr<classfile::ClassLoader> loader_;
 };
 
 }  // namespace

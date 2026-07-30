@@ -2,6 +2,7 @@
 
 #include "classfile/class_loader.hpp"
 #include "oops/klass.hpp"
+#include "oops_test_base.hpp"
 
 #include <gtest/gtest.h>
 #include <memory>
@@ -10,23 +11,7 @@
 
 using namespace jvm;
 
-class MethodAreaTest : public ::testing::Test {
- protected:
-  void SetUp() override {
-    // Set up test classpath
-    test_classpath_ = TEST_CLASS_PATH;
-    classpath_list_ = {test_classpath_};
-    loader_         = std::make_unique<classfile::ClassLoader>(nullptr, classpath_list_);
-    // Reset method area because it is a global singleton
-    oops::MethodArea::getSingleton().reset();
-  }
-
-  void TearDown() override { loader_.reset(); }
-
-  std::string                             test_classpath_;
-  std::vector<std::string>                classpath_list_;
-  std::unique_ptr<classfile::ClassLoader> loader_;
-};
+class MethodAreaTest : public OopsTestBase {};
 
 TEST_F(MethodAreaTest, SingletonInstance) {
   // Test that getInstance returns the same instance
