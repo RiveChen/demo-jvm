@@ -46,7 +46,7 @@ endif()
 option(ENABLE_ASAN "Enable Address Sanitizer" OFF)
 if(ENABLE_ASAN AND NOT MSVC)
   message(STATUS "Address Sanitizer Enabled")
-  add_compile_options(-fsanitize=address -g)
+  add_compile_options(-fsanitize=address -fno-omit-frame-pointer -g)
   add_link_options(-fsanitize=address)
 endif()
 
@@ -54,8 +54,12 @@ endif()
 option(ENABLE_UBSAN "Enable Undefined Behavior Sanitizer" OFF)
 if(ENABLE_UBSAN AND NOT MSVC)
   message(STATUS "Undefined Behavior Sanitizer Enabled")
-  add_compile_options(-fsanitize=undefined -fno-sanitize-recover=undefined -g)
-  add_link_options(-fsanitize=undefined -fno-sanitize-recover=undefined)
+  # NOTE: No -fno-sanitize-recover here on purpose.
+  # With recovery enabled, UBSan reports violations to stderr and lets the
+  # process continue, so all tests within one executable still run to
+  # completion instead of aborting at the first violation (SIGABRT).
+  add_compile_options(-fsanitize=undefined -fno-omit-frame-pointer -g)
+  add_link_options(-fsanitize=undefined)
 endif()
 
 # GoogleTest Integration
