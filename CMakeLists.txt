@@ -50,6 +50,14 @@ if(ENABLE_ASAN AND NOT MSVC)
   add_link_options(-fsanitize=address)
 endif()
 
+# Undefined Behavior Sanitizer
+option(ENABLE_UBSAN "Enable Undefined Behavior Sanitizer" OFF)
+if(ENABLE_UBSAN AND NOT MSVC)
+  message(STATUS "Undefined Behavior Sanitizer Enabled")
+  add_compile_options(-fsanitize=undefined -fno-sanitize-recover=undefined -g)
+  add_link_options(-fsanitize=undefined -fno-sanitize-recover=undefined)
+endif()
+
 # GoogleTest Integration
 include(FetchContent)
 FetchContent_Declare(
