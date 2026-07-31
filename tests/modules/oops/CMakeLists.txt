@@ -12,4 +12,4 @@ add_dependencies(test_oops compile_test_classes)
 target_compile_definitions(
   test_oops PRIVATE TEST_CLASS_PATH="${CMAKE_BINARY_DIR}/test_classes")
 
-gtest_discover_tests(test_oops)
+gtest_discover_tests(test_oops PROPERTIES LABELS "implementation")

@@ -9,4 +9,4 @@ target_compile_definitions(test_class_loader PRIVATE
     TEST_CLASS_PATH="${CMAKE_BINARY_DIR}/test_classes"
 )
 
-gtest_discover_tests(test_class_loader)
+gtest_discover_tests(test_class_loader PROPERTIES LABELS "implementation")

@@ -8,4 +8,4 @@ add_dependencies(test_heap compile_test_classes)
 target_compile_definitions(
   test_heap PRIVATE TEST_CLASS_PATH="${CMAKE_BINARY_DIR}/test_classes")
 
-gtest_discover_tests(test_heap)
+gtest_discover_tests(test_heap PROPERTIES LABELS "implementation")

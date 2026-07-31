@@ -9,4 +9,4 @@ add_dependencies(test_runtime compile_test_classes)
 target_compile_definitions(
   test_runtime PRIVATE TEST_CLASS_PATH="${CMAKE_BINARY_DIR}/test_classes")
 
-gtest_discover_tests(test_runtime)
+gtest_discover_tests(test_runtime PROPERTIES LABELS "implementation")
