@@ -60,7 +60,8 @@ TEST_F(HeapTest, FieldRoundtrip) {
   auto* obj = memory::Heap::getSingleton().newInstance(klass_);
 
   obj->setInt(xIndex(), 42);
-  obj->setLong(yIndex(), 0x1122334455667788LL);  // 64-bit value survives the wide slot
+  obj->setLong(yIndex(),
+               0x1122334455667788LL);  // 64-bit value survives the wide slot
   obj->setDouble(zIndex(), 2.5);
 
   EXPECT_EQ(obj->getInt(xIndex()), 42);

@@ -42,9 +42,13 @@ constexpr std::array<BasicTypeInfo, 12> kTypeInfo = {{
   {.size = 8, .arrayName = "[J", .typeName = "long"},
 }};
 
-inline Jint basicTypeElementSize(BasicType type) { return static_cast<Jint>(kTypeInfo[static_cast<size_t>(type)].size); }
+inline Jint basicTypeElementSize(BasicType type) {
+  return static_cast<Jint>(kTypeInfo[static_cast<size_t>(type)].size);
+}
 
-inline std::string basicTypeToArrayName(BasicType type) { return kTypeInfo[static_cast<size_t>(type)].arrayName; }
+inline std::string basicTypeToArrayName(BasicType type) {
+  return kTypeInfo[static_cast<size_t>(type)].arrayName;
+}
 
 inline BasicType charToBasicType(char c) {
   switch (c) {

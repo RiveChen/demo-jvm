@@ -39,16 +39,17 @@ namespace {
 
 [[noreturn]] void throwUnsupportedOpcode(const oops::Method* method, U1 opcode, size_t pc) {
   std::ostringstream message;
-  message << "Unsupported opcode " << opcode_name(opcode) << " (0x" << std::hex << std::setw(2) << std::setfill('0')
-          << static_cast<unsigned>(opcode) << ") in " << method->getOwnerKlass()->getName() << "." << method->getName()
+  message << "Unsupported opcode " << opcode_name(opcode) << " (0x" << std::hex << std::setw(2)
+          << std::setfill('0') << static_cast<unsigned>(opcode) << ") in "
+          << method->getOwnerKlass()->getName() << "." << method->getName()
           << method->getDescriptor() << " at pc=" << std::dec << pc;
   throw std::runtime_error(message.str());
 }
 
 }  // namespace
 
-// (readability-function-size, hicpp-function-size, readability-function-cognitive-complexity)
-// NOLINTNEXTLINE
+// (readability-function-size, hicpp-function-size,
+// readability-function-cognitive-complexity) NOLINTNEXTLINE
 void Interpreter::interpret(runtime::Thread* thread) {
   // Cache pc in a local register for the hot loop.
   // The authoritative pc lives in the current frame; we spill it back
@@ -80,11 +81,12 @@ void Interpreter::interpret(runtime::Thread* thread) {
     BytecodeReader reader(code, pc);             // note we pass pc by ref here
     auto           opcode    = reader.readU1();  // note pc incremented by 1 here
     const auto     opcode_pc = pc - 1;
-    LOG_TRACE("pc=", opcode_pc, " 0x", "0123456789abcdef"[opcode >> 4U], "0123456789abcdef"[opcode & 0x0FU], " (",
-              opcode_name(opcode), ")");
+    LOG_TRACE("pc=", opcode_pc, " 0x", "0123456789abcdef"[opcode >> 4U],
+              "0123456789abcdef"[opcode & 0x0FU], " (", opcode_name(opcode), ")");
 
     // NOLINTBEGIN(bugprone-branch-clone)
-    // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
+    // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers,
+    // readability-magic-numbers)
     switch (opcode) {
       case NOP:
         break;
@@ -165,7 +167,8 @@ void Interpreter::interpret(runtime::Thread* thread) {
         } else if (std::holds_alternative<Jfloat>(constant)) {
           op_stack.pushFloat(std::get<Jfloat>(constant));
         } else if (std::holds_alternative<std::string>(constant)) {
-          const std::string* s = oops::StringPool::getSingleton().intern(std::get<std::string>(constant));
+          const std::string* s =
+            oops::StringPool::getSingleton().intern(std::get<std::string>(constant));
           op_stack.pushRef(const_cast<std::string*>(s));
         }
       } break;
@@ -177,7 +180,8 @@ void Interpreter::interpret(runtime::Thread* thread) {
         } else if (std::holds_alternative<Jfloat>(constant)) {
           op_stack.pushFloat(std::get<Jfloat>(constant));
         } else if (std::holds_alternative<std::string>(constant)) {
-          const std::string* s = oops::StringPool::getSingleton().intern(std::get<std::string>(constant));
+          const std::string* s =
+            oops::StringPool::getSingleton().intern(std::get<std::string>(constant));
           op_stack.pushRef(const_cast<std::string*>(s));
         }
       } break;
@@ -463,7 +467,8 @@ void Interpreter::interpret(runtime::Thread* thread) {
       } break;
       case DUP_X2: {
         // Duplicate the top value and insert it three slots down
-        // Stack: ..., value3, value2, value1 -> ..., value1, value3, value2, value1
+        // Stack: ..., value3, value2, value1 -> ..., value1, value3, value2,
+        // value1
         auto value1 = op_stack.popSlot();  // Pop value1 (top)
         auto value2 = op_stack.popSlot();  // Pop value2
         auto value3 = op_stack.popSlot();  // Pop value3
@@ -484,7 +489,8 @@ void Interpreter::interpret(runtime::Thread* thread) {
       } break;
       case DUP2_X1: {
         // Duplicate the top two values and insert them three slots down
-        // Stack: ..., value3, value2, value1 -> ..., value2, value1, value3, value2, value1
+        // Stack: ..., value3, value2, value1 -> ..., value2, value1, value3,
+        // value2, value1
         auto value1 = op_stack.popSlot();  // Pop value1 (top)
         auto value2 = op_stack.popSlot();  // Pop value2
         auto value3 = op_stack.popSlot();  // Pop value3
@@ -496,8 +502,8 @@ void Interpreter::interpret(runtime::Thread* thread) {
       } break;
       case DUP2_X2: {
         // Duplicate the top two values and insert them four slots down
-        // Stack: ..., value4, value3, value2, value1 -> ..., value2, value1, value4, value3,
-        // value2, value1
+        // Stack: ..., value4, value3, value2, value1 -> ..., value2, value1,
+        // value4, value3, value2, value1
         auto value1 = op_stack.popSlot();  // Pop value1 (top)
         auto value2 = op_stack.popSlot();  // Pop value2
         auto value3 = op_stack.popSlot();  // Pop value3
@@ -519,11 +525,13 @@ void Interpreter::interpret(runtime::Thread* thread) {
 
       /* #region Arithmetic */
 
-      // Function: Perform arithmetic operations on numeric values (add, subtract, multiply, divide,
-      // remainder, negate, shift, bitwise) Components: op_stack
+      // Function: Perform arithmetic operations on numeric values (add,
+      // subtract, multiply, divide, remainder, negate, shift, bitwise)
+      // Components: op_stack
       case IADD: {
         // Use unsigned arithmetic so overflow wraps (defined behavior)
-        // instead of signed overflow (UB), matching JVM two's complement semantics.
+        // instead of signed overflow (UB), matching JVM two's complement
+        // semantics.
         auto value2 = static_cast<U4>(op_stack.popInt());
         auto value1 = static_cast<U4>(op_stack.popInt());
         op_stack.pushInt(static_cast<Jint>(value1 + value2));
@@ -690,14 +698,16 @@ void Interpreter::interpret(runtime::Thread* thread) {
         // Integer arithmetic shift right: value1 >> (value2 & 0x1f)
         auto shift_count = static_cast<U4>(op_stack.popInt()) & 0x1FU;  // Only use lower 5 bits
         auto value       = op_stack.popInt();
-        // NOLINTNEXTLINE(hicpp-signed-bitwise) yes we want to shift the sign bit
+        // NOLINTNEXTLINE(hicpp-signed-bitwise) yes we want to shift the sign
+        // bit
         op_stack.pushInt(value >> shift_count);
       } break;
       case LSHR: {
         // Long arithmetic shift right: value1 >> (value2 & 0x3f)
         auto shift_count = static_cast<U4>(op_stack.popInt()) & 0x3FU;  // Only use lower 6 bits
         auto value       = op_stack.popLong();
-        // NOLINTNEXTLINE(hicpp-signed-bitwise) yes we want to shift the sign bit
+        // NOLINTNEXTLINE(hicpp-signed-bitwise) yes we want to shift the sign
+        // bit
         op_stack.pushLong(value >> shift_count);
       } break;
       case IUSHR: {
@@ -1132,7 +1142,8 @@ void Interpreter::interpret(runtime::Thread* thread) {
         throwUnsupportedOpcode(method, opcode, opcode_pc);
       case TABLESWITCH: {
         auto base_addr = pc - 1;
-        // skip padding to make sure the defaultOffset' address in bytecode is always 4-byte aligned
+        // skip padding to make sure the defaultOffset' address in bytecode is
+        // always 4-byte aligned
         reader.align4();
         // defaultOffset, signed
         auto default_offset = static_cast<size_t>(reader.readSU4());
@@ -1243,7 +1254,8 @@ void Interpreter::interpret(runtime::Thread* thread) {
       } break;
       case RETURN: {
         LOG_DEBUG("return from ", method->getName());
-        // If the returned method was <clinit>, mark the class as fully initialized
+        // If the returned method was <clinit>, mark the class as fully
+        // initialized
         if (method->getName() == "<clinit>") {
           method->getOwnerKlass()->markFullyInitialized();
         }
@@ -1291,7 +1303,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         }
         auto& slot      = klass->getStaticSlot(field->getSlotIndex());
         auto  signature = field->getSignature();
-        slot            = descriptor::isCategory2(signature) ? op_stack.popWide() : op_stack.popSlot();
+        slot = descriptor::isCategory2(signature) ? op_stack.popWide() : op_stack.popSlot();
       } break;
       case GETFIELD: {
         auto  index = reader.readU2();
@@ -1308,7 +1320,8 @@ void Interpreter::interpret(runtime::Thread* thread) {
         auto  index     = reader.readU2();
         auto* field     = rt_cp.resolveField(index);
         auto  signature = field->getSignature();
-        // stack: ..., objectref, value  (value on top) -> pop value first, then objectref
+        // stack: ..., objectref, value  (value on top) -> pop value first, then
+        // objectref
         Slot  value = descriptor::isCategory2(signature) ? op_stack.popWide() : op_stack.popSlot();
         auto* obj   = static_cast<oops::InstanceOopDesc*>(op_stack.popRef());
         if (obj == nullptr) {
@@ -1331,16 +1344,18 @@ void Interpreter::interpret(runtime::Thread* thread) {
         }
 
         auto* resolved = rt_cp.resolveMethod(index);
-        LOG_DEBUG("INVOKEVIRTUAL ", resolved->getOwnerKlass()->getName(), ".", resolved->getName(), ".",
-                  resolved->getDescriptor());
-        auto* recv = static_cast<oops::InstanceOopDesc*>(op_stack.peekRef(resolved->getSignature().arg_slot_count));
+        LOG_DEBUG("INVOKEVIRTUAL ", resolved->getOwnerKlass()->getName(), ".", resolved->getName(),
+                  ".", resolved->getDescriptor());
+        auto* recv = static_cast<oops::InstanceOopDesc*>(
+          op_stack.peekRef(resolved->getSignature().arg_slot_count));
 
         if (recv == nullptr) {
           throw std::runtime_error("NPE");
         }
         auto* recv_klass = static_cast<oops::InstanceKlass*>(recv->getKlass());
 
-        oops::Method* actual = recv_klass->findMethod(resolved->getName(), resolved->getDescriptor());
+        oops::Method* actual =
+          recv_klass->findMethod(resolved->getName(), resolved->getDescriptor());
         if (actual == nullptr) {
           throw std::runtime_error("NPE");
         }
@@ -1375,8 +1390,8 @@ void Interpreter::interpret(runtime::Thread* thread) {
         }
 
         auto* new_method = rt_cp.resolveMethod(index);
-        LOG_DEBUG("INVOKESPECIAL ", new_method->getOwnerKlass()->getName(), ".", new_method->getName(), ".",
-                  new_method->getDescriptor());
+        LOG_DEBUG("INVOKESPECIAL ", new_method->getOwnerKlass()->getName(), ".",
+                  new_method->getName(), ".", new_method->getDescriptor());
 
         const auto&    signature = new_method->getSignature();
         runtime::Frame next_frame(new_method);
@@ -1410,8 +1425,8 @@ void Interpreter::interpret(runtime::Thread* thread) {
         }
 
         auto* new_method = rt_cp.resolveMethod(index);
-        LOG_DEBUG("INVOKESTATIC ", new_method->getOwnerKlass()->getName(), ".", new_method->getName(), ".",
-                  new_method->getDescriptor());
+        LOG_DEBUG("INVOKESTATIC ", new_method->getOwnerKlass()->getName(), ".",
+                  new_method->getName(), ".", new_method->getDescriptor());
 
         // if the class is not initialied, initialize it
         auto* klass = new_method->getOwnerKlass();
@@ -1427,9 +1442,9 @@ void Interpreter::interpret(runtime::Thread* thread) {
         }
 
         if (new_method->isNative()) {
-          auto key =
-            new_method->getOwnerKlass()->getName() + "." + new_method->getName() + "." + new_method->getDescriptor();
-          auto fn = NativeRegistry::getSingleton().find(key);
+          auto key = new_method->getOwnerKlass()->getName() + "." + new_method->getName() + "." +
+                     new_method->getDescriptor();
+          auto fn  = NativeRegistry::getSingleton().find(key);
           if (fn == nullptr) {
             throw std::runtime_error("unbound native: " + key);
           }
@@ -1471,16 +1486,18 @@ void Interpreter::interpret(runtime::Thread* thread) {
         }
 
         auto* resolved = rt_cp.resolveMethod(index);
-        LOG_DEBUG("INVOKEINTERFACE ", resolved->getOwnerKlass()->getName(), ".", resolved->getName(), ".",
-                  resolved->getDescriptor());
-        auto* recv = static_cast<oops::InstanceOopDesc*>(op_stack.peekRef(resolved->getSignature().arg_slot_count));
+        LOG_DEBUG("INVOKEINTERFACE ", resolved->getOwnerKlass()->getName(), ".",
+                  resolved->getName(), ".", resolved->getDescriptor());
+        auto* recv = static_cast<oops::InstanceOopDesc*>(
+          op_stack.peekRef(resolved->getSignature().arg_slot_count));
 
         if (recv == nullptr) {
           throw std::runtime_error("NPE");
         }
         auto* recv_klass = static_cast<oops::InstanceKlass*>(recv->getKlass());
 
-        oops::Method* actual = recv_klass->findMethod(resolved->getName(), resolved->getDescriptor());
+        oops::Method* actual =
+          recv_klass->findMethod(resolved->getName(), resolved->getDescriptor());
         if (actual == nullptr) {
           throw std::runtime_error("NPE");
         }
@@ -1508,8 +1525,8 @@ void Interpreter::interpret(runtime::Thread* thread) {
         pc = 0;
       } break;
       case INVOKEDYNAMIC:
-        // TODO: implement invokedynamic (requires bootstrap methods + call site resolution).
-        // Unsupported: fail-fast until then.
+        // TODO: implement invokedynamic (requires bootstrap methods + call site
+        // resolution). Unsupported: fail-fast until then.
         throwUnsupportedOpcode(method, opcode, opcode_pc);
       /* #endregion Methods */
 
@@ -1570,8 +1587,8 @@ void Interpreter::interpret(runtime::Thread* thread) {
 
       // Function: Synchronization operations
       // Components: op_stack
-      // TODO: implement monitorenter & monitorexit (requires threading/monitor support)
-      // Unsupported: fail-fast until then.
+      // TODO: implement monitorenter & monitorexit (requires threading/monitor
+      // support) Unsupported: fail-fast until then.
       case MONITORENTER:
       case MONITOREXIT:
         throwUnsupportedOpcode(method, opcode, opcode_pc);
@@ -1649,15 +1666,16 @@ void Interpreter::interpret(runtime::Thread* thread) {
           case RET:
             throwUnsupportedOpcode(method, widened_opcode, opcode_pc);
           default:
-            throw std::runtime_error("Unsupported widened opcode: " + std::to_string(widened_opcode));
+            throw std::runtime_error("Unsupported widened opcode: " +
+                                     std::to_string(widened_opcode));
         }
       } break;
 
       default:
         throw std::runtime_error("Invalid opcode: " + std::to_string(opcode));
     }
-    // NOLINTEND(cppcoreguidelines-avoid-magic-numbers, readability-magic-numbers)
-    // NOLINTEND(bugprone-branch-clone)
+    // NOLINTEND(cppcoreguidelines-avoid-magic-numbers,
+    // readability-magic-numbers) NOLINTEND(bugprone-branch-clone)
   }
 }
 

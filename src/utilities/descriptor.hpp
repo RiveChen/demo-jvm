@@ -72,7 +72,8 @@ struct MethodType {
 };
 
 /// @brief Parse a method descriptor string into its structured representation.
-/// @param desc A JVM method descriptor, e.g. "(IJ)V" or "(Ljava/lang/String;)Z".
+/// @param desc A JVM method descriptor, e.g. "(IJ)V" or
+/// "(Ljava/lang/String;)Z".
 /// @return The parsed MethodType containing params, ret, and arg_slot_count.
 MethodType parseMethodDescriptor(std::string_view desc);
 

@@ -39,7 +39,8 @@ TEST_F(StringPoolTest, PointerStaysValidAfterManyInserts) {
   for (int i = 0; i < 1000; ++i) {
     sp.intern("filler-" + std::to_string(i));
   }
-  // node-based container: earlier pointer must remain valid, unchanged, and stable
+  // node-based container: earlier pointer must remain valid, unchanged, and
+  // stable
   EXPECT_EQ(sp.intern("first"), first);
   EXPECT_EQ(*first, "first");
 }

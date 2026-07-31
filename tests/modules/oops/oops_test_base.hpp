@@ -14,7 +14,6 @@
 #include "oops/method_area.hpp"
 
 #include <gtest/gtest.h>
-
 #include <memory>
 #include <string>
 #include <vector>

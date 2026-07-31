@@ -116,8 +116,10 @@ class ArrayOopDesc : public OopDesc {
  public:
   explicit ArrayOopDesc(Klass* klass) : OopDesc(klass) {}
 
-  Jint  length() { return *reinterpret_cast<Jint*>(reinterpret_cast<char*>(this) + kLengthOffset); }
-  void  setLength(Jint n) { *reinterpret_cast<Jint*>(reinterpret_cast<char*>(this) + kLengthOffset) = n; }
+  Jint length() { return *reinterpret_cast<Jint*>(reinterpret_cast<char*>(this) + kLengthOffset); }
+  void setLength(Jint n) {
+    *reinterpret_cast<Jint*>(reinterpret_cast<char*>(this) + kLengthOffset) = n;
+  }
   void* base() { return reinterpret_cast<char*>(this) + kDataOffset; }
 
   template <typename T>

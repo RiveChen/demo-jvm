@@ -67,7 +67,8 @@ class BytecodeReader {
   /// @brief Advance the pc by @p n bytes (for skipping operands).
   void skip(size_t n) { pc_ += n; }
 
-  /// @brief Align pc to the next 4-byte boundary (for TABLESWITCH/LOOKUPSWITCH).
+  /// @brief Align pc to the next 4-byte boundary (for
+  /// TABLESWITCH/LOOKUPSWITCH).
   void align4() {
     while (pc_ % 4 != 0) {
       pc_++;

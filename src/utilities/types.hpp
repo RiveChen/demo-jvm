@@ -1,6 +1,7 @@
 /**
  * @file types.hpp
- * @brief Cross-platform type aliases for JVM specification types and Java primitives.
+ * @brief Cross-platform type aliases for JVM specification types and Java
+ * primitives.
  *
  * All JVM-specified unsigned integral types (u1, u2, u4, u8) and
  * Java primitive type aliases used throughout the runtime.

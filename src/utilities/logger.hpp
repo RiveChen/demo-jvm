@@ -20,7 +20,8 @@ namespace jvm::log {
 
 enum class Level : uint8_t { TRACE = 0, DEBUG = 1, INFO = 2, WARN = 3, ERROR = 4, OFF = 5 };
 
-/// @brief Resolve the minimum output level from environment variable JVM_LOG_LEVEL.
+/// @brief Resolve the minimum output level from environment variable
+/// JVM_LOG_LEVEL.
 inline Level min_level() {
   static const Level l = [] {
     if (auto* env = std::getenv("JVM_LOG_LEVEL")) {
@@ -72,7 +73,8 @@ inline const char* strip_src(const char* file) {
   return file;
 }
 
-/// @brief Core log function — prints level, file:line, and variadic args to stderr.
+/// @brief Core log function — prints level, file:line, and variadic args to
+/// stderr.
 template <typename... Args>
 void log(Level lv, const char* file, int line, Args&&... args) {
   if (lv < min_level()) {
@@ -93,8 +95,8 @@ void log(Level lv, const char* file, int line, Args&&... args) {
 #define LOG_ERROR(...) jvm::log::log(jvm::log::Level::ERROR, __FILE__, __LINE__, __VA_ARGS__)
 
 // ---- Compile-time level stripping ----
-// Define JVM_LOG_MAX_LEVEL at build time to compile-out higher verbosity levels.
-// Level values: TRACE=0, DEBUG=1, INFO=2, WARN=3, ERROR=4
+// Define JVM_LOG_MAX_LEVEL at build time to compile-out higher verbosity
+// levels. Level values: TRACE=0, DEBUG=1, INFO=2, WARN=3, ERROR=4
 #ifdef JVM_LOG_MAX_LEVEL
 #if JVM_LOG_MAX_LEVEL <= 0
 #undef LOG_TRACE

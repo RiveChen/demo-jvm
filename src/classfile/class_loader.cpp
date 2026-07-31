@@ -26,19 +26,22 @@ namespace jvm::classfile {
 /**
  * @brief Reads a class file from the classpath and returns its binary content
  *
- * This method searches for a class file by converting the class name to a file path
- * (replacing dots with forward slashes and appending .class extension) and looking
- * through all configured classpath directories.
+ * This method searches for a class file by converting the class name to a file
+ * path (replacing dots with forward slashes and appending .class extension) and
+ * looking through all configured classpath directories.
  *
  * @param name The fully qualified class name (e.g., "java.lang.String")
- * @return std::optional<std::vector<std::byte>> The binary content of the class file if found,
- *         std::nullopt if the class file could not be located or read
+ * @return std::optional<std::vector<std::byte>> The binary content of the class
+ * file if found, std::nullopt if the class file could not be located or read
  *
- * @note The method searches through classpaths in order and returns the first match found
- * @note Class names are converted to file paths by replacing '.' with '/' and adding '.class'
+ * @note The method searches through classpaths in order and returns the first
+ * match found
+ * @note Class names are converted to file paths by replacing '.' with '/' and
+ * adding '.class'
  */
 std::optional<std::vector<std::byte>> ClassLoader::readClassFile(const std::string& name) {
-  // Convert class name to file path (e.g., "java.lang.String" -> "java/lang/String.class")
+  // Convert class name to file path (e.g., "java.lang.String" ->
+  // "java/lang/String.class")
   std::string relative_path = name;
   std::ranges::replace(relative_path, '.', '/');
   relative_path.append(".class");
@@ -96,7 +99,8 @@ oops::InstanceKlass* ClassLoader::loadClass(const std::string& fully_qualified_n
   auto parser = ClassFileParser(std::span<U1>(std::bit_cast<U1*>(class_file_data.value().data()),
                                               class_file_data.value().size()));
   auto cf     = parser.parse();
-  // Wrap in unique_ptr for MethodArea ownership; keep a raw pointer for the link phase.
+  // Wrap in unique_ptr for MethodArea ownership; keep a raw pointer for the
+  // link phase.
   auto  cf_unique = std::make_unique<ClassFile>(std::move(cf));
   auto* cf_ptr    = cf_unique.get();
 

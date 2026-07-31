@@ -148,8 +148,9 @@ class InterpreterTestBase : public ::testing::Test {
     classpath_list_ = {test_classpath_};
     loader_         = std::make_unique<classfile::ClassLoader>(nullptr, classpath_list_);
     oops::MethodArea::getSingleton().reset();
-    // register built-ins so intercepted JDK calls (System.out/println, Object.<init>)
-    // and ACC_NATIVE methods work in interpreter tests (bind is idempotent)
+    // register built-ins so intercepted JDK calls (System.out/println,
+    // Object.<init>) and ACC_NATIVE methods work in interpreter tests (bind is
+    // idempotent)
     engine::registerBuiltinNatives();
     engine::registerStubIntercepts();
   }
@@ -158,7 +159,8 @@ class InterpreterTestBase : public ::testing::Test {
 
   /**
    * @brief Generic static method execution helper function
-   * @tparam Ret Return value type (explicitly specified, e.g. executeStaticMethod<Jint>(...))
+   * @tparam Ret Return value type (explicitly specified, e.g.
+   * executeStaticMethod<Jint>(...))
    * @tparam Args Parameter types (automatically deduced by compiler)
    */
   template <typename Ret, typename... Args>
@@ -191,7 +193,8 @@ class InterpreterTestBase : public ::testing::Test {
 
     // 5. Parameter passing (generic handling)
     U2 current_slot = 0;
-    // Define lambda to automatically handle different parameter types and slot index increment
+    // Define lambda to automatically handle different parameter types and slot
+    // index increment
     auto set_arg = [&](auto val) {
       using T = decltype(val);
       detail::JvmTraits<T>::setLocal(callee_frame.getLocalVariables(), current_slot, val);

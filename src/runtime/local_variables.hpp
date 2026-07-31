@@ -2,8 +2,8 @@
  * @file local_variables.hpp
  * @brief Local variable array within a JVM stack frame.
  *
- * Implements the local variables array as described in JVM Specification §2.6.1.
- * Local variables are indexed by unsigned shorts, with category-2 types
+ * Implements the local variables array as described in JVM Specification
+ * §2.6.1. Local variables are indexed by unsigned shorts, with category-2 types
  * (long, double) occupying two consecutive indices.
  *
  */
@@ -28,7 +28,8 @@ class LocalVariables {
  public:
   LocalVariables() = default;
   /// @brief Allocate a local variables array of the given slot count.
-  /// @param size Number of slot-sized entries (as specified by max_locals in Code attribute).
+  /// @param size Number of slot-sized entries (as specified by max_locals in
+  /// Code attribute).
   explicit LocalVariables(U2 size) : variables_(size) {}
   LocalVariables(const LocalVariables&)            = delete;
   LocalVariables(LocalVariables&&)                 = default;
@@ -66,7 +67,8 @@ class LocalVariables {
     return variables_[index];
   }
 
-  /// @brief Set a category-2 value at the given index, occupying index and index+1.
+  /// @brief Set a category-2 value at the given index, occupying index and
+  /// index+1.
   void setWide(U2 index, Slot value) {
     checkBounds(index + 1);
     variables_[index]     = value;

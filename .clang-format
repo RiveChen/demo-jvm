@@ -33,7 +33,7 @@ AllowShortLoopsOnASingleLine: true
 AllowShortCaseLabelsOnASingleLine: false
 
 # Column limit (matching your clang-tidy LineLength setting)
-ColumnLimit: 120
+ColumnLimit: 100
 
 # Includes
 IncludeBlocks: Regroup

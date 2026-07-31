@@ -29,23 +29,26 @@ struct SymRef_Class {
 
 /// @brief A symbolic reference to a field (unresolved).
 struct SymRef_Field {
-  U2          class_cp_index;  ///< Index into the owning class's constant pool for the class ref.
-  std::string member_name;     ///< Field name.
-  std::string descriptor;      ///< Field descriptor string.
+  U2 class_cp_index;        ///< Index into the owning class's constant pool for the
+                            ///< class ref.
+  std::string member_name;  ///< Field name.
+  std::string descriptor;   ///< Field descriptor string.
 };
 
 /// @brief A symbolic reference to a method (unresolved).
 struct SymRef_Method {
-  U2          class_cp_index;  ///< Index into the owning class's constant pool for the class ref.
-  std::string member_name;     ///< Method name.
-  std::string descriptor;      ///< Method descriptor string.
+  U2 class_cp_index;        ///< Index into the owning class's constant pool for the
+                            ///< class ref.
+  std::string member_name;  ///< Method name.
+  std::string descriptor;   ///< Method descriptor string.
 };
 
 /// @brief A symbolic reference to an interface method (unresolved).
 struct SymRef_InterfaceMethod {
-  U2          class_cp_index;  ///< Index into the owning class's constant pool for the class ref.
-  std::string member_name;     ///< Interface method name.
-  std::string descriptor;      ///< Interface method descriptor string.
+  U2 class_cp_index;        ///< Index into the owning class's constant pool for the
+                            ///< class ref.
+  std::string member_name;  ///< Interface method name.
+  std::string descriptor;   ///< Interface method descriptor string.
 };
 ///@}
 
@@ -62,8 +65,9 @@ class Field;
 /// - Resolved references: Klass*, Method*, Field*
 /// - Unresolved symbolic references: SymRef_Class, SymRef_Field, SymRef_Method,
 /// SymRef_InterfaceMethod
-using RtCpInfo = std::variant<std::monostate, Jint, Jfloat, Jlong, Jdouble, std::string, Klass*, Method*, Field*,
-                              SymRef_Class, SymRef_Field, SymRef_Method, SymRef_InterfaceMethod>;
+using RtCpInfo =
+  std::variant<std::monostate, Jint, Jfloat, Jlong, Jdouble, std::string, Klass*, Method*, Field*,
+               SymRef_Class, SymRef_Field, SymRef_Method, SymRef_InterfaceMethod>;
 
 /**
  * @brief The runtime constant pool for a class.
@@ -92,7 +96,8 @@ class RuntimeConstantPool {
   Method* resolveMethod(U2 index);
   ///@}
 
-  /// @brief Resolve the symbolic key string for an entry (e.g. for error messages).
+  /// @brief Resolve the symbolic key string for an entry (e.g. for error
+  /// messages).
   std::optional<std::string> symbolicKey(U2 index);
 
  private:

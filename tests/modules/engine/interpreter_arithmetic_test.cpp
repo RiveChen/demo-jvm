@@ -63,17 +63,21 @@ TEST_F(InterpreterArithmeticTest, INEG_Basic) {
 }
 
 TEST_F(InterpreterArithmeticTest, IADD_MaxPlusOneWrapsToMin) {
-  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testIADD", std::numeric_limits<Jint>::max(), Jint{1}),
-            std::numeric_limits<Jint>::min());
+  EXPECT_EQ(
+    executeStaticMethod<Jint>(kClassName, "testIADD", std::numeric_limits<Jint>::max(), Jint{1}),
+    std::numeric_limits<Jint>::min());
 }
 
 TEST_F(InterpreterArithmeticTest, ISUB_MinMinusOneWrapsToMax) {
-  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testISUB", std::numeric_limits<Jint>::min(), Jint{1}),
-            std::numeric_limits<Jint>::max());
+  EXPECT_EQ(
+    executeStaticMethod<Jint>(kClassName, "testISUB", std::numeric_limits<Jint>::min(), Jint{1}),
+    std::numeric_limits<Jint>::max());
 }
 
 TEST_F(InterpreterArithmeticTest, IMUL_OverflowWrapsAsTwosComplement) {
-  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testIMUL", std::numeric_limits<Jint>::max(), Jint{2}), Jint{-2});
+  EXPECT_EQ(
+    executeStaticMethod<Jint>(kClassName, "testIMUL", std::numeric_limits<Jint>::max(), Jint{2}),
+    Jint{-2});
 }
 
 TEST_F(InterpreterArithmeticTest, INEG_MinWrapsToMin) {
@@ -82,12 +86,15 @@ TEST_F(InterpreterArithmeticTest, INEG_MinWrapsToMin) {
 }
 
 TEST_F(InterpreterArithmeticTest, IDIV_MinByNegativeOneReturnsMin) {
-  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testIDIV", std::numeric_limits<Jint>::min(), Jint{-1}),
-            std::numeric_limits<Jint>::min());
+  EXPECT_EQ(
+    executeStaticMethod<Jint>(kClassName, "testIDIV", std::numeric_limits<Jint>::min(), Jint{-1}),
+    std::numeric_limits<Jint>::min());
 }
 
 TEST_F(InterpreterArithmeticTest, IREM_MinByNegativeOneReturnsZero) {
-  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testIREM", std::numeric_limits<Jint>::min(), Jint{-1}), Jint{0});
+  EXPECT_EQ(
+    executeStaticMethod<Jint>(kClassName, "testIREM", std::numeric_limits<Jint>::min(), Jint{-1}),
+    Jint{0});
 }
 
 // ============================================================================
@@ -133,17 +140,21 @@ TEST_F(InterpreterArithmeticTest, LNEG_Basic) {
 }
 
 TEST_F(InterpreterArithmeticTest, LADD_MaxPlusOneWrapsToMin) {
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLADD", std::numeric_limits<Jlong>::max(), Jlong{1}),
-            std::numeric_limits<Jlong>::min());
+  EXPECT_EQ(
+    executeStaticMethod<Jlong>(kClassName, "testLADD", std::numeric_limits<Jlong>::max(), Jlong{1}),
+    std::numeric_limits<Jlong>::min());
 }
 
 TEST_F(InterpreterArithmeticTest, LSUB_MinMinusOneWrapsToMax) {
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLSUB", std::numeric_limits<Jlong>::min(), Jlong{1}),
-            std::numeric_limits<Jlong>::max());
+  EXPECT_EQ(
+    executeStaticMethod<Jlong>(kClassName, "testLSUB", std::numeric_limits<Jlong>::min(), Jlong{1}),
+    std::numeric_limits<Jlong>::max());
 }
 
 TEST_F(InterpreterArithmeticTest, LMUL_OverflowWrapsAsTwosComplement) {
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLMUL", std::numeric_limits<Jlong>::max(), Jlong{2}), Jlong{-2});
+  EXPECT_EQ(
+    executeStaticMethod<Jlong>(kClassName, "testLMUL", std::numeric_limits<Jlong>::max(), Jlong{2}),
+    Jlong{-2});
 }
 
 TEST_F(InterpreterArithmeticTest, LNEG_MinWrapsToMin) {
@@ -152,12 +163,15 @@ TEST_F(InterpreterArithmeticTest, LNEG_MinWrapsToMin) {
 }
 
 TEST_F(InterpreterArithmeticTest, LDIV_MinByNegativeOneReturnsMin) {
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLDIV", std::numeric_limits<Jlong>::min(), Jlong{-1}),
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLDIV", std::numeric_limits<Jlong>::min(),
+                                       Jlong{-1}),
             std::numeric_limits<Jlong>::min());
 }
 
 TEST_F(InterpreterArithmeticTest, LREM_MinByNegativeOneReturnsZero) {
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLREM", std::numeric_limits<Jlong>::min(), Jlong{-1}), Jlong{0});
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLREM", std::numeric_limits<Jlong>::min(),
+                                       Jlong{-1}),
+            Jlong{0});
 }
 
 // ============================================================================

@@ -150,7 +150,8 @@ TEST(DescriptorArgSlotTest, Counts) {
   EXPECT_EQ((parseMethodDescriptor("(JD)J")).arg_slot_count, 4);   // 2 + 2
   EXPECT_EQ((parseMethodDescriptor("(DDD)V")).arg_slot_count, 6);  // 2 * 3
   EXPECT_EQ((parseMethodDescriptor("([Ljava/lang/String;)V")).arg_slot_count, 1);
-  EXPECT_EQ((parseMethodDescriptor("(BCFDJZ)V")).arg_slot_count, 8);  // 1+1+1+2+2+1
+  EXPECT_EQ((parseMethodDescriptor("(BCFDJZ)V")).arg_slot_count,
+            8);  // 1+1+1+2+2+1
 }
 
 // ============================================================================

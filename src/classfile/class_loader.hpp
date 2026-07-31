@@ -50,7 +50,8 @@ class ClassLoader {
     : parent_(parent), classpaths_(std::move(classpaths)) {}
 
   /// @brief Load (or find already-loaded) a class by fully qualified name.
-  /// @param fully_qualified_name Fully qualified class name (e.g. "java.lang.Object").
+  /// @param fully_qualified_name Fully qualified class name (e.g.
+  /// "java.lang.Object").
   /// @return The Klass object, or nullptr if the class cannot be found.
   oops::InstanceKlass* loadClass(const std::string& fully_qualified_name);
 };

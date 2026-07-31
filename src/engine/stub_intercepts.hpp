@@ -53,7 +53,8 @@ class StubIntercepts {
   std::unordered_map<std::string, InterceptFn> table_;
 };
 
-/// @brief Register all built-in stub intercepts (System.out, println, Object.\<init\>).
+/// @brief Register all built-in stub intercepts (System.out, println,
+/// Object.\<init\>).
 void registerStubIntercepts();
 
 /**

@@ -35,7 +35,8 @@ std::string Klass::getDescriptorName() {
 // ============================================================================
 
 InstanceKlass::InstanceKlass(classfile::ClassFile* class_file, classfile::ClassLoader* loader)
-  : Klass(Klass::Kind::Instance, class_file->constant_pool.getClassName(class_file->this_class_index),
+  : Klass(Klass::Kind::Instance,
+          class_file->constant_pool.getClassName(class_file->this_class_index),
           class_file->access_flags),
     loader_(loader),
     interfaces_(class_file->interfaces_count),
@@ -68,7 +69,8 @@ void InstanceKlass::initialize(runtime::Thread* thread) {
     runtime::Frame frame(clinit);
     thread->pushFrame(std::move(frame));
   } else {
-    // a subclass without its own <clinit> should also initializes its superclass
+    // a subclass without its own <clinit> should also initializes its
+    // superclass
     state_ = FullyInitialized;
   }
 
@@ -78,7 +80,8 @@ void InstanceKlass::initialize(runtime::Thread* thread) {
   }
 }
 
-Method* InstanceKlass::findMethod(const std::string& name, const std::string& descriptor, bool find_in_super) {
+Method* InstanceKlass::findMethod(const std::string& name, const std::string& descriptor,
+                                  bool find_in_super) {
   for (auto& m : methods_) {
     if (m.getName() == name && m.getDescriptor() == descriptor) {
       return &m;
@@ -123,7 +126,8 @@ bool InstanceKlass::isInstanceOf(const Klass* target) const {
 // ============================================================================
 
 void InstanceKlass::prepareRuntimeConstantPool(classfile::ClassFile* class_file) {
-  LOG_DEBUG("Preparing runtime constant pool for ", name_, " (", class_file->constant_pool.size(), " entries)");
+  LOG_DEBUG("Preparing runtime constant pool for ", name_, " (", class_file->constant_pool.size(),
+            " entries)");
   size_t cp_count = class_file->constant_pool.size();
   constant_pool_.infos_.resize(cp_count);
   constant_pool_.infos_[0] = std::monostate{};
@@ -136,25 +140,25 @@ void InstanceKlass::prepareRuntimeConstantPool(classfile::ClassFile* class_file)
           i, SymRef_Class{.class_name = class_file->constant_pool.getUtf8String(info->name_index)});
       } break;
       case classfile::ConstantTag::kMethodref: {
-        const auto* info          = static_cast<const classfile::MethodrefInfo*>(cpinfo);
-        auto        name_and_type = class_file->constant_pool.getNameAndType(info->name_and_type_index);
+        const auto* info   = static_cast<const classfile::MethodrefInfo*>(cpinfo);
+        auto name_and_type = class_file->constant_pool.getNameAndType(info->name_and_type_index);
         constant_pool_.setConstant(i, SymRef_Method{.class_cp_index = info->class_index,
                                                     .member_name    = name_and_type.first,
                                                     .descriptor     = name_and_type.second});
       } break;
       case classfile::ConstantTag::kFieldref: {
-        const auto* info          = static_cast<const classfile::FieldrefInfo*>(cpinfo);
-        auto        name_and_type = class_file->constant_pool.getNameAndType(info->name_and_type_index);
+        const auto* info   = static_cast<const classfile::FieldrefInfo*>(cpinfo);
+        auto name_and_type = class_file->constant_pool.getNameAndType(info->name_and_type_index);
         constant_pool_.setConstant(i, SymRef_Field{.class_cp_index = info->class_index,
                                                    .member_name    = name_and_type.first,
                                                    .descriptor     = name_and_type.second});
       } break;
       case classfile::ConstantTag::kInterfaceMethodref: {
-        const auto* info          = static_cast<const classfile::InterfaceMethodrefInfo*>(cpinfo);
-        auto        name_and_type = class_file->constant_pool.getNameAndType(info->name_and_type_index);
+        const auto* info   = static_cast<const classfile::InterfaceMethodrefInfo*>(cpinfo);
+        auto name_and_type = class_file->constant_pool.getNameAndType(info->name_and_type_index);
         constant_pool_.setConstant(i, SymRef_InterfaceMethod{.class_cp_index = info->class_index,
                                                              .member_name    = name_and_type.first,
-                                                             .descriptor     = name_and_type.second});
+                                                             .descriptor = name_and_type.second});
       } break;
       case classfile::ConstantTag::kInteger: {
         constant_pool_.setConstant(i, static_cast<const classfile::IntegerInfo*>(cpinfo)->value);
@@ -184,7 +188,8 @@ void InstanceKlass::prepareRuntimeConstantPool(classfile::ClassFile* class_file)
       case classfile::ConstantTag::kUtf8:
         break;
       default:
-        throw std::runtime_error("Unknown constant pool tag: " + std::to_string(static_cast<int>(cpinfo->tag)));
+        throw std::runtime_error("Unknown constant pool tag: " +
+                                 std::to_string(static_cast<int>(cpinfo->tag)));
     }
   }
 }
@@ -214,9 +219,10 @@ void InstanceKlass::prepareMethods(classfile::ClassFile* class_file) {
 }
 
 void InstanceKlass::prepareFieldsAndStatics(classfile::ClassFile* class_file) {
-  size_t instance_slot_count =
-    (super_class_ != nullptr) ? static_cast<InstanceKlass*>(super_class_)->getInstanceSlotCount() : 0;
-  size_t                               static_slot_count = 0;
+  size_t instance_slot_count = (super_class_ != nullptr)
+                                 ? static_cast<InstanceKlass*>(super_class_)->getInstanceSlotCount()
+                                 : 0;
+  size_t static_slot_count   = 0;
   std::vector<std::pair<size_t, Slot>> static_inits;
   for (auto& member_info : class_file->fields.getMembers()) {
     auto* field_info   = dynamic_cast<classfile::FieldInfo*>(member_info.get());
@@ -232,21 +238,25 @@ void InstanceKlass::prepareFieldsAndStatics(classfile::ClassFile* class_file) {
         const auto* cp_info = class_file->constant_pool.getConstantInfo(cv->value);
         switch (cp_info->tag) {
           case classfile::ConstantTag::kInteger:
-            static_inits.emplace_back(field.slot_index_,
-                                      Slot{.i = static_cast<const classfile::IntegerInfo*>(cp_info)->value});
+            static_inits.emplace_back(
+              field.slot_index_,
+              Slot{.i = static_cast<const classfile::IntegerInfo*>(cp_info)->value});
             break;
           case classfile::ConstantTag::kFloat:
-            static_inits.emplace_back(field.slot_index_,
-                                      Slot{.f = static_cast<const classfile::FloatInfo*>(cp_info)->value});
+            static_inits.emplace_back(
+              field.slot_index_,
+              Slot{.f = static_cast<const classfile::FloatInfo*>(cp_info)->value});
             break;
           case classfile::ConstantTag::kLong:
-            static_inits.emplace_back(field.slot_index_,
-                                      Slot{.l = static_cast<const classfile::LongInfo*>(cp_info)->value});
+            static_inits.emplace_back(
+              field.slot_index_,
+              Slot{.l = static_cast<const classfile::LongInfo*>(cp_info)->value});
             static_inits.emplace_back(field.slot_index_ + 1, Slot{.i = 0});
             break;
           case classfile::ConstantTag::kDouble:
-            static_inits.emplace_back(field.slot_index_,
-                                      Slot{.d = static_cast<const classfile::DoubleInfo*>(cp_info)->value});
+            static_inits.emplace_back(
+              field.slot_index_,
+              Slot{.d = static_cast<const classfile::DoubleInfo*>(cp_info)->value});
             static_inits.emplace_back(field.slot_index_ + 1, Slot{.i = 0});
             break;
           case classfile::ConstantTag::kString:
@@ -283,7 +293,8 @@ void InstanceKlass::linkSuperClass(classfile::ClassFile* cf, classfile::ClassLoa
     return;
   }
   auto* super_klass = loader->loadClass(super_class_name);
-  // loadClass returns Klass*; the super of an InstanceKlass is always an InstanceKlass
+  // loadClass returns Klass*; the super of an InstanceKlass is always an
+  // InstanceKlass
   this->setSuperClass(static_cast<InstanceKlass*>(super_klass));
 }
 

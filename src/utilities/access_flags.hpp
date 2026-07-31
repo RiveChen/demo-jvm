@@ -63,11 +63,17 @@ enum class Field : U2 {
 /// Cast to U4 (32-bit unsigned) before OR to avoid C++ integer promotion
 /// of uint16_t (U2) to signed int, which triggers clang-tidy warnings.
 /// @{
-constexpr U2 operator|(Class a, Class b) { return static_cast<U2>(static_cast<U4>(a) | static_cast<U4>(b)); }
+constexpr U2 operator|(Class a, Class b) {
+  return static_cast<U2>(static_cast<U4>(a) | static_cast<U4>(b));
+}
 constexpr U2 operator|(U2 a, Class b) { return static_cast<U2>(a | static_cast<U4>(b)); }
-constexpr U2 operator|(Method a, Method b) { return static_cast<U2>(static_cast<U4>(a) | static_cast<U4>(b)); }
+constexpr U2 operator|(Method a, Method b) {
+  return static_cast<U2>(static_cast<U4>(a) | static_cast<U4>(b));
+}
 constexpr U2 operator|(U2 a, Method b) { return static_cast<U2>(a | static_cast<U4>(b)); }
-constexpr U2 operator|(Field a, Field b) { return static_cast<U2>(static_cast<U4>(a) | static_cast<U4>(b)); }
+constexpr U2 operator|(Field a, Field b) {
+  return static_cast<U2>(static_cast<U4>(a) | static_cast<U4>(b));
+}
 constexpr U2 operator|(U2 a, Field b) { return static_cast<U2>(a | static_cast<U4>(b)); }
 /// @}
 }  // namespace flags

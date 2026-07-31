@@ -62,7 +62,11 @@ class Klass {
   Klass*                    super_class_;
 
   Klass(Kind kind, std::string name, AccessFlags<flags::Class> flags)
-    : kind_(kind), state_(Allocated), name_(std::move(name)), access_flags_(flags), super_class_(nullptr) {}
+    : kind_(kind),
+      state_(Allocated),
+      name_(std::move(name)),
+      access_flags_(flags),
+      super_class_(nullptr) {}
 
  public:
   virtual ~Klass() = default;
@@ -101,8 +105,8 @@ class InstanceKlass : public Klass {
   bool                    isInstanceOf(const Klass* target) const override;
 
   // -- Class hierarchy (well-typed for InstanceKlass) --
-  void                               setSuperClass(InstanceKlass* super) { super_class_ = super; }
-  void                               setInterface(U2 index, InstanceKlass* iface) { interfaces_.at(index) = iface; }
+  void setSuperClass(InstanceKlass* super) { super_class_ = super; }
+  void setInterface(U2 index, InstanceKlass* iface) { interfaces_.at(index) = iface; }
   const std::vector<InstanceKlass*>& getInterfaces() const { return interfaces_; }
 
   // -- Runtime constant pool --
@@ -114,7 +118,8 @@ class InstanceKlass : public Klass {
   Slot&  getStaticSlot(size_t index) { return statics_.at(index); }
 
   // -- Member lookup --
-  Method* findMethod(const std::string& name, const std::string& descriptor, bool find_in_super = true);
+  Method* findMethod(const std::string& name, const std::string& descriptor,
+                     bool find_in_super = true);
   Field*  findField(const std::string& name, const std::string& descriptor);
 
   // -- Linking & initialization --
@@ -170,7 +175,8 @@ class TypeArrayKlass : public ArrayKlass {
  public:
   TypeArrayKlass(BasicType type, Jint elem_size, std::string name)
     : ArrayKlass(Klass::Kind::TypeArray, std::move(name), elem_size,
-                 AccessFlags<flags::Class>(flags::Class::PUBLIC | flags::Class::FINAL | flags::Class::ABSTRACT)),
+                 AccessFlags<flags::Class>(flags::Class::PUBLIC | flags::Class::FINAL |
+                                           flags::Class::ABSTRACT)),
       type_(type) {
     // Arrays are always fully initialized immediately
     state_ = FullyInitialized;
@@ -189,7 +195,8 @@ class ObjArrayKlass : public ArrayKlass {
  public:
   ObjArrayKlass(Klass* element, std::string name)
     : ArrayKlass(Klass::Kind::ObjArray, std::move(name), static_cast<Jint>(sizeof(void*)),
-                 AccessFlags<flags::Class>(flags::Class::PUBLIC | flags::Class::FINAL | flags::Class::ABSTRACT)),
+                 AccessFlags<flags::Class>(flags::Class::PUBLIC | flags::Class::FINAL |
+                                           flags::Class::ABSTRACT)),
       element_klass_(element) {
     // Arrays are always fully initialized immediately
     state_ = FullyInitialized;

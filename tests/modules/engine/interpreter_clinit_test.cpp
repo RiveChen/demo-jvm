@@ -20,7 +20,8 @@ class InterpreterClinitTest : public InterpreterTestBase {
 // ============================================================================
 
 TEST_F(InterpreterClinitTest, ConstantValueInt) {
-  // CONST_INT = 42 is a ConstantValue attribute — set during linking, before <clinit>
+  // CONST_INT = 42 is a ConstantValue attribute — set during linking, before
+  // <clinit>
   EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "getConstInt"), 42);
 }
 
@@ -44,8 +45,8 @@ TEST_F(InterpreterClinitTest, GetStaticLongFromClinit) {
 // ============================================================================
 
 TEST_F(InterpreterClinitTest, PutStaticTriggersClinit) {
-  // PUTSTATIC to staticIntFromClinit should trigger <clinit> first (setting it to 100),
-  // then the method's own assignment sets it to 42.
+  // PUTSTATIC to staticIntFromClinit should trigger <clinit> first (setting it
+  // to 100), then the method's own assignment sets it to 42.
   EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "putThenGetInt", 42), 42);
 }
 
@@ -57,9 +58,9 @@ TEST_F(InterpreterClinitTest, ClinitExecutesOnlyOnce) {
   // First call triggers <clinit> → staticIntFromClinit = 100
   EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "getIntFromClinit"), 100);
 
-  // Second call: class already fully initialized, skip <clinit>, read stale value.
-  // The value persists because this test shares the same loader.
-  // After first call the class is FullyInitialized; read should still be 100.
+  // Second call: class already fully initialized, skip <clinit>, read stale
+  // value. The value persists because this test shares the same loader. After
+  // first call the class is FullyInitialized; read should still be 100.
   EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "getIntFromClinit"), 100);
 }
 
@@ -83,7 +84,8 @@ TEST_F(InterpreterClinitTest, KlassStateAfterFirstActiveUse) {
 
   EXPECT_EQ(klass->getState(), oops::InstanceKlass::Linked);
 
-  // Trigger <clinit> by executing a method that reads a field initialized in <clinit>
+  // Trigger <clinit> by executing a method that reads a field initialized in
+  // <clinit>
   executeStaticMethod<Jint>(kClassName, "getIntFromClinit");
 
   // After first access, class should be fully initialized

@@ -24,7 +24,8 @@ class ConstantPoolTest : public OopsTestBase {
 }  // namespace
 
 // SymRef entries are self-sufficient (baked strings + runtime-cp class index);
-// resolution must not touch the ClassFile. Each test plants a SymRef and resolves it.
+// resolution must not touch the ClassFile. Each test plants a SymRef and
+// resolves it.
 
 TEST_F(ConstantPoolTest, ResolveClassCachesResult) {
   auto* klass = loader_->loadClass(kClassName);
@@ -49,7 +50,8 @@ TEST_F(ConstantPoolTest, ResolveMethodAndCache) {
   auto& rcp = klass->getRuntimeConstantPool();
   // slot 1: the Class entry the method ref points at (via class_cp_index)
   rcp.setConstant(1, oops::SymRef_Class{.class_name = kClassName});
-  rcp.setConstant(2, oops::SymRef_Method{.class_cp_index = 1, .member_name = "add", .descriptor = "(II)I"});
+  rcp.setConstant(
+    2, oops::SymRef_Method{.class_cp_index = 1, .member_name = "add", .descriptor = "(II)I"});
 
   auto* resolved_first  = rcp.resolveMethod(2);
   auto* resolved_second = rcp.resolveMethod(2);
@@ -68,7 +70,8 @@ TEST_F(ConstantPoolTest, ResolveFieldAndCache) {
 
   auto& rcp = klass->getRuntimeConstantPool();
   rcp.setConstant(1, oops::SymRef_Class{.class_name = kClassName});
-  rcp.setConstant(3, oops::SymRef_Field{.class_cp_index = 1, .member_name = "sd", .descriptor = "D"});
+  rcp.setConstant(3,
+                  oops::SymRef_Field{.class_cp_index = 1, .member_name = "sd", .descriptor = "D"});
 
   auto* resolved_first  = rcp.resolveField(3);
   auto* resolved_second = rcp.resolveField(3);
@@ -82,52 +85,58 @@ TEST_F(ConstantPoolTest, ResolveFieldAndCache) {
   EXPECT_TRUE(std::holds_alternative<oops::Field*>(rcp.getConstant(3)));
 }
 
-// symbolicKey builds "class.member descriptor" from an unresolved SymRef without
-// resolving. The format must match what registerStubIntercepts() binds.
+// symbolicKey builds "class.member descriptor" from an unresolved SymRef
+// without resolving. The format must match what registerStubIntercepts() binds.
 TEST_F(ConstantPoolTest, SymbolicKeyFromMethodAndFieldRefs) {
   auto* klass = loader_->loadClass(kClassName);
   ASSERT_NE(klass, nullptr);
   auto& rcp = klass->getRuntimeConstantPool();
 
-  // class names are the internal slash form; the key must match registerStubIntercepts()
+  // class names are the internal slash form; the key must match
+  // registerStubIntercepts()
   rcp.setConstant(1, oops::SymRef_Class{.class_name = "java/io/PrintStream"});
-  rcp.setConstant(
-    2, oops::SymRef_Method{.class_cp_index = 1, .member_name = "println", .descriptor = "(Ljava/lang/String;)V"});
+  rcp.setConstant(2, oops::SymRef_Method{.class_cp_index = 1,
+                                         .member_name    = "println",
+                                         .descriptor     = "(Ljava/lang/String;)V"});
   auto mkey = rcp.symbolicKey(2);
   ASSERT_TRUE(mkey.has_value());
   EXPECT_EQ(*mkey, "java/io/PrintStream.println (Ljava/lang/String;)V");
 
   rcp.setConstant(3, oops::SymRef_Class{.class_name = "java/lang/System"});
-  rcp.setConstant(4,
-                  oops::SymRef_Field{.class_cp_index = 3, .member_name = "out", .descriptor = "Ljava/io/PrintStream;"});
+  rcp.setConstant(4, oops::SymRef_Field{.class_cp_index = 3,
+                                        .member_name    = "out",
+                                        .descriptor     = "Ljava/io/PrintStream;"});
   auto fkey = rcp.symbolicKey(4);
   ASSERT_TRUE(fkey.has_value());
   EXPECT_EQ(*fkey, "java/lang/System.out Ljava/io/PrintStream;");
 }
 
-// A resolved slot (Method*) is not symbolic -> no key (keeps the invoke hot path cheap).
+// A resolved slot (Method*) is not symbolic -> no key (keeps the invoke hot
+// path cheap).
 TEST_F(ConstantPoolTest, SymbolicKeyNulloptForResolvedSlot) {
   auto* klass = loader_->loadClass(kClassName);
   ASSERT_NE(klass, nullptr);
   auto& rcp = klass->getRuntimeConstantPool();
 
   rcp.setConstant(1, oops::SymRef_Class{.class_name = kClassName});
-  rcp.setConstant(2, oops::SymRef_Method{.class_cp_index = 1, .member_name = "add", .descriptor = "(II)I"});
+  rcp.setConstant(
+    2, oops::SymRef_Method{.class_cp_index = 1, .member_name = "add", .descriptor = "(II)I"});
   ASSERT_TRUE(rcp.symbolicKey(2).has_value());   // symbolic before resolve
   rcp.resolveMethod(2);                          // slot 2 now holds Method*
   EXPECT_FALSE(rcp.symbolicKey(2).has_value());  // resolved -> nullopt
 }
 
-// Regression: the target Class entry may already be resolved (Klass*) by another ref
-// to the same class while this method ref is still symbolic. symbolicKey must return
-// nullopt, not throw bad_variant_access.
+// Regression: the target Class entry may already be resolved (Klass*) by
+// another ref to the same class while this method ref is still symbolic.
+// symbolicKey must return nullopt, not throw bad_variant_access.
 TEST_F(ConstantPoolTest, SymbolicKeyNoThrowWhenTargetClassResolved) {
   auto* klass = loader_->loadClass(kClassName);
   ASSERT_NE(klass, nullptr);
   auto& rcp = klass->getRuntimeConstantPool();
 
   rcp.setConstant(1, oops::SymRef_Class{.class_name = kClassName});
-  rcp.setConstant(2, oops::SymRef_Method{.class_cp_index = 1, .member_name = "add", .descriptor = "(II)I"});
+  rcp.setConstant(
+    2, oops::SymRef_Method{.class_cp_index = 1, .member_name = "add", .descriptor = "(II)I"});
   rcp.resolveClass(1);  // slot 1 (class) -> Klass*, slot 2 still SymRef_Method
 
   std::optional<std::string> key;

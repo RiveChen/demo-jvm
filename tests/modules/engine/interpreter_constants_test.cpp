@@ -1,6 +1,5 @@
-#include "interpreter_test_base.hpp"
-
 #include "engine/opcode.hpp"
+#include "interpreter_test_base.hpp"
 
 #include <gtest/gtest.h>
 

@@ -42,14 +42,17 @@ inline U8 BSWAP64(U8 val) {
 namespace jvm {
 
 /**
- * @brief Swap byte order of a multi-byte value, or leave 1-byte values unchanged.
+ * @brief Swap byte order of a multi-byte value, or leave 1-byte values
+ * unchanged.
  *
  * Uses C++17 `if constexpr` to dispatch to the correct BSWAP intrinsic
  * at compile time based on the type size.
  *
  * @tparam T A scalar type (typically U2, U4, U8, or their signed equivalents).
- * @param value The value to convert from big-endian to host endianness (or vice versa).
- * @return The byte-swapped value, or the original unchanged for single-byte types.
+ * @param value The value to convert from big-endian to host endianness (or vice
+ * versa).
+ * @return The byte-swapped value, or the original unchanged for single-byte
+ * types.
  */
 template <typename T>
 T swapEndian(T value) {

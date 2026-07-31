@@ -51,6 +51,8 @@ ObjArrayKlass* MethodArea::getOrCreateObjArrayKlass(Klass* component) {
   return klass_ptr;
 }
 
-bool MethodArea::hasClass(const ClassIdentifier& identifier) const { return instance_klasses_.contains(identifier); }
+bool MethodArea::hasClass(const ClassIdentifier& identifier) const {
+  return instance_klasses_.contains(identifier);
+}
 
 }  // namespace jvm::oops

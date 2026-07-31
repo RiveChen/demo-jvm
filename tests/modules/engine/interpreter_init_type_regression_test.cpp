@@ -12,7 +12,8 @@
  *   B3  <clinit> looked up via findMethod inherits the super's <clinit>
  *       -> fix: look up "<clinit>" in this class's methods only
  *   B4  sub <clinit> runs before super <clinit>
- *       -> fix: push own <clinit> frame before recursing into super.initialize()
+ *       -> fix: push own <clinit> frame before recursing into
+ * super.initialize()
  */
 
 #include "interpreter_test_base.hpp"
@@ -49,19 +50,23 @@ TEST_F(InterpreterInitTypeRegressionTest, B2_InstanceOfSuperInterface) {
 
 // --- B4: superclass <clinit> must run before subclass <clinit> ---------------
 TEST_F(InterpreterInitTypeRegressionTest, B4_SuperClinitBeforeSubClinit) {
-  // Base contributes digit 1, Derived digit 2. Correct order => 12; sub-first => 21.
+  // Base contributes digit 1, Derived digit 2. Correct order => 12; sub-first
+  // => 21.
   EXPECT_EQ(executeStaticMethod<Jint>(kDriver, "b4SuperBeforeSub"), 12)
-    << "subclass <clinit> ran before superclass <clinit> (expected 12, buggy 21)";
+    << "subclass <clinit> ran before superclass <clinit> (expected 12, buggy "
+       "21)";
 }
 
-// --- B3: a subclass without its own <clinit> must reach FullyInitialized ------
+// --- B3: a subclass without its own <clinit> must reach FullyInitialized
+// ------
 TEST_F(InterpreterInitTypeRegressionTest, B3_SubclassWithoutClinitFullyInitialized) {
-  // Trigger init of RIT_DerivedNoClinit (extends RIT_Base, which HAS a <clinit>).
+  // Trigger init of RIT_DerivedNoClinit (extends RIT_Base, which HAS a
+  // <clinit>).
   //
-  // NOTE: with the bug present in a build that keeps asserts (debug), the second
-  // markFullyInitialized(RIT_Base) will abort the process -- that is itself a
-  // detection of B3. In a release build the assert is a no-op and the subclass
-  // is left in BeingInitialized, which the EXPECT below catches.
+  // NOTE: with the bug present in a build that keeps asserts (debug), the
+  // second markFullyInitialized(RIT_Base) will abort the process -- that is
+  // itself a detection of B3. In a release build the assert is a no-op and the
+  // subclass is left in BeingInitialized, which the EXPECT below catches.
   executeStaticMethod<Jint>(kDriver, "b3TriggerNoClinit");
 
   auto* k = loader_->loadClass(kDerivedNoClinit);

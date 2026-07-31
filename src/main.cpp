@@ -34,7 +34,8 @@
  * @param argc Argument count.
  * @param argv Argument vector:
  *             argv[1] = classpath directory (default: ".")
- *             argv[2] = fully qualified main class (default: "tests.data.java.HelloWorld")
+ *             argv[2] = fully qualified main class (default:
+ * "tests.data.java.HelloWorld")
  * @return 0 on success, 1 on error (class not found or no main method).
  */
 int main(int argc, char** argv) {

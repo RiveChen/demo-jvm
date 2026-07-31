@@ -23,7 +23,8 @@ TEST_F(MethodAreaTest, SingletonInstance) {
 
 TEST_F(MethodAreaTest, AddAndGetClass) {
   // Load a class which will be added to method area
-  // internal (slash) form: this is how loadClass keys the MethodArea after normalization
+  // internal (slash) form: this is how loadClass keys the MethodArea after
+  // normalization
   std::string class_name = "tests/data/java/HelloWorld";
   auto*       klass      = loader_->loadClass(class_name);
 
@@ -49,7 +50,8 @@ TEST_F(MethodAreaTest, HasClass) {
   EXPECT_FALSE(method_area.hasClass(non_existent)) << "Non-existent class should not be found";
 
   // Load a class and verify it exists
-  // internal (slash) form: this is how loadClass keys the MethodArea after normalization
+  // internal (slash) form: this is how loadClass keys the MethodArea after
+  // normalization
   std::string class_name = "tests/data/java/HelloWorld";
   auto*       klass      = loader_->loadClass(class_name);
   ASSERT_NE(klass, nullptr);
@@ -73,7 +75,8 @@ TEST_F(MethodAreaTest, DifferentClassLoadersSameClassName) {
   auto loader1 = std::make_unique<classfile::ClassLoader>(nullptr, classpath_list_);
   auto loader2 = std::make_unique<classfile::ClassLoader>(nullptr, classpath_list_);
 
-  // internal (slash) form: this is how loadClass keys the MethodArea after normalization
+  // internal (slash) form: this is how loadClass keys the MethodArea after
+  // normalization
   std::string class_name = "tests/data/java/HelloWorld";
 
   // Load same class with different loaders

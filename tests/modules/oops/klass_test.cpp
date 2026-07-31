@@ -23,7 +23,8 @@ TEST_F(KlassTest, ConstructFromClassFile) {
 
   ASSERT_NE(klass, nullptr);
   EXPECT_EQ(klass->getClassLoader(), loader_.get());
-  // fields/statics were prepared from the class file (KlassTestData has static sd:D)
+  // fields/statics were prepared from the class file (KlassTestData has static
+  // sd:D)
   EXPECT_GT(klass->getStaticSlotCount(), 0U);
 }
 

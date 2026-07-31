@@ -31,8 +31,9 @@ static Klass* arrayKlassForName(classfile::ClassLoader* loader, const std::strin
   ArrayKlass* res = nullptr;
   if (name[dim] == 'L') {
     // remove 'L' and ';'
-    auto* klass = static_cast<InstanceKlass*>(loader->loadClass(name.substr(dim + 1, name.size() - dim - 2)));
-    res         = oops::MethodArea::getSingleton().getOrCreateObjArrayKlass(klass);
+    auto* klass =
+      static_cast<InstanceKlass*>(loader->loadClass(name.substr(dim + 1, name.size() - dim - 2)));
+    res = oops::MethodArea::getSingleton().getOrCreateObjArrayKlass(klass);
   } else {
     auto type = charToBasicType(name[dim]);
     res       = oops::MethodArea::getSingleton().getOrCreateTypeArrayKlass(type);
@@ -116,9 +117,11 @@ Method* RuntimeConstantPool::resolveMethod(U2 index) {
 
 std::optional<std::string> RuntimeConstantPool::symbolicKey(U2 index) {
   const auto& slot  = infos_.at(index);
-  auto        build = [&](U2 class_cp, const std::string& m, const std::string& d) -> std::optional<std::string> {
-    // the target Class may already be resolved (Klass*) by another ref to the same
-    // class -> then this ref's class is loaded, so it's never a stub candidate.
+  auto        build = [&](U2 class_cp, const std::string& m,
+                          const std::string& d) -> std::optional<std::string> {
+    // the target Class may already be resolved (Klass*) by another ref to the
+    // same class -> then this ref's class is loaded, so it's never a stub
+    // candidate.
     const auto* c = std::get_if<SymRef_Class>(&infos_.at(class_cp));
     if (c == nullptr) {
       return std::nullopt;

@@ -17,8 +17,9 @@ struct UnsupportedInstruction {
   std::vector<U1> code;
 };
 
-class InterpreterUnimplementedOpcodeTest : public InterpreterTestBase,
-                                           public ::testing::WithParamInterface<UnsupportedInstruction> {
+class InterpreterUnimplementedOpcodeTest
+  : public InterpreterTestBase,
+    public ::testing::WithParamInterface<UnsupportedInstruction> {
  protected:
   static constexpr const char* kClassName  = "tests.data.java.OpcodeFailureTest";
   static constexpr const char* kMethodName = "testOpcode";
@@ -34,8 +35,8 @@ class InterpreterUnimplementedOpcodeTest : public InterpreterTestBase,
       throw std::runtime_error("Method not found");
     }
 
-    // Keep the parsed method metadata/constant pool and replace only its code in
-    // this isolated fixture, avoiding a hand-written class-file assembler.
+    // Keep the parsed method metadata/constant pool and replace only its code
+    // in this isolated fixture, avoiding a hand-written class-file assembler.
     auto& mutable_code = const_cast<std::vector<U1>&>(method->getCode());
     mutable_code       = code;
 
@@ -64,7 +65,8 @@ TEST_P(InterpreterUnimplementedOpcodeTest, FailsWithOpcodeAndLocationContext) {
   EXPECT_NE(message.find(instruction.name), std::string::npos) << message;
 
   std::ostringstream opcode_hex;
-  opcode_hex << "0x" << std::hex << std::setw(2) << std::setfill('0') << static_cast<unsigned>(instruction.opcode);
+  opcode_hex << "0x" << std::hex << std::setw(2) << std::setfill('0')
+             << static_cast<unsigned>(instruction.opcode);
   EXPECT_NE(message.find(opcode_hex.str()), std::string::npos) << message;
   EXPECT_NE(message.find("OpcodeFailureTest"), std::string::npos) << message;
   EXPECT_NE(message.find(kMethodName), std::string::npos) << message;

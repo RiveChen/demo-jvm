@@ -12,10 +12,9 @@
  * array creation exists.
  */
 
-#include "oops_test_base.hpp"
-
 #include "oops/klass.hpp"
 #include "oops/method_area.hpp"
+#include "oops_test_base.hpp"
 #include "utilities/basic_type.hpp"
 
 #include <gtest/gtest.h>
@@ -46,7 +45,7 @@ TEST_F(ArrayKlassTest, TypeArrayAllPrimitives) {
     Jint        size;
   };
   const Case cases[] = {
-    {T_BOOLEAN, "[Z", 1}, {T_BYTE, "[B", 1}, {T_CHAR, "[C", 2},  {T_SHORT, "[S", 2},
+    {T_BOOLEAN, "[Z", 1}, {T_BYTE, "[B", 1},  {T_CHAR, "[C", 2}, {T_SHORT, "[S", 2},
     {T_INT, "[I", 4},     {T_FLOAT, "[F", 4}, {T_LONG, "[J", 8}, {T_DOUBLE, "[D", 8},
   };
   for (const auto& c : cases) {
@@ -66,7 +65,8 @@ TEST_F(ArrayKlassTest, DescriptorNames) {
   // primitive array -> the name is already the descriptor
   EXPECT_EQ(ma.getOrCreateTypeArrayKlass(T_INT)->getDescriptorName(), "[I");
   // obj array -> "[" + component descriptor
-  EXPECT_EQ(ma.getOrCreateObjArrayKlass(inst)->getDescriptorName(), "[Ltests/data/java/KlassTestData;");
+  EXPECT_EQ(ma.getOrCreateObjArrayKlass(inst)->getDescriptorName(),
+            "[Ltests/data/java/KlassTestData;");
 }
 
 // --- ObjArrayKlass: name, element linkage, dedup ----------------------------
@@ -83,7 +83,8 @@ TEST_F(ArrayKlassTest, ObjArrayNameLinkageDedup) {
   EXPECT_EQ(ma.getOrCreateObjArrayKlass(inst), arr);  // dedup
 }
 
-// --- Multi-dimensional building (the pieces arrayKlassForName composes) -------
+// --- Multi-dimensional building (the pieces arrayKlassForName composes)
+// -------
 TEST_F(ArrayKlassTest, MultiDimObjArrayWrapsTypeArray) {
   auto& ma   = oops::MethodArea::getSingleton();
   auto* ints = ma.getOrCreateTypeArrayKlass(T_INT);  // [I
@@ -107,8 +108,9 @@ TEST_F(ArrayKlassTest, IsInstanceOfSameAndDifferentElement) {
   ASSERT_NE(b, nullptr);
   auto* arrA = ma.getOrCreateObjArrayKlass(a);
   auto* arrB = ma.getOrCreateObjArrayKlass(b);
-  EXPECT_TRUE(arrA->isInstanceOf(ma.getOrCreateObjArrayKlass(a)));  // same element -> same singleton
-  EXPECT_FALSE(arrA->isInstanceOf(arrB));                          // different element (exact-match)
+  EXPECT_TRUE(
+    arrA->isInstanceOf(ma.getOrCreateObjArrayKlass(a)));  // same element -> same singleton
+  EXPECT_FALSE(arrA->isInstanceOf(arrB));                 // different element (exact-match)
   // NOTE: recursive covariance ([Sub] <: [Super]) is a known gap (exact-match
   // only); add a case here once ObjArrayKlass::isInstanceOf walks the element
   // hierarchy.

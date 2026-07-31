@@ -58,14 +58,17 @@ TEST_F(InterpreterConversionTest, F2I_Basic) {
 }
 
 TEST_F(InterpreterConversionTest, F2I_NaN) {
-  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testF2I", std::numeric_limits<Jfloat>::quiet_NaN()), 0);
+  EXPECT_EQ(
+    executeStaticMethod<Jint>(kClassName, "testF2I", std::numeric_limits<Jfloat>::quiet_NaN()), 0);
 }
 
 TEST_F(InterpreterConversionTest, F2I_InfinitySaturates) {
-  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testF2I", std::numeric_limits<Jfloat>::infinity()),
-            std::numeric_limits<Jint>::max());
-  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testF2I", -std::numeric_limits<Jfloat>::infinity()),
-            std::numeric_limits<Jint>::min());
+  EXPECT_EQ(
+    executeStaticMethod<Jint>(kClassName, "testF2I", std::numeric_limits<Jfloat>::infinity()),
+    std::numeric_limits<Jint>::max());
+  EXPECT_EQ(
+    executeStaticMethod<Jint>(kClassName, "testF2I", -std::numeric_limits<Jfloat>::infinity()),
+    std::numeric_limits<Jint>::min());
 }
 
 TEST_F(InterpreterConversionTest, F2I_PositiveOutOfRangeFiniteValueSaturates) {
@@ -83,14 +86,18 @@ TEST_F(InterpreterConversionTest, F2L_Basic) {
 }
 
 TEST_F(InterpreterConversionTest, F2L_NaN) {
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testF2L", std::numeric_limits<Jfloat>::quiet_NaN()), 0LL);
+  EXPECT_EQ(
+    executeStaticMethod<Jlong>(kClassName, "testF2L", std::numeric_limits<Jfloat>::quiet_NaN()),
+    0LL);
 }
 
 TEST_F(InterpreterConversionTest, F2L_InfinitySaturates) {
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testF2L", std::numeric_limits<Jfloat>::infinity()),
-            std::numeric_limits<Jlong>::max());
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testF2L", -std::numeric_limits<Jfloat>::infinity()),
-            std::numeric_limits<Jlong>::min());
+  EXPECT_EQ(
+    executeStaticMethod<Jlong>(kClassName, "testF2L", std::numeric_limits<Jfloat>::infinity()),
+    std::numeric_limits<Jlong>::max());
+  EXPECT_EQ(
+    executeStaticMethod<Jlong>(kClassName, "testF2L", -std::numeric_limits<Jfloat>::infinity()),
+    std::numeric_limits<Jlong>::min());
 }
 
 TEST_F(InterpreterConversionTest, F2L_PositiveOutOfRangeFiniteValueSaturates) {
@@ -99,8 +106,9 @@ TEST_F(InterpreterConversionTest, F2L_PositiveOutOfRangeFiniteValueSaturates) {
 }
 
 TEST_F(InterpreterConversionTest, F2L_NegativeOutOfRangeFiniteValueSaturates) {
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testF2L", std::numeric_limits<Jfloat>::lowest()),
-            std::numeric_limits<Jlong>::min());
+  EXPECT_EQ(
+    executeStaticMethod<Jlong>(kClassName, "testF2L", std::numeric_limits<Jfloat>::lowest()),
+    std::numeric_limits<Jlong>::min());
 }
 
 TEST_F(InterpreterConversionTest, F2D_Basic) {
@@ -117,14 +125,17 @@ TEST_F(InterpreterConversionTest, D2I_Basic) {
 }
 
 TEST_F(InterpreterConversionTest, D2I_NaN) {
-  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testD2I", std::numeric_limits<Jdouble>::quiet_NaN()), 0);
+  EXPECT_EQ(
+    executeStaticMethod<Jint>(kClassName, "testD2I", std::numeric_limits<Jdouble>::quiet_NaN()), 0);
 }
 
 TEST_F(InterpreterConversionTest, D2I_InfinitySaturates) {
-  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testD2I", std::numeric_limits<Jdouble>::infinity()),
-            std::numeric_limits<Jint>::max());
-  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testD2I", -std::numeric_limits<Jdouble>::infinity()),
-            std::numeric_limits<Jint>::min());
+  EXPECT_EQ(
+    executeStaticMethod<Jint>(kClassName, "testD2I", std::numeric_limits<Jdouble>::infinity()),
+    std::numeric_limits<Jint>::max());
+  EXPECT_EQ(
+    executeStaticMethod<Jint>(kClassName, "testD2I", -std::numeric_limits<Jdouble>::infinity()),
+    std::numeric_limits<Jint>::min());
 }
 
 TEST_F(InterpreterConversionTest, D2I_PositiveOutOfRangeFiniteValueSaturates) {
@@ -133,8 +144,9 @@ TEST_F(InterpreterConversionTest, D2I_PositiveOutOfRangeFiniteValueSaturates) {
 }
 
 TEST_F(InterpreterConversionTest, D2I_NegativeOutOfRangeFiniteValueSaturates) {
-  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testD2I", std::numeric_limits<Jdouble>::lowest()),
-            std::numeric_limits<Jint>::min());
+  EXPECT_EQ(
+    executeStaticMethod<Jint>(kClassName, "testD2I", std::numeric_limits<Jdouble>::lowest()),
+    std::numeric_limits<Jint>::min());
 }
 
 TEST_F(InterpreterConversionTest, D2L_Basic) {
@@ -142,14 +154,18 @@ TEST_F(InterpreterConversionTest, D2L_Basic) {
 }
 
 TEST_F(InterpreterConversionTest, D2L_NaN) {
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testD2L", std::numeric_limits<Jdouble>::quiet_NaN()), 0LL);
+  EXPECT_EQ(
+    executeStaticMethod<Jlong>(kClassName, "testD2L", std::numeric_limits<Jdouble>::quiet_NaN()),
+    0LL);
 }
 
 TEST_F(InterpreterConversionTest, D2L_InfinitySaturates) {
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testD2L", std::numeric_limits<Jdouble>::infinity()),
-            std::numeric_limits<Jlong>::max());
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testD2L", -std::numeric_limits<Jdouble>::infinity()),
-            std::numeric_limits<Jlong>::min());
+  EXPECT_EQ(
+    executeStaticMethod<Jlong>(kClassName, "testD2L", std::numeric_limits<Jdouble>::infinity()),
+    std::numeric_limits<Jlong>::max());
+  EXPECT_EQ(
+    executeStaticMethod<Jlong>(kClassName, "testD2L", -std::numeric_limits<Jdouble>::infinity()),
+    std::numeric_limits<Jlong>::min());
 }
 
 TEST_F(InterpreterConversionTest, D2L_PositiveOutOfRangeFiniteValueSaturates) {
@@ -158,8 +174,9 @@ TEST_F(InterpreterConversionTest, D2L_PositiveOutOfRangeFiniteValueSaturates) {
 }
 
 TEST_F(InterpreterConversionTest, D2L_NegativeOutOfRangeFiniteValueSaturates) {
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testD2L", std::numeric_limits<Jdouble>::lowest()),
-            std::numeric_limits<Jlong>::min());
+  EXPECT_EQ(
+    executeStaticMethod<Jlong>(kClassName, "testD2L", std::numeric_limits<Jdouble>::lowest()),
+    std::numeric_limits<Jlong>::min());
 }
 
 TEST_F(InterpreterConversionTest, D2F_Basic) {

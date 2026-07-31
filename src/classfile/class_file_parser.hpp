@@ -37,9 +37,11 @@ class ClassFileParser {
    */
   ClassFile parse();
 
-  /// @brief Access the underlying byte reader (e.g. for nested attribute parsing).
+  /// @brief Access the underlying byte reader (e.g. for nested attribute
+  /// parsing).
   ByteReader& getReader() { return reader_; }
-  /// @brief Access the parsed constant pool (valid after parseConstantPool is called).
+  /// @brief Access the parsed constant pool (valid after parseConstantPool is
+  /// called).
   const ConstantPool& getConstantPool() { return *constant_pool_ref_; }
 
  private:

@@ -14,7 +14,8 @@
 
 namespace jvm::descriptor {
 
-static TypeKind nextFieldType(std::string_view d, size_t& i) {  // NOLINT(misc-no-recursion)
+static TypeKind nextFieldType(std::string_view d,
+                              size_t&          i) {  // NOLINT(misc-no-recursion)
   assert(i < d.size());
   char c = d[i];
   switch (c) {
