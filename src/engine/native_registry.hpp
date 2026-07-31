@@ -1,5 +1,5 @@
 /**
- * @file native_registry.h
+ * @file native_registry.hpp
  * @brief Registry for JNI-style native method implementations.
  *
  * Maps (className.methodName.descriptor) keys to function pointers.

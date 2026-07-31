@@ -1,5 +1,5 @@
 /**
- * @file constant_pool.h
+ * @file constant_pool.hpp
  * @brief Constant pool entries and their container for parsed class files.
  *
  * Implements the constant pool structures defined in JVM Specification §4.4.

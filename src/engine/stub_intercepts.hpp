@@ -1,5 +1,5 @@
 /**
- * @file stub_intercepts.h
+ * @file stub_intercepts.hpp
  * @brief Pre-resolution interceptors for JDK class stubs.
  *
  * When the interpreter encounters GETSTATIC, INVOKEVIRTUAL, or INVOKESPECIAL,

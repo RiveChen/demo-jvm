@@ -1,5 +1,5 @@
 /**
- * @file slot.h
+ * @file slot.hpp
  * @brief Union type representing a Java VM stack slot.
  *
  * Each slot occupies 8 bytes (due to alignment) and can hold any JVM

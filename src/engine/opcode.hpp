@@ -1,5 +1,5 @@
 /**
- * @file opcode.h
+ * @file opcode.hpp
  * @brief JVM bytecode opcode constants.
  *
  * Defines all JVM instruction opcodes as U1 constants,

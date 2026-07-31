@@ -1,10 +1,11 @@
 /**
- * @file thread.h
+ * @file thread.hpp
  * @brief Representation of a single Java thread.
  *
  * Models a single-threaded execution context as defined in
- * JVM Specification §2.5. Each thread has a private memory area
- * consisting of a Program Counter register and a VM stack.
+ * JVM Specification §2.5. Each thread has a private VM stack of frames.
+ * Note: the Program Counter lives inside each Frame (see Frame::pc_),
+ * not here on the Thread — see ARCHITECTURE.md "PC:归 Frame".
  *
  * @note This implementation is single-threaded; no threading or
  * synchronization primitives are provided yet.

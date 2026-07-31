@@ -1,5 +1,5 @@
 /**
- * @file interpreter.h
+ * @file interpreter.hpp
  * @brief The JVM bytecode interpreter.
  *
  * Implements the execution engine as described in JVM Specification §2.8.

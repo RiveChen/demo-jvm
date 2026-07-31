@@ -1,5 +1,5 @@
 /**
- * @file klass.h
+ * @file klass.hpp
  * @brief Runtime representation of a loaded Java class (Klass hierarchy).
  *
  * Mirrors HotSpot's klass-oop split: Klass (metadata, in MethodArea)

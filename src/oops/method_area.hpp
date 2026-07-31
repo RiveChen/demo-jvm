@@ -1,5 +1,5 @@
 /**
- * @file method_area.h
+ * @file method_area.hpp
  * @brief The method area (class metadata storage).
  *
  * Implements the Method Area as described in JVM Specification §2.5.4.

@@ -1,5 +1,5 @@
 /**
- * @file local_variables.h
+ * @file local_variables.hpp
  * @brief Local variable array within a JVM stack frame.
  *
  * Implements the local variables array as described in JVM Specification §2.6.1.

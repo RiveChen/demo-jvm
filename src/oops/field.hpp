@@ -1,5 +1,5 @@
 /**
- * @file field.h
+ * @file field.hpp
  * @brief Runtime representation of a Java field.
  *
  * A Field object stores metadata about a class or instance field:

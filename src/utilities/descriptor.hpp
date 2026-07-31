@@ -1,5 +1,5 @@
 /**
- * @file descriptor.h
+ * @file descriptor.hpp
  * @brief Parsers for JVM field and method descriptors.
  *
  * Converts JVM descriptor strings (as defined in JVM Spec §4.3)

@@ -1,5 +1,5 @@
 /**
- * @file bytecode_reader.h
+ * @file bytecode_reader.hpp
  * @brief Sequential bytecode reader for the interpreter.
  *
  * Reads opcodes and operands from a method's bytecode array.

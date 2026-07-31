@@ -1,5 +1,5 @@
 /**
- * @file class_file.h
+ * @file class_file.hpp
  * @brief Data structure representing a parsed class file.
  *
  * Holds all data parsed from a .class file, including version info,

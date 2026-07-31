@@ -1,5 +1,5 @@
 /**
- * @file operand_stack.h
+ * @file operand_stack.hpp
  * @brief Operand stack within a JVM stack frame.
  *
  * Implements the operand stack as described in JVM Specification §2.6.2.

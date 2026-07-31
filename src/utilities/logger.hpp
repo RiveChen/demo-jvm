@@ -1,5 +1,5 @@
 /**
- * @file logger.h
+ * @file logger.hpp
  * @brief Minimal compile-time / runtime level-controlled logger.
  *
  * Five levels: TRACE < DEBUG < INFO < WARN < ERROR.

@@ -1,5 +1,5 @@
 /**
- * @file constant_pool.h
+ * @file constant_pool.hpp
  * @brief Runtime constant pool with symbolic and resolved references.
  *
  * After a class is loaded, the class file constant pool is converted

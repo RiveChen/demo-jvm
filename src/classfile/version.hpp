@@ -1,5 +1,5 @@
 /**
- * @file version.h
+ * @file version.hpp
  * @brief Class file version information.
  *
  * Represents a class file's major/minor version as specified in

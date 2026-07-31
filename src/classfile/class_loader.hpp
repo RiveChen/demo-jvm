@@ -1,5 +1,5 @@
 /**
- * @file class_loader.h
+ * @file class_loader.hpp
  * @brief Class loading subsystem.
  *
  * Implements class loading as described in JVM Specification §5.3.

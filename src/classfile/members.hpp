@@ -1,5 +1,5 @@
 /**
- * @file members.h
+ * @file members.hpp
  * @brief Class file field and method member representations.
  *
  * Implements the field_info and method_info structures from

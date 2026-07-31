@@ -50,8 +50,9 @@ namespace {
 // (readability-function-size, hicpp-function-size, readability-function-cognitive-complexity)
 // NOLINTNEXTLINE
 void Interpreter::interpret(runtime::Thread* thread) {
-  // cache pc to avoid fetching it from thread every time
-  // for thread-pc, we only use it when the frame is popped or pushed
+  // Cache pc in a local register for the hot loop.
+  // The authoritative pc lives in the current frame; we spill it back
+  // before any stack operation (invoke/return) and reload after popping.
   size_t pc = thread->getCurrentFrame().getPC();
 
   while (true) {
@@ -66,13 +67,12 @@ void Interpreter::interpret(runtime::Thread* thread) {
     auto&       rt_cp      = method->getOwnerKlass()->getRuntimeConstantPool();
     const auto& code       = method->getCode();
 
-    // size_t pc = thread->getPC();
+    // TODO: PC reaching the end of code is an illegal method ending
+    // and should fail fast with a VM error. It is currently treated as a
+    // normal return so the test helper can read a value the interpreter
+    // already pushed (e.g. an implicit IRETURN). This couples test helper
+    // semantics with production interpreter behavior and must be decoupled.
     if (pc >= code.size()) {
-      // PC is beyond code length, method has finished executing
-      // This typically means the method ended without an explicit RETURN
-      // In a real JVM, this would be an error, but for testing we'll just pop the frame
-      // If there's a return value on the stack, it means IRETURN/LRETURN/etc
-      // just executed - return now so the test helper can read the value
       return;
     }
 
@@ -301,7 +301,8 @@ void Interpreter::interpret(runtime::Thread* thread) {
         auto* value = local_vars.getRef(3);
         op_stack.pushRef(value);
       } break;
-      // TODO: implement *aload
+      // TODO: implement array loads
+      // Unsupported: fail-fast until then.
       case IALOAD:
       case LALOAD:
       case FALOAD:
@@ -422,7 +423,8 @@ void Interpreter::interpret(runtime::Thread* thread) {
         auto* value = op_stack.popRef();
         local_vars.setRef(3, value);
       } break;
-      // TODO: implement sastore
+      // TODO: implement array stores
+      // Unsupported: fail-fast until then.
       case IASTORE:
       case LASTORE:
       case FASTORE:
@@ -520,14 +522,16 @@ void Interpreter::interpret(runtime::Thread* thread) {
       // Function: Perform arithmetic operations on numeric values (add, subtract, multiply, divide,
       // remainder, negate, shift, bitwise) Components: op_stack
       case IADD: {
-        auto value2 = op_stack.popInt();
-        auto value1 = op_stack.popInt();
-        op_stack.pushInt(value1 + value2);
+        // Use unsigned arithmetic so overflow wraps (defined behavior)
+        // instead of signed overflow (UB), matching JVM two's complement semantics.
+        auto value2 = static_cast<U4>(op_stack.popInt());
+        auto value1 = static_cast<U4>(op_stack.popInt());
+        op_stack.pushInt(static_cast<Jint>(value1 + value2));
       } break;
       case LADD: {
-        auto value2 = op_stack.popLong();
-        auto value1 = op_stack.popLong();
-        op_stack.pushLong(value1 + value2);
+        auto value2 = static_cast<U8>(op_stack.popLong());
+        auto value1 = static_cast<U8>(op_stack.popLong());
+        op_stack.pushLong(static_cast<Jlong>(value1 + value2));
       } break;
       case FADD: {
         auto value2 = op_stack.popFloat();
@@ -540,14 +544,14 @@ void Interpreter::interpret(runtime::Thread* thread) {
         op_stack.pushDouble(value1 + value2);
       } break;
       case ISUB: {
-        auto value2 = op_stack.popInt();
-        auto value1 = op_stack.popInt();
-        op_stack.pushInt(value1 - value2);
+        auto value2 = static_cast<U4>(op_stack.popInt());
+        auto value1 = static_cast<U4>(op_stack.popInt());
+        op_stack.pushInt(static_cast<Jint>(value1 - value2));
       } break;
       case LSUB: {
-        auto value2 = op_stack.popLong();
-        auto value1 = op_stack.popLong();
-        op_stack.pushLong(value1 - value2);
+        auto value2 = static_cast<U8>(op_stack.popLong());
+        auto value1 = static_cast<U8>(op_stack.popLong());
+        op_stack.pushLong(static_cast<Jlong>(value1 - value2));
       } break;
       case FSUB: {
         auto value2 = op_stack.popFloat();
@@ -560,14 +564,14 @@ void Interpreter::interpret(runtime::Thread* thread) {
         op_stack.pushDouble(value1 - value2);
       } break;
       case IMUL: {
-        auto value2 = op_stack.popInt();
-        auto value1 = op_stack.popInt();
-        op_stack.pushInt(value1 * value2);
+        auto value2 = static_cast<U4>(op_stack.popInt());
+        auto value1 = static_cast<U4>(op_stack.popInt());
+        op_stack.pushInt(static_cast<Jint>(value1 * value2));
       } break;
       case LMUL: {
-        auto value2 = op_stack.popLong();
-        auto value1 = op_stack.popLong();
-        op_stack.pushLong(value1 * value2);
+        auto value2 = static_cast<U8>(op_stack.popLong());
+        auto value1 = static_cast<U8>(op_stack.popLong());
+        op_stack.pushLong(static_cast<Jlong>(value1 * value2));
       } break;
       case FMUL: {
         auto value2 = op_stack.popFloat();
@@ -585,7 +589,13 @@ void Interpreter::interpret(runtime::Thread* thread) {
         if (value2 == 0) {
           throw std::runtime_error("ArithmeticException: / by zero");
         }
-        op_stack.pushInt(value1 / value2);
+        // JVM spec §6.5.idiv: INT_MIN / -1 overflows and yields INT_MIN.
+        // Direct division would be signed-overflow UB in C++.
+        if (value1 == INT32_MIN && value2 == -1) {
+          op_stack.pushInt(INT32_MIN);
+        } else {
+          op_stack.pushInt(value1 / value2);
+        }
       } break;
       case LDIV: {
         auto value2 = op_stack.popLong();
@@ -593,7 +603,12 @@ void Interpreter::interpret(runtime::Thread* thread) {
         if (value2 == 0) {
           throw std::runtime_error("ArithmeticException: / by zero");
         }
-        op_stack.pushLong(value1 / value2);
+        // JVM spec §6.5.ldiv: LONG_MIN / -1 overflows and yields LONG_MIN.
+        if (value1 == INT64_MIN && value2 == -1) {
+          op_stack.pushLong(INT64_MIN);
+        } else {
+          op_stack.pushLong(value1 / value2);
+        }
       } break;
       case FDIV: {
         auto value2 = op_stack.popFloat();
@@ -611,7 +626,12 @@ void Interpreter::interpret(runtime::Thread* thread) {
         if (value2 == 0) {
           throw std::runtime_error("ArithmeticException: / by zero");
         }
-        op_stack.pushInt(value1 % value2);
+        // JVM spec §6.5.irem: INT_MIN % -1 must be 0 (avoids UB).
+        if (value1 == INT32_MIN && value2 == -1) {
+          op_stack.pushInt(0);
+        } else {
+          op_stack.pushInt(value1 % value2);
+        }
       } break;
       case LREM: {
         auto value2 = op_stack.popLong();
@@ -619,7 +639,12 @@ void Interpreter::interpret(runtime::Thread* thread) {
         if (value2 == 0) {
           throw std::runtime_error("ArithmeticException: / by zero");
         }
-        op_stack.pushLong(value1 % value2);
+        // JVM spec §6.5.lrem: LONG_MIN % -1 must be 0 (avoids UB).
+        if (value1 == INT64_MIN && value2 == -1) {
+          op_stack.pushLong(0);
+        } else {
+          op_stack.pushLong(value1 % value2);
+        }
       } break;
       case FREM: {
         auto value2 = op_stack.popFloat();
@@ -632,12 +657,14 @@ void Interpreter::interpret(runtime::Thread* thread) {
         op_stack.pushDouble(std::fmod(value1, value2));
       } break;
       case INEG: {
-        auto value = op_stack.popInt();
-        op_stack.pushInt(-value);
+        // Negation via unsigned subtraction wraps correctly for INT32_MIN.
+        auto value = static_cast<U4>(op_stack.popInt());
+        op_stack.pushInt(static_cast<Jint>(0U - value));
       } break;
       case LNEG: {
-        auto value = op_stack.popLong();
-        op_stack.pushLong(-value);
+        // Negation via unsigned subtraction wraps correctly for INT64_MIN.
+        auto value = static_cast<U8>(op_stack.popLong());
+        op_stack.pushLong(static_cast<Jlong>(0ULL - value));
       } break;
       case FNEG: {
         auto value = op_stack.popFloat();
@@ -771,22 +798,30 @@ void Interpreter::interpret(runtime::Thread* thread) {
       } break;
       case F2I: {
         // Convert float to int (truncate towards zero)
+        // Saturate to int32 range; direct static_cast would be UB
+        // when the value exceeds the representable range.
         auto value = op_stack.popFloat();
         if (std::isnan(value)) {
           op_stack.pushInt(0);
-        } else if (std::isinf(value)) {
-          op_stack.pushInt(value > 0 ? INT32_MAX : INT32_MIN);
+        } else if (value >= static_cast<float>(INT32_MAX)) {
+          op_stack.pushInt(INT32_MAX);
+        } else if (value <= static_cast<float>(INT32_MIN)) {
+          op_stack.pushInt(INT32_MIN);
         } else {
           op_stack.pushInt(static_cast<Jint>(value));
         }
       } break;
       case F2L: {
         // Convert float to long (truncate towards zero)
+        // Saturate to int64 range; direct static_cast would be UB
+        // for float values beyond the representable range.
         auto value = op_stack.popFloat();
         if (std::isnan(value)) {
           op_stack.pushLong(0);
-        } else if (std::isinf(value)) {
-          op_stack.pushLong(value > 0 ? INT64_MAX : INT64_MIN);
+        } else if (value >= static_cast<float>(INT64_MAX)) {
+          op_stack.pushLong(INT64_MAX);
+        } else if (value <= static_cast<float>(INT64_MIN)) {
+          op_stack.pushLong(INT64_MIN);
         } else {
           op_stack.pushLong(static_cast<Jlong>(value));
         }
@@ -798,22 +833,30 @@ void Interpreter::interpret(runtime::Thread* thread) {
       } break;
       case D2I: {
         // Convert double to int (truncate towards zero)
+        // Saturate to int32 range; direct static_cast would be UB
+        // for double values beyond the representable range.
         auto value = op_stack.popDouble();
         if (std::isnan(value)) {
           op_stack.pushInt(0);
-        } else if (std::isinf(value)) {
-          op_stack.pushInt(value > 0 ? INT32_MAX : INT32_MIN);
+        } else if (value >= static_cast<double>(INT32_MAX)) {
+          op_stack.pushInt(INT32_MAX);
+        } else if (value <= static_cast<double>(INT32_MIN)) {
+          op_stack.pushInt(INT32_MIN);
         } else {
           op_stack.pushInt(static_cast<Jint>(value));
         }
       } break;
       case D2L: {
         // Convert double to long (truncate towards zero)
+        // Saturate to int64 range; direct static_cast would be UB
+        // for double values beyond the representable range.
         auto value = op_stack.popDouble();
         if (std::isnan(value)) {
           op_stack.pushLong(0);
-        } else if (std::isinf(value)) {
-          op_stack.pushLong(value > 0 ? INT64_MAX : INT64_MIN);
+        } else if (value >= static_cast<double>(INT64_MAX)) {
+          op_stack.pushLong(INT64_MAX);
+        } else if (value <= static_cast<double>(INT64_MIN)) {
+          op_stack.pushLong(INT64_MIN);
         } else {
           op_stack.pushLong(static_cast<Jlong>(value));
         }
@@ -1465,7 +1508,8 @@ void Interpreter::interpret(runtime::Thread* thread) {
         pc = 0;
       } break;
       case INVOKEDYNAMIC:
-        // TODO: implement invokedynamic
+        // TODO: implement invokedynamic (requires bootstrap methods + call site resolution).
+        // Unsupported: fail-fast until then.
         throwUnsupportedOpcode(method, opcode, opcode_pc);
       /* #endregion Methods */
 
@@ -1517,7 +1561,8 @@ void Interpreter::interpret(runtime::Thread* thread) {
       // Function: Exception handling
       // Components: op_stack
       case ATHROW:
-        // TODO: implement athrow
+        // TODO: implement athrow + exception table
+        // Unsupported: fail-fast until then.
         throwUnsupportedOpcode(method, opcode, opcode_pc);
       /* #endregion Exceptions */
 
@@ -1525,7 +1570,8 @@ void Interpreter::interpret(runtime::Thread* thread) {
 
       // Function: Synchronization operations
       // Components: op_stack
-      // TODO: implement monitorenter & monitorexit
+      // TODO: implement monitorenter & monitorexit (requires threading/monitor support)
+      // Unsupported: fail-fast until then.
       case MONITORENTER:
       case MONITOREXIT:
         throwUnsupportedOpcode(method, opcode, opcode_pc);
@@ -1537,12 +1583,16 @@ void Interpreter::interpret(runtime::Thread* thread) {
       // Components: op_stack, rt_cp, thread (PC)
       case NEWARRAY:
         // TODO: implement newarray
+        // Unsupported: fail-fast until then.
       case ANEWARRAY:
         // TODO: implement anewarray
+        // Unsupported: fail-fast until then.
       case ARRAYLENGTH:
         // TODO: implement arraylength
+        // Unsupported: fail-fast until then.
       case MULTIANEWARRAY:
         // TODO: implement multianewarray
+        // Unsupported: fail-fast until then.
         throwUnsupportedOpcode(method, opcode, opcode_pc);
         /* #endregion Arrays */
 

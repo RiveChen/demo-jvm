@@ -1,5 +1,5 @@
 /**
- * @file class_file_parser.h
+ * @file class_file_parser.hpp
  * @brief Parser for Java class files (.class).
  *
  * Reads a binary .class file stream and produces a ClassFile object.

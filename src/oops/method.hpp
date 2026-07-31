@@ -1,5 +1,5 @@
 /**
- * @file method.h
+ * @file method.hpp
  * @brief Runtime representation of a Java method.
  *
  * A Method object holds the bytecode, max stack/locals, access flags,

@@ -1,5 +1,5 @@
 /**
- * @file object.h
+ * @file object.hpp
  * @brief Runtime representation of a Java object instance.
  *
  * Models a Java heap-allocated object with a Klass pointer,

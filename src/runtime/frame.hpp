@@ -1,5 +1,5 @@
 /**
- * @file frame.h
+ * @file frame.hpp
  * @brief A single JVM stack frame.
  *
  * Represents a method invocation context as defined in JVM Specification §2.6.

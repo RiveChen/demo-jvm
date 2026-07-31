@@ -1,5 +1,5 @@
 /**
- * @file string_pool.h
+ * @file string_pool.hpp
  * @brief Interned string pool singleton.
  *
  * Mimics the JVM's string interning mechanism (cf. String.intern()).

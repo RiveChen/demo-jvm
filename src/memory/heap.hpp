@@ -1,5 +1,5 @@
 /**
- * @file heap.h
+ * @file heap.hpp
  * @brief Simple bump-pointer object heap.
  *
  * Implements the heap as described in JVM Specification §2.5.3.

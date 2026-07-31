@@ -1,5 +1,5 @@
 /**
- * @file stack.h
+ * @file stack.hpp
  * @brief JVM virtual machine stack (a stack of frames).
  *
  * Implements the VM stack as defined in JVM Specification §2.5.2.
