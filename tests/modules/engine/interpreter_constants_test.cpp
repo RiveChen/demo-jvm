@@ -81,27 +81,31 @@ TEST_F(InterpreterConstantsTest, DCONST_1) {
   EXPECT_DOUBLE_EQ(executeStaticMethod<Jdouble>(kClassName, "testDCONST_1"), 1.0);
 }
 
-// // ============================================================================
-// // BIPUSH Tests
-// // ============================================================================
+// ============================================================================
+// BIPUSH Tests
+// ============================================================================
 
-// Note: BIPUSH and SIPUSH tests are disabled because Java compilers
-// typically use LDC instructions instead of BIPUSH/SIPUSH for constant values.
-// These instructions are more commonly used in hand-written bytecode.
-// To properly test BIPUSH/SIPUSH, we would need to write bytecode directly.
+TEST_F(InterpreterConstantsTest, BIPUSH_PushesPositiveBoundary) {
+  auto* klass = loader_->loadClass(kClassName);
+  ASSERT_NE(klass, nullptr);
+  auto* method = klass->findMethod("testBIPUSH_127", "()I");
+  ASSERT_NE(method, nullptr);
+  ASSERT_FALSE(method->getCode().empty());
+  ASSERT_EQ(method->getCode().front(), engine::BIPUSH);
 
-// TEST_F(InterpreterConstantsTest, BIPUSH_127) {
-//   EXPECT_EQ(executeIntMethod0Arg(kClassName, "testBIPUSH_127", "()I"), 127);
-// }
+  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testBIPUSH_127"), 127);
+}
 
-// TEST_F(InterpreterConstantsTest, BIPUSH_Neg128) {
-//   EXPECT_EQ(executeIntMethod0Arg(kClassName, "testBIPUSH_Neg128", "()I"),
-//   -128);
-// }
+TEST_F(InterpreterConstantsTest, BIPUSH_SignExtendsNegativeBoundary) {
+  auto* klass = loader_->loadClass(kClassName);
+  ASSERT_NE(klass, nullptr);
+  auto* method = klass->findMethod("testBIPUSH_Neg128", "()I");
+  ASSERT_NE(method, nullptr);
+  ASSERT_FALSE(method->getCode().empty());
+  ASSERT_EQ(method->getCode().front(), engine::BIPUSH);
 
-// TEST_F(InterpreterConstantsTest, BIPUSH_0) {
-//   EXPECT_EQ(executeIntMethod0Arg(kClassName, "testBIPUSH_0", "()I"), 0);
-// }
+  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testBIPUSH_Neg128"), -128);
+}
 
 // ============================================================================
 // SIPUSH Tests
