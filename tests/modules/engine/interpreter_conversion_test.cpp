@@ -58,7 +58,7 @@ TEST_F(InterpreterConversionTest, F2I_Basic) {
 }
 
 TEST_F(InterpreterConversionTest, F2I_NaN) {
-  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testF2I_NaN"), 0);
+  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testF2I", std::numeric_limits<Jfloat>::quiet_NaN()), 0);
 }
 
 TEST_F(InterpreterConversionTest, F2I_InfinitySaturates) {
@@ -117,7 +117,7 @@ TEST_F(InterpreterConversionTest, D2I_Basic) {
 }
 
 TEST_F(InterpreterConversionTest, D2I_NaN) {
-  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testD2I_NaN"), 0);
+  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testD2I", std::numeric_limits<Jdouble>::quiet_NaN()), 0);
 }
 
 TEST_F(InterpreterConversionTest, D2I_InfinitySaturates) {

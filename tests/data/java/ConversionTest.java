@@ -76,27 +76,4 @@ public class ConversionTest {
         return (short) a;
     }
 
-    // Float NaN to Int
-    public static int testF2I_NaN() {
-        float nan = Float.NaN;
-        return (int) nan;
-    }
-
-    // Float Infinity to Int
-    public static int testF2I_Infinity() {
-        float inf = Float.POSITIVE_INFINITY;
-        return (int) inf;
-    }
-
-    // Double NaN to Int
-    public static int testD2I_NaN() {
-        double nan = Double.NaN;
-        return (int) nan;
-    }
-
-    // Double Infinity to Int
-    public static int testD2I_Infinity() {
-        double inf = Double.POSITIVE_INFINITY;
-        return (int) inf;
-    }
 }
