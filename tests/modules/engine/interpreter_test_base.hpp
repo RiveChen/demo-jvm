@@ -118,6 +118,17 @@ struct JvmTraits<Jchar> {
   }
 };
 
+// Specialization: Jref (reference type, uses L...; in descriptors)
+template <>
+struct JvmTraits<Jref> {
+  static constexpr std::string_view descriptor = "Ljava/lang/Object;";
+  static constexpr U2               slots      = 1;
+  static void setLocal(jvm::runtime::LocalVariables& vars, U2 index, Jref val) {
+    vars.setRef(index, val);
+  }
+  static Jref popStack(jvm::runtime::OperandStack& stack) { return stack.popRef(); }
+};
+
 // Specialization: void (only used for return value)
 template <>
 struct JvmTraits<void> {

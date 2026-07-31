@@ -186,12 +186,10 @@ TEST_F(InterpreterControlFlowTest, IF_ICMPLE_False) {
 
 // ============================================================================
 // IFNULL Tests - Branch if reference value is null
-// TODO: Uncomment when object support is implemented
 // ============================================================================
-/*
+
 TEST_F(InterpreterControlFlowTest, IFNULL_True) {
-  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testIFNULL_True", static_cast<Jref>(nullptr)),
-            1);
+  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testIFNULL_True", static_cast<Jref>(nullptr)), 1);
 }
 
 TEST_F(InterpreterControlFlowTest, IFNULL_False) {
@@ -199,73 +197,61 @@ TEST_F(InterpreterControlFlowTest, IFNULL_False) {
   // Note: In a real JVM, this would be a proper object reference
   // For testing, we use a non-null pointer value
   void* dummy_obj = reinterpret_cast<void*>(0x1234);
-  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testIFNULL_False", static_cast<Jref>(dummy_obj)),
-            1);
+  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testIFNULL_False", static_cast<Jref>(dummy_obj)), 1);
 }
-*/
 
 // ============================================================================
 // IFNONNULL Tests - Branch if reference value is not null
-// TODO: Uncomment when object support is implemented
 // ============================================================================
-/*
+
 TEST_F(InterpreterControlFlowTest, IFNONNULL_True) {
   // Create a dummy object reference (non-null)
   void* dummy_obj = reinterpret_cast<void*>(0x1234);
-  EXPECT_EQ(
-    executeStaticMethod<Jint>(kClassName, "testIFNONNULL_True", static_cast<Jref>(dummy_obj)), 1);
+  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testIFNONNULL_True", static_cast<Jref>(dummy_obj)), 1);
 }
 
 TEST_F(InterpreterControlFlowTest, IFNONNULL_False) {
-  EXPECT_EQ(
-    executeStaticMethod<Jint>(kClassName, "testIFNONNULL_False", static_cast<Jref>(nullptr)), 1);
+  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testIFNONNULL_False", static_cast<Jref>(nullptr)), 1);
 }
-*/
 
 // ============================================================================
 // IF_ACMPEQ Tests - Branch if two reference values are equal
-// TODO: Uncomment when object support is implemented
 // ============================================================================
-/*
+
 TEST_F(InterpreterControlFlowTest, IF_ACMPEQ_True) {
   void* dummy_obj = reinterpret_cast<void*>(0x1234);
-  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testIF_ACMPEQ_True",
-                                      static_cast<Jref>(dummy_obj), static_cast<Jref>(dummy_obj)),
+  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testIF_ACMPEQ_True", static_cast<Jref>(dummy_obj),
+                                      static_cast<Jref>(dummy_obj)),
             1);
-  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testIF_ACMPEQ_True", static_cast<Jref>(nullptr),
-                                      static_cast<Jref>(nullptr)),
-            1);
+  EXPECT_EQ(
+    executeStaticMethod<Jint>(kClassName, "testIF_ACMPEQ_True", static_cast<Jref>(nullptr), static_cast<Jref>(nullptr)),
+    1);
 }
 
 TEST_F(InterpreterControlFlowTest, IF_ACMPEQ_False) {
   void* obj1 = reinterpret_cast<void*>(0x1234);
   void* obj2 = reinterpret_cast<void*>(0x5678);
-  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testIF_ACMPEQ_False", static_cast<Jref>(obj1),
-                                      static_cast<Jref>(obj2)),
-            1);
+  EXPECT_EQ(
+    executeStaticMethod<Jint>(kClassName, "testIF_ACMPEQ_False", static_cast<Jref>(obj1), static_cast<Jref>(obj2)), 1);
 }
-*/
 
 // ============================================================================
 // IF_ACMPNE Tests - Branch if two reference values are not equal
-// TODO: Uncomment when object support is implemented
 // ============================================================================
-/*
+
 TEST_F(InterpreterControlFlowTest, IF_ACMPNE_True) {
   void* obj1 = reinterpret_cast<void*>(0x1234);
   void* obj2 = reinterpret_cast<void*>(0x5678);
-  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testIF_ACMPNE_True", static_cast<Jref>(obj1),
-                                      static_cast<Jref>(obj2)),
-            1);
+  EXPECT_EQ(
+    executeStaticMethod<Jint>(kClassName, "testIF_ACMPNE_True", static_cast<Jref>(obj1), static_cast<Jref>(obj2)), 1);
 }
 
 TEST_F(InterpreterControlFlowTest, IF_ACMPNE_False) {
   void* dummy_obj = reinterpret_cast<void*>(0x1234);
-  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testIF_ACMPNE_False",
-                                      static_cast<Jref>(dummy_obj), static_cast<Jref>(dummy_obj)),
+  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testIF_ACMPNE_False", static_cast<Jref>(dummy_obj),
+                                      static_cast<Jref>(dummy_obj)),
             1);
 }
-*/
 
 // ============================================================================
 // GOTO Tests - Unconditional branch
@@ -279,9 +265,7 @@ TEST_F(InterpreterControlFlowTest, GOTO_Negative) {
   EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testGOTO", -5), 20);
 }
 
-TEST_F(InterpreterControlFlowTest, GOTO_Zero) {
-  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testGOTO", 0), 20);
-}
+TEST_F(InterpreterControlFlowTest, GOTO_Zero) { EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testGOTO", 0), 20); }
 
 // ============================================================================
 // TABLESWITCH Tests - Table switch statement
