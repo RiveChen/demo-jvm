@@ -72,7 +72,51 @@
 - **无虚函数**(保证 `this+1` = 头末尾)。内联字段用 `reinterpret_cast<Slot*>(this + 1)`——标准 C++、`-Wpedantic` 干净(优于非标准的柔性数组成员)。placement-new 头部;字段靠 arena 的零当默认值。
 - **MarkWord**:现在**预留**这个字(HotSpot 式两字头),日后**不重排布局**即可长成位复用的 mark word。**不要现在实现 markOop 的位编码**(它复用 hash/age/锁/forwarding——都是我们还没有的特性)。
 
-**已知限制**:`instance_slot_count` 只算本类字段,不含继承字段(super 被桩)。真继承/字段落地时修。
+**字段继承布局**:`instance_slot_count` **从父类总槽数起算**(`prepareFieldsAndStatics` 里 `super->getInstanceSlotCount()` 作为子类字段起点),父类字段在前、子类字段接续——继承字段读写正确、字段隐藏成立。静态字段各类自有 `statics_`(不继承布局)。
+
+---
+
+## Klass-oop 层级(仿 HotSpot)
+
+**决策**:两棵平行的树——**Klass(元数据,MethodArea 持有)** 与 **oop(堆对象头)** 各自成层级、一一对应。
+
+```
+Klass (抽象基:kind/state/name/super + 虚 isInstanceOf/getClassLoader/getDescriptorName)
+├── InstanceKlass          (.class 加载:methods/fields/CP/statics)
+└── ArrayKlass (中间基:element_size_)
+    ├── TypeArrayKlass      (基元数组 [I/[J/…,带 BasicType)
+    └── ObjArrayKlass       (引用数组 [L…;/[[…,带 element_klass_)
+
+OopDesc (头:klass + mark,无 vtable)
+├── InstanceOopDesc         (内联 Slot 字段)
+└── ArrayOopDesc            (+ length + 内联元素)
+```
+
+**理由 / 关键取舍**
+- **Klass 侧用 C++ 虚函数**:元数据、实例少、非布局敏感。HotSpot 手搓 vtable 是为 metaspace/CDS 跨进程序列化,那些理由在本项目不成立,直接用虚函数换干净层级。基类有虚析构(`MethodArea` 以 `unique_ptr` 持派生对象)。
+- **oop 侧零虚函数**:`OopDesc` 头必须保持 `klass + mark` 紧凑(`this+1` = 头末尾),一旦加 vptr 就破坏布局。**实例行为的多态全部经由 Klass 分派**(`oop->getKlass()->…`),类型判别走 `kind()`。这与 HotSpot 一致(`oopDesc` 无 vtable)。
+- 数组 klass:`super` 恒为 `java/lang/Object`(当前 Object 被桩 → `super_class_` 留 `nullptr`,`isInstanceOf` 按名认 Object);构造即 `FullyInitialized`(数组无 `<clinit>`,故创建指令不做 init 检查)。
+
+---
+
+## 数组(D4):klass plumbing + 分阶段
+
+数组是堆对象但布局不同(头 + `length` + 内联元素),且每个数组类型是一个**合成 klass**(无 `.class`)。落地分 5 阶段(路线见 `TODO.md`)。
+
+**Phase A(已完成)——klass plumbing**
+- **名字即描述符**:数组 klass 的 `name_` 就是其 JVM 描述符(`[I`、`[Ljava/lang/String;`、`[[I`),与 `CONSTANT_Class` 里的串一致 → 创建与 CHECKCAST 命中**同一单例**。
+- **BasicType**(`utilities/basic_type.hpp`):atype 值(4..11)+ 名/尺寸/`char→BasicType` 表。位于 utilities 因 oops 与 engine 都要用。
+- **工厂 + 去重**:`MethodArea` 加平行表 `array_klasses_`(name→`unique_ptr<ArrayKlass>`)+ `getOrCreateTypeArrayKlass(BasicType)` / `getOrCreateObjArrayKlass(Klass* component)`,**按名去重返回单例**(去重是正确性要求:`isInstanceOf` 用 `this==target` 指针相等)。`reset()` 两表都清。
+- **`Klass::getDescriptorName()`**:Instance→`Lname;`,数组→`name_`(即描述符)。`ObjArrayKlass` 名 = `[` + `component->getDescriptorName()`。
+- **`resolveClass` 收窄 + 路由**:变体 `InstanceKlass*→Klass*`,`resolveClass` 返回 `Klass*`;`[`-前缀名走 file-local `arrayKlassForName`(递归:`L…;` 走 `loadClass`,基元走 `getOrCreateTypeArrayKlass`,基底 1 维再包 (dim-1) 次)。路由放在 `constant_pool.cpp` 因那里已有 loader 访问,**不新增跨层依赖**。`resolveField/Method` 对目标 `static_cast<InstanceKlass*>`(成员引用恒为 instance)。
+- **红利**:CHECKCAST/INSTANCEOF 对数组类型**自动可用**(`resolveClass` 产出数组 klass + `TypeArrayKlass`/`ObjArrayKlass::isInstanceOf`)。
+
+**Phase B–E(待做,要点)**
+- **B 堆分配**:`Heap::newTypeArray`/`newObjArray`;元素**按大小 packed**(与 `element_size_`/`base()` 骨架一致)。**对齐骨架已完成**:`ArrayOopDesc` 布局 `[ OopDesc header(16) | Jint length(4) | alignment padding(4) | element[N] ]`,`base()` = 偏移 24(8 对齐,long[]/double[] 不错位)。arena 零初始化且不复用 → 新数组自带零值(null/0)。仍在实现:实际堆分配函数与 NEWARRAY/ANEWARRAY/ARRAYLENGTH 指令。
+- **C 创建/长度**:NEWARRAY(atype→BasicType)、ANEWARRAY(`resolveClass(component)` + `getOrCreateObjArrayKlass`)、ARRAYLENGTH;MULTIANEWARRAY 延后。
+- **D 访问**:`*ALOAD`/`*ASTORE`,抽 null+越界 helper;B/C/S 符号/零扩展 + 存时截断;L/D 走 wide;AASTORE store-check 延后。
+- **E 收尾**:真 `String[] args`;INVOKEVIRTUAL/INTERFACE 的 receiver klass cast 对数组加保护;`ObjArrayKlass::isInstanceOf` 递归元素协变(当前仅精确匹配);GC 期 `scanRefs`(ObjArray 扫元素、TypeArray no-op)。
+- **错误路径**先 `std::runtime_error`(NegativeArraySize/NPE/AIOOBE),D6 后升级真异常。
 
 ---
 
@@ -137,10 +181,24 @@
 
 ---
 
+## `<clinit>` 类初始化
+
+**决策**:`Klass` 带初始化状态机 `Allocated→Loaded→Linked→BeingInitialized→FullyInitialized(→InitializationError)`。NEW/GETSTATIC/PUTSTATIC/INVOKESTATIC 在目标类 `state==Linked` 时:**回退触发指令 PC** → `initialize()` 压 `<clinit>()V` 帧(super 先于 sub)→ 触发指令随后重执行(此时已 `FullyInitialized`)。`<clinit>` 的 RETURN 处 `markFullyInitialized`。带 ConstantValue 的 `static final` 常量在 prepare 阶段直接写入(早于 `<clinit>`)。
+
+**已修复缺陷(有回归测试 `interpreter_init_type_regression_test` 覆盖)**:
+- **B1**(已修) — 无 `<clinit>` 未压帧时,触发点 `pc` 应回退为当前帧的 PC。
+- **B2**(已修) — `isInstanceOf` 沿继承/接口链递归判断。
+- **B3**(已修) — `<clinit>` 用 `findMethod("<clinit>","()V", false)` 限定本类,不误继承父类。
+- **B4**(已修) — 父子 `<clinit>` 执行顺序:super 先于 sub。
+- **B5**(已修) — 无自身 `<clinit>` 的子类,`initialize()` 直接置 `FullyInitialized` 后**无条件**递归 `super.initialize()`,保证父类 `<clinit>` 被触发。
+
+---
+
 ## 已知限制 / 推迟项
 
 - 无 GC(bump arena 全泄漏——短程序无所谓)。
-- 无数组;无 `\<clinit\>`(静态初始化不跑——带初始化器的静态字段停在默认值);无 Java 层异常;无 INVOKEINTERFACE/INVOKEDYNAMIC。
-- String 是 std::string 桩;无真类库。
+- **数组**:Phase A(klass/路由 + 数组 CHECKCAST/INSTANCEOF)完成;Phase B–E(堆分配/创建/访问)待做,详见数组一节。
+- 无 Java 层异常(失败抛 `std::runtime_error` 打挂 VM);无 INVOKEDYNAMIC。
+- String 是 std::string 桩;无真类库;`java.lang.Object` 被桩(super 置空)。
 - 单线程;无 monitor。
-- `instance_slot_count` 不含继承字段。
+- 字符串驻留仅覆盖常量池字面量(`StringPool` 去重 + LDC 稳定指针);`String.intern()` 与运行时字符串(拼接 `new String`)未实现。

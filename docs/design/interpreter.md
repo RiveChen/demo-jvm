@@ -42,6 +42,72 @@
   - `INVOKEINTERFACE`：调用接口方法
   - `INVOKEDYNAMIC`：调用动态方法
 - `objects`：对象创建和类型检查
-  - `NEW`：创建对象
-  - `CHECKCAST`：检查对象类型
-  - `INSTANCEOF`：检查对象类型
+   - `NEW`：创建对象
+   - `CHECKCAST`：检查对象类型
+   - `INSTANCEOF`：检查对象类型
+
+---
+
+## C++ UB 与 JVM 语义
+
+JVM 规范定义了明确的数值语义，但部分语义在 C++ 中属于**未定义行为（UB）**。实现解释器时，不能直接翻译 Java 语义为 C++ 代码，必须用 well-defined 的方式表达 JVM 要求的行为。以下为 UBSan 发现的全部 4 类问题及其修复：
+
+### 1. 有符号整数溢出 → 应回绕（Two's complement）
+
+| 指令 | C++ UB | JVM 要求 |
+|------|--------|---------|
+| `IADD` `ISUB` `IMUL` `INEG` | 有符号溢出即 UB | 回绕 |
+| `LADD` `LSUB` `LMUL` `LNEG` | 同上 | 同上 |
+
+**修复**：操作数转为无符号运算（无符号溢出 well-defined），结果转回有符号。
+
+```cpp
+auto v1 = static_cast<U4>(op_stack.popInt());
+auto v2 = static_cast<U4>(op_stack.popInt());
+op_stack.pushInt(static_cast<Jint>(v1 + v2));
+```
+
+### 2. `INT_MIN / -1` → 应返回被除数本身
+
+| 指令 | C++ UB | JVM 要求 |
+|------|--------|---------|
+| `IDIV` | `INT32_MIN / -1` 溢出 | 返回 `INT32_MIN` |
+| `LDIV` | `INT64_MIN / -1` 溢出 | 返回 `INT64_MIN` |
+| `IREM` | `INT32_MIN % -1` 溢出 | 返回 `0` |
+| `LREM` | `INT64_MIN % -1` 溢出 | 返回 `0` |
+
+**修复**：分支特判，绕过 C++ 除法/取余。
+
+```cpp
+if (value1 == INT32_MIN && value2 == -1) {
+  op_stack.pushInt(INT32_MIN);  // JVM §6.5.idiv
+} else {
+  op_stack.pushInt(value1 / value2);
+}
+```
+
+### 3. 浮点 → 整数转换超出范围 → 应饱和
+
+| 指令 | C++ UB | JVM 要求 |
+|------|--------|---------|
+| `F2I` `F2L` `D2I` `D2L` | `static_cast` 超出目标范围 | NaN→0，超限→±极值 |
+
+**修复**：先做范围检查再 `static_cast`。
+
+```cpp
+if (std::isnan(value)) {
+  op_stack.pushInt(0);
+} else if (value >= static_cast<float>(INT32_MAX)) {
+  op_stack.pushInt(INT32_MAX);
+} else if (value <= static_cast<float>(INT32_MIN)) {
+  op_stack.pushInt(INT32_MIN);
+} else {
+  op_stack.pushInt(static_cast<Jint>(value));
+}
+```
+
+### 4. UBSan 配置与测试架构
+
+- `-fno-sanitize-recover=undefined` 会让首个 UB 触发 SIGABRT，导致同一可执行文件中的后续 GoogleTest 全部丢失。
+- **修复**：移除该 flag，保留 `-fsanitize=undefined`。UBSan 诊断输出到 stderr，进程继续运行，所有测试执行完毕。
+- ASan 保持默认 abort 模式（`use-after-free` 等错误继续执行会导致更混乱的状态）。

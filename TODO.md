@@ -1,6 +1,6 @@
 # demo-jvm 待办清单
 
-_更新于 2026-07-12。`[x]` 已完成,`[ ]` 待办,引用处标注 `文件:行`。_
+_更新于 2026-07-31。`[x]` 已完成,`[ ]` 待办,引用处标注 `文件:行`。_
 
 ---
 
@@ -33,11 +33,27 @@ _更新于 2026-07-12。`[x]` 已完成,`[ ]` 待办,引用处标注 `文件:行
 - [x] **D5 invoke 全齐** — INVOKESTATIC/SPECIAL/VIRTUAL/**INTERFACE** 全实现(接口按 receiver 实际类分派);修了接口解析/链接索引顺序。
 - [x] **CHECKCAST / INSTANCEOF** — `isInstanceOf` 沿继承/接口链判断。
 - [x] **stub 方法家桶(Tier 1 部分)** — `System.err` 哨兵;`PrintStream.print/println` 各原始类型(I/J/F/D/…)+ String,按 receiver 哨兵选 cout/cerr。
+- [x] **`<clinit>` 类初始化** — `Klass` 状态机(`Allocated→Loaded→Linked→BeingInitialized→FullyInitialized`)+ 递归守卫;NEW/GETSTATIC/PUTSTATIC/INVOKESTATIC 在 `state==Linked` 时回退触发指令 PC → `initialize` 压 `<clinit>()V` 帧 → RETURN 处 `markFullyInitialized`;super 先于 sub;ConstantValue 静态量在 prepare 阶段设置。`interpreter_clinit_test`。
+- [x] **klass-oop 层级重构(仿 HotSpot)** — `Klass`(抽象基:kind/state/name/super + 虚 `isInstanceOf`/`getClassLoader`/`getDescriptorName`)→ `InstanceKlass` / `ArrayKlass`(→ `TypeArrayKlass`/`ObjArrayKlass`);oop 侧 `OopDesc`(无 vtable)→ `InstanceOopDesc`/`ArrayOopDesc`。字段继承布局修复(子类实例槽从父类槽数起算)。`klass_test`。
+- [x] **D4 Phase A — 数组 klass plumbing** — `utilities/basic_type.hpp`(BasicType + 名/尺寸/atype 表);`Klass::getDescriptorName`;`MethodArea` 加 `array_klasses_` 表 + `getOrCreateTypeArrayKlass`/`getOrCreateObjArrayKlass`(按名去重,单例);变体收窄 `InstanceKlass*→Klass*`,`resolveClass` 返回 `Klass*` 并路由 `[`-前缀名(`arrayKlassForName` 递归);CHECKCAST/INSTANCEOF 随之支持数组类型。`array_klass_test`。
+- [x] **oops 测试统一** — 抽出 `tests/modules/oops/oops_test_base.hpp`(loader + MethodArea reset),`method_area`/`klass`/`constant_pool` 测试共用;`string_pool` 独立(不需 loader)。
+- [x] **init/类型判定 B1–B4 修复** — B1 四个触发点改 `pc = thread->getCurrentFrame().getPC()`;B2 `isInstanceOf` 对 super 递归;B3 `findMethod("<clinit>","()V", false)` 仅本类;B4 先压本类 clinit 帧再递归 `super.initialize()`。回归测试 `interpreter_init_type_regression_test`。
+- [x] **C++ UB 修复(16 处)** — UBSan 驱动,`interpreter.cpp` 修复:① 有符号整数溢出回绕(IADD/ISUB/IMUL/INEG/LADD/LSUB/LMUL/LNEG 转 unsigned 运算);② `INT_MIN/-1` 与 `% -1`(IDIV/LDIV/IREM/LREM 特判);③ 浮点→整数越界饱和(F2I/F2L/D2I/D2L 先范围检查);④ 有符号右移 NOLINT 保留。详见 `docs/design/interpreter.md`「C++ UB 与 JVM 语义」。
+- [x] **UBSan 集成** — `ENABLE_UBSAN` option;不设 `-fno-sanitize-recover`(避免首个 UB SIGABRT 杀掉同进程后续 gtest);与 ASan 可独立/组合启用。
+- [x] **ASan/UBSan 工具链收口** — `CMakePresets.json`(default/asan/ubsan/asan-ubsan 四预设,共用 `build/`)、`.vscode`(tasks/TestMate/CMakeTools 跟随 active preset)、`.gitignore` 清理;389/389 测试在 UBSan 下全绿。
+- [x] **B5. 无自身 `<clinit>` 的子类不初始化父类（已修）** — `initialize()` 不再因 `clinit == nullptr` 提前返回:无 `<clinit>` 时直接置 `FullyInitialized`,然后**无条件**递归 `super.initialize()`(`klass.cpp`)。回归测试 `interpreter_init_type_regression_test` 覆盖。
+
+---
+
+## A. 待修 bug
+
+（当前无待修 bug 条目 —— B1–B5 均已在 `klass.cpp` 修复，见上方 ✅。）
 
 ---
 
 ## B. 小项 / 收尾
 
+- [ ] **恢复 IFNULL/IF_ACMP 系列测试** — 对象支持(NEW/GETFIELD)已实现,解禁 `ControlFlowTest.java` 与 `interpreter_control_flow_test.cpp` 中被注释的 IFNULL/IFNONNULL/IF_ACMPEQ/IF_ACMPNE 用例。
 - [ ] **`slotCount` switch 后补 `return`** — `-Wreturn-type` 警告(`utilities/descriptor.h`),switch 后加 `return 1;` 或 `std::unreachable()`。
 - [ ] **B5.(可选)debug-only tag** — `#ifndef NDEBUG` 下在 `pop*`/`get*` 加 `assert`,开发期类型安全网,Release 零开销。
 
@@ -69,9 +85,14 @@ _更新于 2026-07-12。`[x]` 已完成,`[ ]` 待办,引用处标注 `文件:行
 
 ### D. 功能(按价值/依赖)
 
-- [ ] **D4. 数组** —— **推荐下一个大特性**。NEWARRAY/ANEWARRAY/\*ALOAD/\*ASTORE/ARRAYLENGTH;解锁真 `String[] args`、真 String(char[])、大量普通程序。建在现有 heap 上,自洽。也是"自写真类"路线的硬前提。
-- [ ] **`<clinit>` 类初始化** —— **已可实现(自洽,前提就绪)**。加 Klass 初始化状态(`uninit→in-progress→inited`)+ 递归守卫;NEW/GETSTATIC/PUTSTATIC/INVOKESTATIC + main 入口前触发;super 先于 sub;复用现有 invoke/帧机制跑 `<clinit>()V`。**唯一设计决定**:如何"指令中途"跑 clinit(嵌套 interpret 调用 vs 压帧后回退 pc 重执行触发指令)。不依赖数组/异常。修正"`static int x=5` 仍是 0"缺口,也是"自写真类"的前提。
-- [ ] **D6. 异常处理** — ATHROW + 异常表 + 真 Java 异常,替换会打挂 VM 的 `std::runtime_error`(除零/NPE/越界)。解锁 try/catch,也是真 String 方法错误路径的前提。
+- [ ] **D4. 数组** —— **进行中,当前大特性**。分阶段(详见 `ARCHITECTURE.md` 数组一节):
+    - [x] **Phase A. klass plumbing** — BasicType/名字/去重工厂 + `resolveClass` 路由 `[`-名;CHECKCAST/INSTANCEOF 支持数组。见上方 ✅。
+    - [ ] **Phase B. 堆分配** — `Heap::newTypeArray`/`newObjArray`;元素**按大小 packed**(与 `element_size_`/`base()` 骨架一致)。**对齐骨架已完成**(`object.hpp` `kDataOffset = 24`,元素起点 8 对齐,long[]/double[] 不错位)。待做:实际堆分配函数与 NEWARRAY/ANEWARRAY/ARRAYLENGTH 指令。arena 零初始化且不复用 → 新数组自带零值。
+    - [ ] **Phase C. 创建/长度指令** — NEWARRAY(atype→BasicType)、ANEWARRAY(`resolveClass(component)`+`getOrCreateObjArrayKlass`)、ARRAYLENGTH;MULTIANEWARRAY 延后。
+    - [ ] **Phase D. 访问指令** — `*ALOAD`/`*ASTORE`(抽 null+越界 helper;B/C/S 符号/零扩展 + 截断;L/D 走 wide);AASTORE store-check 延后。
+    - [ ] **Phase E. 集成/收尾** — 真 `String[] args`;INVOKEVIRTUAL/INTERFACE 的 receiver klass cast 对数组加保护;`ObjArrayKlass::isInstanceOf` 递归元素协变(当前仅精确匹配);MULTIANEWARRAY;(GC 期)`scanRefs`。
+    - 错误路径先 `std::runtime_error`(NegativeArraySize/NPE/AIOOBE),D6 后升级为真异常。
+- [ ] **D6. 异常处理** — ATHROW + 异常表 + 真 Java 异常,替换会打挂 VM 的 `std::runtime_error`(除零/NPE/越界/数组错误路径)。解锁 try/catch,也是真 String 方法错误路径的前提。
 - [ ] **stub 家桶续做(Tier 1/2)** — String 只读方法(length/charAt/equals/hashCode…)、静态工具(Integer.parseInt、Math.\*、System.currentTimeMillis;需 INVOKESTATIC 加 `tryStubIntercept`)、返回 String 的方法(intern 结果)、`+` 拼接(StringBuilder 桩 + NEW 拦截)。纯加 handler,不碰 switch。
 - [ ] **自写最小真类** — 编译自己的最小 `Object/String/StringBuilder.java`(char[] 后端、无 Unsafe),加载真字节码逐条烧掉对应 stub。前提:D4 数组 + `<clinit>` + 一小撮 native(arraycopy)+(可选)D6。
 - [ ] **D7. GC** — mark-sweep(非移动,直接指针不变);再远才是移动 + oopmap。
@@ -80,6 +101,7 @@ _更新于 2026-07-12。`[x]` 已完成,`[ ]` 待办,引用处标注 `文件:行
 
 ## E. 工程
 
+- [ ] **文档验收规则** — 每次功能完成必须同步:README feature matrix、TODO 状态、路线图进度。职责划分:README 描述当前能力、ARCHITECTURE 描述稳定设计、TODO 只保留未完成项、roadmap 保存阶段与历史证据。
 - [x] **E2. 暂不迁移 Bazel** — 已决策;提速靠 ccache / Ninja / C2 的 TU 拆分。
 - [x] **E3. `ARCHITECTURE.md`** — 已记录分层、slot(64 位裸 union)、pc 归属、引用/堆、descriptor、常量池(C4)、类加载、native/拦截、String 桩、边界检查与索引类型、错误处理、已知限制。
 
@@ -87,9 +109,12 @@ _更新于 2026-07-12。`[x]` 已完成,`[ ]` 待办,引用处标注 `文件:行
 
 ## 建议下一步
 
-hello world + R1/R2/R3 + 四种 invoke + CHECKCAST/INSTANCEOF + WIDE + print 家桶都已完成 🎉。接下来两条主线,可并行/择一:
+hello world + R1/R2/R3 + 四种 invoke + CHECKCAST/INSTANCEOF + WIDE + print 家桶 + **`<clinit>`** + **klass-oop 层级重构** + **D4 Phase A** 都已完成 🎉。
 
-1. **广度(能跑更多程序,纯加 handler,不碰 switch)**:续做 **stub 家桶 Tier 1/2**(String 只读方法、Integer/Math 静态、`+` 拼接)。ROI 高、低风险。
-2. **深度(走向真类/正确性)**:**`<clinit>`**(已可做、自洽,修静态初始化)→ **D4 数组**(硬前提)→ **D6 异常** → **自写最小真类**(逐条烧 stub)→ 最后 **GC(mark-sweep)**。
+**当前主线:D4 Phase B→C→D(数组),以及剩余正确性/质量门禁收口(见 `docs/remediation-roadmap.md`)。**
 
-**`<clinit>` 现在就能做**(不依赖数组/异常),若你的测试程序开始用 `static int x=5;` 这类初始化,它就是最该补的正确性缺口。**C2 拆 switch** 建议放在这些特性之后(handler 更多、分组更有料);`slotCount return`、logger 短路那两个小项随时穿插。
+1. **D4 数组续做** — Phase B(堆分配,对齐骨架已完成)→ C(创建/长度)→ D(访问)。Phase A 已铺好 klass/路由,B/C/D 偏机械。
+2. **广度(可穿插)**:stub 家桶 Tier 1/2(String 只读方法、Integer/Math 静态、`+` 拼接),纯加 handler、不碰 switch、低风险。
+3. **之后**:D6 异常 → 自写最小真类(逐条烧 stub)→ GC(mark-sweep)。
+
+**C2 拆 switch** 仍建议放在这些特性之后(handler 更多、分组更有料);`slotCount return`、logger 短路那两个小项随时穿插。

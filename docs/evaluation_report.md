@@ -1,3 +1,7 @@
+> ⚠️ **历史评估报告（2026-01-06 快照）**  
+> 本文是项目早期（2026 年 1 月）的外部审查快照，其中关于"NEW/虚调用/字段/native 未实现""Hello World 进度 30%"等内容**不代表当前状态**。  
+> 最新能力清单请见 [README.md](../README.md)，已知缺陷与路线图见 [TODO.md](../TODO.md)。
+
 # JVM Learning Project - Critical Evaluation
 
 **Date**: 2026-01-06

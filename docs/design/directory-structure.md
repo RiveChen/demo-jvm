@@ -1,45 +1,66 @@
 # Directory Structure
 
-本项目结构如下:
+本项目结构如下：
 
 ## 根目录
 
 - **配置文件**:
-  - `CMakeLists.txt`: 根 CMake 配置文件，定义项目设置、编译选项和依赖管理
-  - `.clang-format`: 代码格式化配置（基于 Google 风格）
-  - `.clang-tidy`: 静态代码分析配置
-  - `.editorconfig`: 编辑器配置，统一代码风格
-  - `.gitignore`: Git 忽略文件配置
-  - `LICENSE`: MIT 许可证
-  - `README.md`: 项目说明文档
+  - `CMakeLists.txt`: 根 CMake 配置，定义项目设置、编译选项、Sanitizer 开关和 GoogleTest 集成
+  - `CMakePresets.json`: CMake 预设（default / asan / ubsan / asan-ubsan，共用 `build/`）
+  - `.clang-format`: 代码格式化配置
+  - `.clang-tidy`: clang-tidy 静态分析规则
+  - `.clangd`: clangd 语言服务器配置（诊断抑制 / clang-tidy 联动 / 第三方目录排除）
+  - `.editorconfig`: 跨编辑器风格统一
+  - `.gitignore`: Git 忽略规则
+  - `ARCHITECTURE.md`: 架构与设计决策
+  - `TODO.md`: 待办清单与路线图
+  - `README.md`: 项目说明
 
 ## 主要目录
 
-- `docs/`: 存放开发日志、学习笔记和项目设计文档
-  - `design/`: 设计文档
-    - `directory-structure.md`: 本文件，描述项目目录结构
-  - `dev_logs/`: 开发日志（计划中）
-  - `learning/`: 学习笔记（计划中）
+### `src/` — 源码
 
-- `src/`: 存放源代码
-  - `CMakeLists.txt`: 源代码的 CMake 配置
-  - `main.cpp`: 主程序入口
-  - `common/`: 公共工具和基础类（计划中）
-  - 其他模块目录（待添加）
+依赖方向：`engine → runtime → oops → utilities`；`classfile → oops → utilities`；`memory → oops → utilities`。
 
-- `tests/`: 存放测试代码
-  - `CMakeLists.txt`: 测试的 CMake 配置
-  - `sanity/`: 环境检查测试，验证编译环境和工具链
-    - `CMakeLists.txt`: 测试子目录配置
-    - `env_test.cpp`: 环境检查测试用例
-  - `data/`: 测试数据文件（计划中）
-  - `modules/`: 各模块的单元测试（计划中）
+- `src/CMakeLists.txt`: 聚合子模块 + 主程序 `demo-jvm`
+- `src/main.cpp`: 主程序入口
 
-- `include/`: 存放 JNI 头文件（计划中，仅用于 JNI）
+| 目录 | CMake target | 职责 |
+|------|-------------|------|
+| `utilities/` | `jvm_utilities` | 叶子原语：`types`(U1/U2/Jint…)、`Slot`、`descriptor` 解析器、`basic_type`、`access_flags`、`endian`、`logger`。无依赖 |
+| `oops/` | `jvm_oops` | 运行期元数据：`Klass`/`Method`/`Field`/`RuntimeConstantPool`/`MethodArea`/`Object`/`StringPool` |
+| `classfile/` | `jvm_classfile` | `.class` 解析：`ByteReader`、`ClassFileParser`、`ClassFile`、原始 `ConstantPool`、`ClassLoader` |
+| `runtime/` | `jvm_runtime` | 执行状态：`Frame`、`OperandStack`、`LocalVariables`、`Thread`、`Stack` |
+| `engine/` | `jvm_engine` | 解释器：字节码分派、`NativeRegistry`、`StubIntercepts` |
+| `memory/` | `jvm_memory` | 堆：无 GC 的 bump arena |
 
-- `build/`: 构建产物目录（由 CMake 生成，已加入 .gitignore）
-  - `bin/`: 可执行文件
-    - `demo-jvm`: 主程序
-    - `test_sanity`: 环境检查测试
-  - `lib/`: 库文件
-  - `_deps/`: 外部依赖（如 GoogleTest）
+### `include/` — JNI 头文件
+
+当前为空（JNI 尚未实现，`ACC_NATIVE` 走 `NativeRegistry` + 符号拦截）。
+
+### `tests/` — 测试
+
+- `tests/CMakeLists.txt`: 聚合测试子目录（含 GoogleTest）
+- `tests/data/`: 测试用 Java 源文件 + 编译产物
+  - `data/java/`: 各测试模块的 `.java` 源文件
+  - `data/java/lang/`: 桩类（如 `java/lang/System`）
+- `tests/sanity/`: 环境检查测试
+- `tests/modules/`: 按源码模块组织的单元测试
+  - `utilities/`、`memory/`、`oops/`、`classfile/`、`runtime/`、`engine/`
+- 测试二进制输出到 `build/bin/test_*`（由 CMake 生成）
+
+### `docs/` — 文档
+
+- `docs/design/`: 设计文档（`interpreter.md`、`directory-structure.md` 等）
+- `docs/learning/`: 学习笔记（工具链、JVM 字节码、C++ 等）
+- `docs/evaluation_report.md`: ⚠️ 历史评估快照（2026-01-06），不代表当前状态
+- `docs/remediation-roadmap.md`: 整改路线图（P0–P6）
+- `docs/debugging-tests.md`: 测试调试指南
+
+### `build/` — 构建产物（已 .gitignore）
+
+CMake Presets 统一输出到 `build/`：
+- `build/bin/`: 可执行文件（`demo-jvm`、`test_*`）
+- `build/lib/`: 静态库
+- `build/_deps/`: 外部依赖（GoogleTest）
+- `build/test_classes/`: 测试用 `.class` 文件
