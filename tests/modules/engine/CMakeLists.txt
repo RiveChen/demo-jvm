@@ -23,6 +23,19 @@ target_compile_definitions(
   PRIVATE TEST_CLASS_PATH="${CMAKE_BINARY_DIR}/test_classes")
 gtest_discover_tests(test_interpreter_constants)
 
+# Fail-fast contract for every opcode that is not implemented yet
+add_executable(test_interpreter_unimplemented_opcode
+               interpreter_unimplemented_opcode_test.cpp)
+target_link_libraries(test_interpreter_unimplemented_opcode
+                      PRIVATE jvm_engine jvm_classfile GTest::gtest_main)
+target_include_directories(test_interpreter_unimplemented_opcode
+                           PRIVATE ${TEST_BASE_DIR})
+add_dependencies(test_interpreter_unimplemented_opcode compile_test_classes)
+target_compile_definitions(
+  test_interpreter_unimplemented_opcode
+  PRIVATE TEST_CLASS_PATH="${CMAKE_BINARY_DIR}/test_classes")
+gtest_discover_tests(test_interpreter_unimplemented_opcode)
+
 # Load/Store tests
 add_executable(test_interpreter_load_store interpreter_load_store_test.cpp)
 target_link_libraries(test_interpreter_load_store

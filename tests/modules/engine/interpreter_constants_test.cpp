@@ -1,5 +1,7 @@
 #include "interpreter_test_base.hpp"
 
+#include "engine/opcode.hpp"
+
 #include <gtest/gtest.h>
 
 // ============================================================================
@@ -101,23 +103,20 @@ TEST_F(InterpreterConstantsTest, DCONST_1) {
 //   EXPECT_EQ(executeIntMethod0Arg(kClassName, "testBIPUSH_0", "()I"), 0);
 // }
 
-// // ============================================================================
-// // SIPUSH Tests
-// // ============================================================================
+// ============================================================================
+// SIPUSH Tests
+// ============================================================================
 
-// TEST_F(InterpreterConstantsTest, SIPUSH_32767) {
-//   EXPECT_EQ(executeIntMethod0Arg(kClassName, "testSIPUSH_32767", "()I"),
-//   32767);
-// }
+TEST_F(InterpreterConstantsTest, SIPUSH_SignExtendsNegativeImmediate) {
+  auto* klass = loader_->loadClass(kClassName);
+  ASSERT_NE(klass, nullptr);
+  auto* method = klass->findMethod("testSIPUSH_Neg32768", "()I");
+  ASSERT_NE(method, nullptr);
+  ASSERT_FALSE(method->getCode().empty());
+  ASSERT_EQ(method->getCode().front(), engine::SIPUSH);
 
-// TEST_F(InterpreterConstantsTest, SIPUSH_Neg32768) {
-//   EXPECT_EQ(executeIntMethod0Arg(kClassName, "testSIPUSH_Neg32768", "()I"),
-//             -32768);
-// }
-
-// TEST_F(InterpreterConstantsTest, SIPUSH_100) {
-//   EXPECT_EQ(executeIntMethod0Arg(kClassName, "testSIPUSH_100", "()I"), 100);
-// }
+  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testSIPUSH_Neg32768"), -32768);
+}
 
 // ============================================================================
 // ACONST_NULL Tests
