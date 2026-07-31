@@ -27,10 +27,25 @@
 #include "utilities/types.hpp"
 
 #include <cmath>
+#include <cstdint>
+#include <iomanip>
+#include <sstream>
 #include <stdexcept>
 #include <vector>
 
 namespace jvm::engine {
+
+namespace {
+
+[[noreturn]] void throwUnsupportedOpcode(const oops::Method* method, U1 opcode, size_t pc) {
+  std::ostringstream message;
+  message << "Unsupported opcode " << opcode_name(opcode) << " (0x" << std::hex << std::setw(2) << std::setfill('0')
+          << static_cast<unsigned>(opcode) << ") in " << method->getOwnerKlass()->getName() << "." << method->getName()
+          << method->getDescriptor() << " at pc=" << std::dec << pc;
+  throw std::runtime_error(message.str());
+}
+
+}  // namespace
 
 // (readability-function-size, hicpp-function-size, readability-function-cognitive-complexity)
 // NOLINTNEXTLINE
@@ -62,9 +77,10 @@ void Interpreter::interpret(runtime::Thread* thread) {
     }
 
     // fetch opcode
-    BytecodeReader reader(code, pc);          // note we pass pc by ref here
-    auto           opcode = reader.readU1();  // note pc incremented by 1 here
-    LOG_TRACE("pc=", (pc - 1), " 0x", "0123456789abcdef"[opcode >> 4U], "0123456789abcdef"[opcode & 0x0FU], " (",
+    BytecodeReader reader(code, pc);             // note we pass pc by ref here
+    auto           opcode    = reader.readU1();  // note pc incremented by 1 here
+    const auto     opcode_pc = pc - 1;
+    LOG_TRACE("pc=", opcode_pc, " 0x", "0123456789abcdef"[opcode >> 4U], "0123456789abcdef"[opcode & 0x0FU], " (",
               opcode_name(opcode), ")");
 
     // NOLINTBEGIN(bugprone-branch-clone)
@@ -132,8 +148,8 @@ void Interpreter::interpret(runtime::Thread* thread) {
         op_stack.pushInt(reader.readSU1());
       } break;
       case SIPUSH: {
-        // short integer push
-        op_stack.pushInt(reader.readU2());
+        // short integer push (sign-extend)
+        op_stack.pushInt(reader.readSU2());
       } break;
       /* #endregion Push immediate values */
 
@@ -285,30 +301,16 @@ void Interpreter::interpret(runtime::Thread* thread) {
         auto* value = local_vars.getRef(3);
         op_stack.pushRef(value);
       } break;
+      // TODO: implement *aload
       case IALOAD:
-        // TODO: implement iaload
-        break;
       case LALOAD:
-        // TODO: implement laload
-        break;
       case FALOAD:
-        // TODO: implement faload
-        break;
       case DALOAD:
-        // TODO: implement daload
-        break;
       case AALOAD:
-        // TODO: implement aaload
-        break;
       case BALOAD:
-        // TODO: implement baload
-        break;
       case CALOAD:
-        // TODO: implement caload
-        break;
       case SALOAD:
-        // TODO: implement saload
-        break;
+        throwUnsupportedOpcode(method, opcode, opcode_pc);
       /* #endregion Loads */
 
       /* #region Stores */
@@ -420,30 +422,16 @@ void Interpreter::interpret(runtime::Thread* thread) {
         auto* value = op_stack.popRef();
         local_vars.setRef(3, value);
       } break;
+      // TODO: implement sastore
       case IASTORE:
-        // TODO: implement iastore
-        break;
       case LASTORE:
-        // TODO: implement lastore
-        break;
       case FASTORE:
-        // TODO: implement fastore
-        break;
       case DASTORE:
-        // TODO: implement dastore
-        break;
       case AASTORE:
-        // TODO: implement aastore
-        break;
       case BASTORE:
-        // TODO: implement bastore
-        break;
       case CASTORE:
-        // TODO: implement castore
-        break;
       case SASTORE:
-        // TODO: implement sastore
-        break;
+        throwUnsupportedOpcode(method, opcode, opcode_pc);
       /* #endregion Stores */
 
       /* #region Stack */
@@ -784,8 +772,10 @@ void Interpreter::interpret(runtime::Thread* thread) {
       case F2I: {
         // Convert float to int (truncate towards zero)
         auto value = op_stack.popFloat();
-        if (std::isnan(value) || std::isinf(value)) {
+        if (std::isnan(value)) {
           op_stack.pushInt(0);
+        } else if (std::isinf(value)) {
+          op_stack.pushInt(value > 0 ? INT32_MAX : INT32_MIN);
         } else {
           op_stack.pushInt(static_cast<Jint>(value));
         }
@@ -793,8 +783,10 @@ void Interpreter::interpret(runtime::Thread* thread) {
       case F2L: {
         // Convert float to long (truncate towards zero)
         auto value = op_stack.popFloat();
-        if (std::isnan(value) || std::isinf(value)) {
-          op_stack.pushLong(0);
+        if (std::isnan(value)) {
+          op_stack.pushInt(0);
+        } else if (std::isinf(value)) {
+          op_stack.pushLong(value > 0 ? INT64_MAX : INT64_MIN);
         } else {
           op_stack.pushLong(static_cast<Jlong>(value));
         }
@@ -807,8 +799,10 @@ void Interpreter::interpret(runtime::Thread* thread) {
       case D2I: {
         // Convert double to int (truncate towards zero)
         auto value = op_stack.popDouble();
-        if (std::isnan(value) || std::isinf(value)) {
+        if (std::isnan(value)) {
           op_stack.pushInt(0);
+        } else if (std::isinf(value)) {
+          op_stack.pushInt(value > 0 ? INT32_MAX : INT32_MIN);
         } else {
           op_stack.pushInt(static_cast<Jint>(value));
         }
@@ -816,8 +810,10 @@ void Interpreter::interpret(runtime::Thread* thread) {
       case D2L: {
         // Convert double to long (truncate towards zero)
         auto value = op_stack.popDouble();
-        if (std::isnan(value) || std::isinf(value)) {
-          op_stack.pushLong(0);
+        if (std::isnan(value)) {
+          op_stack.pushInt(0);
+        } else if (std::isinf(value)) {
+          op_stack.pushLong(value > 0 ? INT64_MAX : INT64_MIN);
         } else {
           op_stack.pushLong(static_cast<Jlong>(value));
         }
@@ -1086,13 +1082,11 @@ void Interpreter::interpret(runtime::Thread* thread) {
       } break;
       case JSR:
         // not used in Java SE 8
-        break;
       case JSR_W:
         // not used in Java SE 8
-        break;
       case RET:
         // not used in Java SE 8
-        break;
+        throwUnsupportedOpcode(method, opcode, opcode_pc);
       case TABLESWITCH: {
         auto base_addr = pc - 1;
         // skip padding to make sure the defaultOffset' address in bytecode is always 4-byte aligned
@@ -1472,7 +1466,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
       } break;
       case INVOKEDYNAMIC:
         // TODO: implement invokedynamic
-        break;
+        throwUnsupportedOpcode(method, opcode, opcode_pc);
       /* #endregion Methods */
 
       /* #region Objects */
@@ -1524,19 +1518,17 @@ void Interpreter::interpret(runtime::Thread* thread) {
       // Components: op_stack
       case ATHROW:
         // TODO: implement athrow
-        break;
+        throwUnsupportedOpcode(method, opcode, opcode_pc);
       /* #endregion Exceptions */
 
       /* #region Monitors */
 
       // Function: Synchronization operations
       // Components: op_stack
+      // TODO: implement monitorenter & monitorexit
       case MONITORENTER:
-        // TODO: implement monitorenter
-        break;
       case MONITOREXIT:
-        // TODO: implement monitorexit
-        break;
+        throwUnsupportedOpcode(method, opcode, opcode_pc);
       /* #endregion Monitors */
 
       /* #region Arrays */
@@ -1545,16 +1537,13 @@ void Interpreter::interpret(runtime::Thread* thread) {
       // Components: op_stack, rt_cp, thread (PC)
       case NEWARRAY:
         // TODO: implement newarray
-        break;
       case ANEWARRAY:
         // TODO: implement anewarray
-        break;
       case ARRAYLENGTH:
         // TODO: implement arraylength
-        break;
       case MULTIANEWARRAY:
         // TODO: implement multianewarray
-        break;
+        throwUnsupportedOpcode(method, opcode, opcode_pc);
         /* #endregion Arrays */
 
       case WIDE: {
@@ -1607,9 +1596,8 @@ void Interpreter::interpret(runtime::Thread* thread) {
             local_vars.setInt(wide_index, current + const_val);
             break;
           }
-          case RET: { /* RET with wide index – unused in Java 8 */
-            break;
-          }
+          case RET:
+            throwUnsupportedOpcode(method, widened_opcode, opcode_pc);
           default:
             throw std::runtime_error("Unsupported widened opcode: " + std::to_string(widened_opcode));
         }
