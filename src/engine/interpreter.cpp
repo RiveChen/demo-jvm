@@ -784,7 +784,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         // Convert float to long (truncate towards zero)
         auto value = op_stack.popFloat();
         if (std::isnan(value)) {
-          op_stack.pushInt(0);
+          op_stack.pushLong(0);
         } else if (std::isinf(value)) {
           op_stack.pushLong(value > 0 ? INT64_MAX : INT64_MIN);
         } else {
@@ -811,7 +811,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         // Convert double to long (truncate towards zero)
         auto value = op_stack.popDouble();
         if (std::isnan(value)) {
-          op_stack.pushInt(0);
+          op_stack.pushLong(0);
         } else if (std::isinf(value)) {
           op_stack.pushLong(value > 0 ? INT64_MAX : INT64_MIN);
         } else {
