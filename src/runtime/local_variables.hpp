@@ -42,15 +42,15 @@ class LocalVariables {
   /// @name Typed get/set wrappers
   ///@{
   void    setInt(U2 index, Jint value) { setSlot(index, {.i = value}); }
-  Jint    getInt(U2 index) { return getSlot(index).i; }
+  Jint    getInt(U2 index) const { return getSlot(index).i; }
   void    setFloat(U2 index, Jfloat value) { setSlot(index, {.f = value}); }
-  Jfloat  getFloat(U2 index) { return getSlot(index).f; }
+  Jfloat  getFloat(U2 index) const { return getSlot(index).f; }
   void    setLong(U2 index, Jlong value) { setWide(index, {.l = value}); }
-  Jlong   getLong(U2 index) { return getWide(index).l; }
+  Jlong   getLong(U2 index) const { return getWide(index).l; }
   void    setDouble(U2 index, Jdouble value) { setWide(index, {.d = value}); }
-  Jdouble getDouble(U2 index) { return getWide(index).d; }
+  Jdouble getDouble(U2 index) const { return getWide(index).d; }
   void    setRef(U2 index, Jref value) { setSlot(index, {.r = value}); }
-  Jref    getRef(U2 index) { return getSlot(index).r; }
+  Jref    getRef(U2 index) const { return getSlot(index).r; }
   ///@}
 
   /// @name Slot-level operations
@@ -61,20 +61,20 @@ class LocalVariables {
     variables_[index] = value;
   }
   /// @brief Get a single slot at the given index.
-  Slot getSlot(U2 index) {
+  Slot getSlot(U2 index) const {
     checkBounds(index);
     return variables_[index];
   }
 
   /// @brief Set a category-2 value at the given index, occupying index and index+1.
   void setWide(U2 index, Slot value) {
-    checkBounds(static_cast<size_t>(index) + 1);
+    checkBounds(index + 1);
     variables_[index]     = value;
     variables_[index + 1] = {.i = 0};  // placeholder for second slot
   }
   /// @brief Get a category-2 value at the given index.
-  Slot getWide(U2 index) {
-    checkBounds(index);
+  Slot getWide(U2 index) const {
+    checkBounds(index + 1);
     return variables_[index];
   }
   ///@}
@@ -84,7 +84,7 @@ class LocalVariables {
 
   /// @brief Bounds-check an index and throw if out of range.
   /// @throws std::out_of_range if index >= variables_.size().
-  void checkBounds(size_t index) {
+  void checkBounds(size_t index) const {
     if (index >= variables_.size()) {
       throw std::out_of_range("Index out of bounds in local variables: " + std::to_string(index));
     }

@@ -56,14 +56,11 @@ class OperandStack {
   /// @brief Pop a category-2 value (long or double) from the stack.
   /// @throws std::runtime_error if the stack is empty or has only one slot.
   Slot popWide() {
-    if (stack_.empty()) {
-      throw std::runtime_error("Operand stack is empty");
+    if (stack_.size() <= 1) {
+      throw std::runtime_error("Operand stack is nearly empty");
     }
     auto value = stack_.back();
     stack_.pop_back();
-    if (stack_.empty()) {
-      throw std::runtime_error("Operand stack is empty");
-    }
     stack_.pop_back();  // pop placeholder
     return value;
   }
