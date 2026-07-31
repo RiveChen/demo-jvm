@@ -53,7 +53,7 @@ class OopDesc {
   OopDesc(Klass* klass, MarkWord mark) : klass_(klass), mark_(mark) {}
 
   /// @brief The runtime class of this object.
-  Klass*  getKlass() const { return klass_; }
+  Klass*    getKlass() const { return klass_; }
   MarkWord& getMarkword() { return mark_; }
 };
 
@@ -109,15 +109,21 @@ class InstanceOopDesc : public OopDesc {
  * The `base()` method returns the address of element[0].
  */
 class ArrayOopDesc : public OopDesc {
+  static constexpr size_t kHeaderSize   = sizeof(OopDesc);
+  static constexpr size_t kLengthOffset = kHeaderSize;
+  static constexpr size_t kDataOffset   = (kHeaderSize + sizeof(Jint) + 7) & ~7ULL;
+
  public:
   explicit ArrayOopDesc(Klass* klass) : OopDesc(klass) {}
 
-  /// @brief The number of elements in this array.
-  Jint  length() { return *reinterpret_cast<Jint*>(this + 1); }
-  void  setLength(Jint l) { *reinterpret_cast<Jint*>(this + 1) = l; }
+  Jint  length() { return *reinterpret_cast<Jint*>(reinterpret_cast<char*>(this) + kLengthOffset); }
+  void  setLength(Jint n) { *reinterpret_cast<Jint*>(reinterpret_cast<char*>(this) + kLengthOffset) = n; }
+  void* base() { return reinterpret_cast<char*>(this) + kDataOffset; }
 
-  /// @brief Pointer to the first element (after the length field).
-  void* base() { return reinterpret_cast<char*>(this + 1) + sizeof(Jint); }
+  template <typename T>
+  T& at(size_t i) {
+    return reinterpret_cast<T*>(base())[i];
+  }
 };
 // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic,
 //            cppcoreguidelines-pro-type-reinterpret-cast)
