@@ -41,63 +41,19 @@ TEST_F(InterpreterTypeCheckTest, InstanceOfNull) {
 // ============================================================================
 
 TEST_F(InterpreterTypeCheckTest, CheckcastSuccess) {
-  auto* klass  = loader_->loadClass(kClassName);
-  auto* method = klass->findMethod("checkcastAnimalToDog", "()Ltests/data/java/Dog;");
-  ASSERT_NE(method, nullptr);
-
-  runtime::Thread     thread;
-  engine::Interpreter interpreter;
-
-  runtime::Frame caller(method);
-  caller.setPC(method->getCode().size());
-  thread.pushFrame(std::move(caller));
-
-  runtime::Frame callee(method);
-  thread.pushFrame(std::move(callee));
-
-  interpreter.interpret(&thread);
-
-  auto* result = thread.getCurrentFrame().getOperandStack().popRef();
+  Jref result =
+    executeStaticMethod<Jref>(kClassName, "checkcastAnimalToDog", "()Ltests/data/java/Dog;");
   EXPECT_NE(result, nullptr);
 }
 
 TEST_F(InterpreterTypeCheckTest, CheckcastNull) {
-  auto* klass  = loader_->loadClass(kClassName);
-  auto* method = klass->findMethod("checkcastNull", "()Ltests/data/java/Dog;");
-  ASSERT_NE(method, nullptr);
-
-  runtime::Thread     thread;
-  engine::Interpreter interpreter;
-
-  runtime::Frame caller(method);
-  caller.setPC(method->getCode().size());
-  thread.pushFrame(std::move(caller));
-
-  runtime::Frame callee(method);
-  thread.pushFrame(std::move(callee));
-
-  interpreter.interpret(&thread);
-
-  auto* result = thread.getCurrentFrame().getOperandStack().popRef();
+  Jref result = executeStaticMethod<Jref>(kClassName, "checkcastNull", "()Ltests/data/java/Dog;");
   EXPECT_EQ(result, nullptr);
 }
 
 TEST_F(InterpreterTypeCheckTest, CheckcastFail) {
-  auto* klass  = loader_->loadClass(kClassName);
-  auto* method = klass->findMethod("checkcastFail", "()Ltests/data/java/Dog;");
-  ASSERT_NE(method, nullptr);
-
-  runtime::Thread     thread;
-  engine::Interpreter interpreter;
-
-  runtime::Frame caller(method);
-  caller.setPC(method->getCode().size());
-  thread.pushFrame(std::move(caller));
-
-  runtime::Frame callee(method);
-  thread.pushFrame(std::move(callee));
-
-  EXPECT_THROW(interpreter.interpret(&thread), std::runtime_error);
+  EXPECT_THROW(executeStaticMethod<Jref>(kClassName, "checkcastFail", "()Ltests/data/java/Dog;"),
+               std::runtime_error);
 }
 
 }  // namespace

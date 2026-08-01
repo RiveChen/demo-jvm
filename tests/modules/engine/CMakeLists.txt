@@ -40,6 +40,7 @@ function(add_interpreter_test name)
 endfunction()
 
 add_interpreter_test(arithmetic LABELS spec regression)
+add_interpreter_test(entry_return LABELS spec regression)
 add_interpreter_test(constants LABELS spec regression)
 add_interpreter_test(unimplemented_opcode LABELS regression)
 add_interpreter_test(load_store LABELS spec)

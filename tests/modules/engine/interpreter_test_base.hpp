@@ -4,137 +4,230 @@
 #include "engine/interpreter.hpp"
 #include "engine/native_registry.hpp"
 #include "engine/stub_intercepts.hpp"
+#include "oops/klass.hpp"
+#include "oops/method.hpp"
 #include "oops/method_area.hpp"
 #include "runtime/frame.hpp"
 #include "runtime/thread.hpp"
+#include "utilities/descriptor.hpp"
+#include "utilities/types.hpp"
 
 #include <gtest/gtest.h>
 #include <memory>
+#include <stdexcept>
 #include <string>
+#include <string_view>
+#include <utility>
+#include <variant>
 #include <vector>
 
 using namespace jvm;
 
 namespace detail {
-// Traits for JVM types
+using engine::ReturnValue;
+using engine::VmValue;
+
+// Traits for JVM types.
 template <typename T>
 struct JvmTraits;
 
-// Specialization: Jint
 template <>
 struct JvmTraits<Jint> {
   static constexpr std::string_view descriptor = "I";
   static constexpr U2               slots      = 1;
-  // Wrapper for LocalVariables set operation
-  static void setLocal(jvm::runtime::LocalVariables& vars, U2 index, Jint val) {
-    vars.setInt(index, val);
-  }
-  // Wrapper for OperandStack pop operation
-  static Jint popStack(jvm::runtime::OperandStack& stack) { return stack.popInt(); }
+  static VmValue                    toVmValue(Jint val) { return val; }
+  static Jint                       fromReturn(const ReturnValue& rv) { return rv.i; }
 };
 
-// Specialization: Jlong (note slots = 2)
 template <>
 struct JvmTraits<Jlong> {
   static constexpr std::string_view descriptor = "J";
   static constexpr U2               slots      = 2;
-  static void setLocal(jvm::runtime::LocalVariables& vars, U2 index, Jlong val) {
-    vars.setLong(index, val);
-  }
-  static Jlong popStack(jvm::runtime::OperandStack& stack) { return stack.popLong(); }
+  static VmValue                    toVmValue(Jlong val) { return val; }
+  static Jlong                      fromReturn(const ReturnValue& rv) { return rv.l; }
 };
 
-// Specialization: Jfloat
 template <>
 struct JvmTraits<Jfloat> {
   static constexpr std::string_view descriptor = "F";
   static constexpr U2               slots      = 1;
-  static void setLocal(jvm::runtime::LocalVariables& vars, U2 index, Jfloat val) {
-    vars.setFloat(index, val);
-  }
-  static Jfloat popStack(jvm::runtime::OperandStack& stack) { return stack.popFloat(); }
+  static VmValue                    toVmValue(Jfloat val) { return val; }
+  static Jfloat                     fromReturn(const ReturnValue& rv) { return rv.f; }
 };
 
-// Specialization: Jdouble (note slots = 2)
 template <>
 struct JvmTraits<Jdouble> {
   static constexpr std::string_view descriptor = "D";
   static constexpr U2               slots      = 2;
-  static void setLocal(jvm::runtime::LocalVariables& vars, U2 index, Jdouble val) {
-    vars.setDouble(index, val);
-  }
-  static Jdouble popStack(jvm::runtime::OperandStack& stack) { return stack.popDouble(); }
+  static VmValue                    toVmValue(Jdouble val) { return val; }
+  static Jdouble                    fromReturn(const ReturnValue& rv) { return rv.d; }
 };
 
-// Specialization: Jboolean (JVM uses Z in descriptors)
 template <>
 struct JvmTraits<Jboolean> {
   static constexpr std::string_view descriptor = "Z";
   static constexpr U2               slots      = 1;
-  static void setLocal(jvm::runtime::LocalVariables& vars, U2 index, Jboolean val) {
-    vars.setInt(index, static_cast<Jint>(val));
-  }
-  static Jboolean popStack(jvm::runtime::OperandStack& stack) {
-    return static_cast<Jboolean>(stack.popInt());
-  }
+  static VmValue                    toVmValue(Jboolean val) { return static_cast<Jint>(val); }
+  static Jboolean fromReturn(const ReturnValue& rv) { return static_cast<Jboolean>(rv.i); }
 };
 
-// Specialization: Jbyte (JVM uses B in descriptors)
 template <>
 struct JvmTraits<Jbyte> {
   static constexpr std::string_view descriptor = "B";
   static constexpr U2               slots      = 1;
-  static void setLocal(jvm::runtime::LocalVariables& vars, U2 index, Jbyte val) {
-    vars.setInt(index, static_cast<Jint>(val));
-  }
-  static Jbyte popStack(jvm::runtime::OperandStack& stack) {
-    return static_cast<Jbyte>(stack.popInt());
-  }
+  static VmValue                    toVmValue(Jbyte val) { return static_cast<Jint>(val); }
+  static Jbyte fromReturn(const ReturnValue& rv) { return static_cast<Jbyte>(rv.i); }
 };
 
-// Specialization: Jshort (JVM uses S in descriptors)
 template <>
 struct JvmTraits<Jshort> {
   static constexpr std::string_view descriptor = "S";
   static constexpr U2               slots      = 1;
-  static void setLocal(jvm::runtime::LocalVariables& vars, U2 index, Jshort val) {
-    vars.setInt(index, static_cast<Jint>(val));
-  }
-  static Jshort popStack(jvm::runtime::OperandStack& stack) {
-    return static_cast<Jshort>(stack.popInt());
-  }
+  static VmValue                    toVmValue(Jshort val) { return static_cast<Jint>(val); }
+  static Jshort fromReturn(const ReturnValue& rv) { return static_cast<Jshort>(rv.i); }
 };
 
-// Specialization: Jchar (JVM uses C in descriptors)
 template <>
 struct JvmTraits<Jchar> {
   static constexpr std::string_view descriptor = "C";
   static constexpr U2               slots      = 1;
-  static void setLocal(jvm::runtime::LocalVariables& vars, U2 index, Jchar val) {
-    vars.setInt(index, static_cast<Jint>(val));
-  }
-  static Jchar popStack(jvm::runtime::OperandStack& stack) {
-    return static_cast<Jchar>(stack.popInt());
-  }
+  static VmValue                    toVmValue(Jchar val) { return static_cast<Jint>(val); }
+  static Jchar fromReturn(const ReturnValue& rv) { return static_cast<Jchar>(rv.i); }
 };
 
-// Specialization: Jref (reference type, uses L...; in descriptors)
 template <>
 struct JvmTraits<Jref> {
   static constexpr std::string_view descriptor = "Ljava/lang/Object;";
   static constexpr U2               slots      = 1;
-  static void setLocal(jvm::runtime::LocalVariables& vars, U2 index, Jref val) {
-    vars.setRef(index, val);
-  }
-  static Jref popStack(jvm::runtime::OperandStack& stack) { return stack.popRef(); }
+  static VmValue                    toVmValue(Jref val) { return val; }
+  static Jref                       fromReturn(const ReturnValue& rv) { return rv.r; }
 };
 
-// Specialization: void (only used for return value)
 template <>
 struct JvmTraits<void> {
   static constexpr std::string_view descriptor = "V";
-  // void type does not need setLocal or popStack
 };
+
+// Expected ReturnValue kind for a given C++ return type.
+template <typename T>
+struct ExpectedReturnKind;
+
+template <>
+struct ExpectedReturnKind<Jint> {
+  static constexpr ReturnValue::Kind value = ReturnValue::Int;
+};
+template <>
+struct ExpectedReturnKind<Jboolean> {
+  static constexpr ReturnValue::Kind value = ReturnValue::Int;
+};
+template <>
+struct ExpectedReturnKind<Jbyte> {
+  static constexpr ReturnValue::Kind value = ReturnValue::Int;
+};
+template <>
+struct ExpectedReturnKind<Jshort> {
+  static constexpr ReturnValue::Kind value = ReturnValue::Int;
+};
+template <>
+struct ExpectedReturnKind<Jchar> {
+  static constexpr ReturnValue::Kind value = ReturnValue::Int;
+};
+template <>
+struct ExpectedReturnKind<Jlong> {
+  static constexpr ReturnValue::Kind value = ReturnValue::Long;
+};
+template <>
+struct ExpectedReturnKind<Jfloat> {
+  static constexpr ReturnValue::Kind value = ReturnValue::Float;
+};
+template <>
+struct ExpectedReturnKind<Jdouble> {
+  static constexpr ReturnValue::Kind value = ReturnValue::Double;
+};
+template <>
+struct ExpectedReturnKind<Jref> {
+  static constexpr ReturnValue::Kind value = ReturnValue::Reference;
+};
+
+// Marshal a VmValue into local variable slots according to the JVM slot
+// layout for the given method signature. slot index is advanced by the
+// signature (category-2 => 2 slots) — the Method descriptor is authoritative.
+inline void marshalArgument(runtime::LocalVariables& locals, U2& slot, descriptor::TypeKind kind,
+                            const VmValue& value) {
+  switch (kind) {
+    case descriptor::TypeKind::Int:
+      locals.setInt(slot, std::get<Jint>(value));
+      slot += 1;
+      break;
+    case descriptor::TypeKind::Float:
+      locals.setFloat(slot, std::get<Jfloat>(value));
+      slot += 1;
+      break;
+    case descriptor::TypeKind::Ref:
+      locals.setRef(slot, std::get<Jref>(value));
+      slot += 1;
+      break;
+    case descriptor::TypeKind::Long:
+      locals.setLong(slot, std::get<Jlong>(value));
+      slot += 2;
+      break;
+    case descriptor::TypeKind::Double:
+      locals.setDouble(slot, std::get<Jdouble>(value));
+      slot += 2;
+      break;
+    case descriptor::TypeKind::Void:
+      break;
+  }
+}
+
+// True if T is one of the supported JVM argument types (primitives + Jref).
+template <typename T>
+struct IsJvmArg
+  : std::bool_constant<
+      std::is_same_v<std::decay_t<T>, Jint> || std::is_same_v<std::decay_t<T>, Jlong> ||
+      std::is_same_v<std::decay_t<T>, Jfloat> || std::is_same_v<std::decay_t<T>, Jdouble> ||
+      std::is_same_v<std::decay_t<T>, Jboolean> || std::is_same_v<std::decay_t<T>, Jbyte> ||
+      std::is_same_v<std::decay_t<T>, Jshort> || std::is_same_v<std::decay_t<T>, Jchar> ||
+      std::is_same_v<std::decay_t<T>, Jref>> {};
+
+// True if every type in the pack is a supported JVM argument type.
+template <typename... Args>
+struct AllJvmArgs;
+
+template <>
+struct AllJvmArgs<> : std::true_type {};
+
+template <typename T, typename... Rest>
+struct AllJvmArgs<T, Rest...>
+  : std::bool_constant<IsJvmArg<T>::value && AllJvmArgs<Rest...>::value> {};
+
+// Verify the VmValue's runtime type matches the expected descriptor kind.
+inline void checkArgumentType(descriptor::TypeKind expected, const VmValue& value,
+                              const std::string& class_name, const std::string& method_name,
+                              const std::string& descriptor, size_t arg_index) {
+  const bool ok = [&] {
+    switch (expected) {
+      case descriptor::TypeKind::Int:
+        return std::holds_alternative<Jint>(value);
+      case descriptor::TypeKind::Float:
+        return std::holds_alternative<Jfloat>(value);
+      case descriptor::TypeKind::Ref:
+        return std::holds_alternative<Jref>(value);
+      case descriptor::TypeKind::Long:
+        return std::holds_alternative<Jlong>(value);
+      case descriptor::TypeKind::Double:
+        return std::holds_alternative<Jdouble>(value);
+      case descriptor::TypeKind::Void:
+        return false;
+    }
+    return false;
+  }();
+  if (!ok) {
+    FAIL() << "Argument type mismatch for " << class_name << "." << method_name << descriptor
+           << " (argument " << arg_index << ")";
+  }
+}
+
 }  // namespace detail
 
 class InterpreterTestBase : public ::testing::Test {
@@ -158,64 +251,183 @@ class InterpreterTestBase : public ::testing::Test {
   void TearDown() override { loader_.reset(); }
 
   /**
-   * @brief Generic static method execution helper function
-   * @tparam Ret Return value type (explicitly specified, e.g.
-   * executeStaticMethod<Jint>(...))
-   * @tparam Args Parameter types (automatically deduced by compiler)
+   * @brief Low-level test entry point: push a single entry frame for the
+   * given method and run the interpreter without JVM invocation semantics
+   * (no class initialization is triggered).
+   *
+   * This is intended for initialization-state machine tests that must
+   * deliberately control the class state. Most tests should use
+   * invokeStatic / executeStaticMethod instead.
+   */
+  engine::RunOutcome runEntryMethodForTest(oops::Method*                       method,
+                                           const std::vector<engine::VmValue>& arguments = {}) {
+    if (method == nullptr) {
+      throw std::runtime_error("runEntryMethodForTest: null method");
+    }
+    // Validate argument count and types against the parsed Method signature.
+    const auto& signature = method->getSignature();
+    if (arguments.size() != signature.params.size()) {
+      throw std::runtime_error("runEntryMethodForTest: argument count mismatch for " +
+                               method->getOwnerKlass()->getName() + "." + method->getName() +
+                               method->getDescriptor());
+    }
+    for (size_t i = 0; i < arguments.size(); ++i) {
+      detail::checkArgumentType(signature.params[i], arguments[i],
+                                method->getOwnerKlass()->getName(), method->getName(),
+                                method->getDescriptor(), i);
+    }
+
+    jvm::runtime::Thread thread;
+    jvm::runtime::Frame  frame(method);
+    auto&                locals = frame.getLocalVariables();
+    U2                   slot   = 0;
+    for (size_t i = 0; i < arguments.size(); ++i) {
+      detail::marshalArgument(locals, slot, signature.params[i], arguments[i]);
+    }
+
+    thread.pushFrame(std::move(frame));
+    jvm::engine::Interpreter interpreter;
+    return interpreter.interpret(&thread);
+  }
+
+  /**
+   * @brief Core JVM invocation layer: invoke a static method with exact
+   * descriptor and JVM-typed arguments.
+   *
+   * Performs full JVM call semantics:
+   *   - locate the method by class_name + method_name + exact descriptor
+   *   - verify it is static
+   *   - validate each argument against the parsed Method signature
+   *   - marshal arguments into a single entry frame per JVM slot layout
+   *   - initialize the declaring class (active use)
+   *   - run the interpreter to completion
+   *
+   * @return The interpreter's RunOutcome (value transferred to the host).
+   */
+  engine::RunOutcome invokeStatic(const std::string& class_name, const std::string& method_name,
+                                  const std::string&                  exact_descriptor,
+                                  const std::vector<engine::VmValue>& arguments) {
+    auto* klass = loader_->loadClass(class_name);
+    if (klass == nullptr) {
+      throw std::runtime_error("Class not found: " + class_name);
+    }
+
+    auto* method = klass->findMethod(method_name, exact_descriptor);
+    if (method == nullptr) {
+      throw std::runtime_error("Method not found: " + class_name + "." + method_name + " " +
+                               exact_descriptor);
+    }
+    if (!method->isStatic()) {
+      throw std::runtime_error("invokeStatic: method is not static: " + class_name + "." +
+                               method_name + " " + exact_descriptor);
+    }
+
+    // Class initialization: invoking a static method is an active use.
+    // Reuses the same initialization machinery as the INVOKESTATIC handler:
+    // if the class (or a superclass) has a <clinit>, execute it first; the
+    // init state machine runs its own frames on a dedicated thread.
+    if (klass->getState() == oops::InstanceKlass::Linked) {
+      jvm::runtime::Thread     init_thread;
+      jvm::engine::Interpreter init_interpreter;
+      klass->initialize(&init_thread);
+      if (!init_thread.isStackEmpty()) {
+        // <clinit> frame(s) pushed; run them to completion (ignoring their
+        // void result) before continuing with the entry method.
+        init_interpreter.interpret(&init_thread);
+      }
+    }
+
+    return runEntryMethodForTest(method, arguments);
+  }
+
+  /**
+   * @brief Convenience template layer for test writing.
+   *
+   * Wraps C++ arguments into VmValue, invokes the core invokeStatic, and
+   * strictly validates the RunOutcome before converting the return value.
+   *
+   * This overload derives the method descriptor from the C++ argument types
+   * and is only suitable for non-ambiguous primitive/reference signatures.
+   * For reference parameters with a specific runtime type or overload
+   * disambiguation, use the overload that takes an explicit descriptor.
    */
   template <typename Ret, typename... Args>
+    requires detail::AllJvmArgs<Args...>::value
   Ret executeStaticMethod(const std::string& class_name, const std::string& method_name,
                           Args... args) {
-    // 1. Dynamically build method descriptor: (Arg1Arg2...)Ret
     std::string descriptor = "(";
-    // Use fold expression to concatenate all parameter descriptors
     ((descriptor += detail::JvmTraits<Args>::descriptor), ...);
     descriptor += ")";
     descriptor += detail::JvmTraits<Ret>::descriptor;
+    return executeStaticMethodWithDescriptor<Ret>(class_name, method_name, descriptor,
+                                                  std::move(args)...);
+  }
 
-    // 2. Load class and find method
-    auto* klass = loader_->loadClass(class_name);
-    if (!klass) throw std::runtime_error("Class not found: " + class_name);
+  /**
+   * @brief Explicit-descriptor overload.
+   *
+   * @param exact_descriptor The precise JVM method descriptor, e.g.
+   *   "(Ljava/lang/String;)I". Required for reference arguments (Jref is an
+   *   opaque pointer and cannot encode the target type) and for overload
+   *   disambiguation.
+   */
+  template <typename Ret, typename... Args>
+  Ret executeStaticMethod(const std::string& class_name, const std::string& method_name,
+                          const std::string& exact_descriptor, Args... args) {
+    return executeStaticMethodWithDescriptor<Ret>(class_name, method_name, exact_descriptor,
+                                                  std::move(args)...);
+  }
 
-    auto* method = klass->findMethod(method_name, descriptor);
-    if (!method) throw std::runtime_error("Method not found: " + method_name + " " + descriptor);
+  // Shared implementation behind both executeStaticMethod overloads.
+  template <typename Ret, typename... Args>
+  Ret executeStaticMethodWithDescriptor(const std::string& class_name,
+                                        const std::string& method_name,
+                                        const std::string& exact_descriptor, Args... args) {
+    // Wrap arguments into VmValue.
+    std::vector<engine::VmValue> values;
+    values.reserve(sizeof...(Args));
+    ((values.push_back(detail::JvmTraits<Args>::toVmValue(std::move(args)))), ...);
 
-    jvm::runtime::Thread     thread;
-    jvm::engine::Interpreter interpreter;
+    engine::RunOutcome outcome = invokeStatic(class_name, method_name, exact_descriptor, values);
 
-    // 3. Prepare caller frame (Caller Frame)
-    jvm::runtime::Frame caller_frame(method);
-    caller_frame.setPC(method->getCode().size());
-    thread.pushFrame(std::move(caller_frame));
+    // Strict outcome validation. FAIL() expands to a `return void;` and
+    // therefore cannot be used inside this non-void helper; ADD_FAILURE records
+    // the failure and we return a default value (never observed by the caller
+    // because the test has already failed).
+    if (!outcome.isCompleted()) {
+      ADD_FAILURE() << "executeStaticMethod: non-completed outcome for " << class_name << "."
+                    << method_name << " " << exact_descriptor;
+      if constexpr (std::is_same_v<Ret, void>) {
+        return;
+      } else {
+        return Ret{};
+      }
+    }
 
-    // 4. Prepare callee frame (Callee Frame)
-    jvm::runtime::Frame callee_frame(method);
-
-    // 5. Parameter passing (generic handling)
-    U2 current_slot = 0;
-    // Define lambda to automatically handle different parameter types and slot
-    // index increment
-    auto set_arg = [&](auto val) {
-      using T = decltype(val);
-      detail::JvmTraits<T>::setLocal(callee_frame.getLocalVariables(), current_slot, val);
-      current_slot += detail::JvmTraits<T>::slots;
-    };
-    // Use fold expression to expand parameter pack
-    (set_arg(args), ...);
-
-    thread.pushFrame(std::move(callee_frame));
-
-    // 6. Execute
-    interpreter.interpret(&thread);
-
-    // 7. Get return value (using if constexpr to handle void)
     if constexpr (std::is_same_v<Ret, void>) {
+      // void methods must report CompletedVoid.
+      if (!std::holds_alternative<engine::CompletedVoid>(outcome.value)) {
+        ADD_FAILURE() << "executeStaticMethod<void>: expected CompletedVoid for " << class_name
+                      << "." << method_name << " " << exact_descriptor;
+      }
       return;
     } else {
-      if (!thread.isStackEmpty()) {
-        return detail::JvmTraits<Ret>::popStack(thread.getCurrentFrame().getOperandStack());
+      const auto* completed = std::get_if<engine::Completed<engine::ReturnValue>>(&outcome.value);
+      if (completed == nullptr) {
+        ADD_FAILURE() << "executeStaticMethod: expected Completed<ReturnValue> for " << class_name
+                      << "." << method_name << " " << exact_descriptor;
+        return Ret{};
       }
-      throw std::runtime_error("Stack is empty after execution");
+      const auto&    result        = completed->result;
+      constexpr auto expected_kind = detail::ExpectedReturnKind<Ret>::value;
+      if (result.kind != expected_kind) {
+        ADD_FAILURE() << "executeStaticMethod: return kind mismatch for " << class_name << "."
+                      << method_name << " " << exact_descriptor << " (expected "
+                      << static_cast<int>(expected_kind) << ", got "
+                      << static_cast<int>(result.kind) << ")";
+        return Ret{};
+      }
+      return detail::JvmTraits<Ret>::fromReturn(result);
     }
   }
 };

@@ -30,278 +30,128 @@ TEST_F(InterpreterStubInterceptTest, PrintlnString) {
 }
 
 TEST_F(InterpreterStubInterceptTest, PrintlnInt) {
-  auto* klass  = loader_->loadClass(kClassName);
-  auto* method = klass->findMethod("printlnInt", "()V");
-  ASSERT_NE(method, nullptr);
-
-  runtime::Thread     thread;
-  engine::Interpreter interpreter;
-  runtime::Frame      frame(method);
-  thread.pushFrame(std::move(frame));
-
   std::ostringstream capture;
   auto*              old = std::cout.rdbuf(capture.rdbuf());
-  interpreter.interpret(&thread);
+  executeStaticMethod<void>(kClassName, "printlnInt");
   std::cout.rdbuf(old);
 
   EXPECT_EQ(capture.str(), "42\n");
 }
 
 TEST_F(InterpreterStubInterceptTest, PrintlnLong) {
-  auto*               klass  = loader_->loadClass(kClassName);
-  auto*               method = klass->findMethod("printlnLong", "()V");
-  runtime::Thread     thread;
-  engine::Interpreter interpreter;
-  runtime::Frame      frame(method);
-  thread.pushFrame(std::move(frame));
-
   std::ostringstream capture;
   auto*              old = std::cout.rdbuf(capture.rdbuf());
-  interpreter.interpret(&thread);
+  executeStaticMethod<void>(kClassName, "printlnLong");
   std::cout.rdbuf(old);
 
   EXPECT_EQ(capture.str(), "1234567890123\n");
 }
 
 TEST_F(InterpreterStubInterceptTest, PrintlnFloat) {
-  auto*               klass  = loader_->loadClass(kClassName);
-  auto*               method = klass->findMethod("printlnFloat", "()V");
-  runtime::Thread     thread;
-  engine::Interpreter interpreter;
-  runtime::Frame      frame(method);
-  thread.pushFrame(std::move(frame));
-
   std::ostringstream capture;
   auto*              old = std::cout.rdbuf(capture.rdbuf());
-  interpreter.interpret(&thread);
+  executeStaticMethod<void>(kClassName, "printlnFloat");
   std::cout.rdbuf(old);
 
   EXPECT_EQ(capture.str(), "3.14\n");
 }
 
 TEST_F(InterpreterStubInterceptTest, PrintlnDouble) {
-  auto*               klass  = loader_->loadClass(kClassName);
-  auto*               method = klass->findMethod("printlnDouble", "()V");
-  runtime::Thread     thread;
-  engine::Interpreter interpreter;
-  runtime::Frame      frame(method);
-  thread.pushFrame(std::move(frame));
-
   std::ostringstream capture;
   auto*              old = std::cout.rdbuf(capture.rdbuf());
-  interpreter.interpret(&thread);
+  executeStaticMethod<void>(kClassName, "printlnDouble");
   std::cout.rdbuf(old);
 
   EXPECT_EQ(capture.str(), "2.71828\n");
 }
 
 TEST_F(InterpreterStubInterceptTest, PrintlnBoolean) {
-  auto*               klass  = loader_->loadClass(kClassName);
-  auto*               method = klass->findMethod("printlnBoolean", "()V");
-  runtime::Thread     thread;
-  engine::Interpreter interpreter;
-  runtime::Frame      frame(method);
-  thread.pushFrame(std::move(frame));
-
   std::ostringstream capture;
   auto*              old = std::cout.rdbuf(capture.rdbuf());
-  interpreter.interpret(&thread);
+  executeStaticMethod<void>(kClassName, "printlnBoolean");
   std::cout.rdbuf(old);
 
   EXPECT_EQ(capture.str(), "true\nfalse\n");
 }
 
 TEST_F(InterpreterStubInterceptTest, PrintlnChar) {
-  auto*               klass  = loader_->loadClass(kClassName);
-  auto*               method = klass->findMethod("printlnChar", "()V");
-  runtime::Thread     thread;
-  engine::Interpreter interpreter;
-  runtime::Frame      frame(method);
-  thread.pushFrame(std::move(frame));
-
   std::ostringstream capture;
   auto*              old = std::cout.rdbuf(capture.rdbuf());
-  interpreter.interpret(&thread);
+  executeStaticMethod<void>(kClassName, "printlnChar");
   std::cout.rdbuf(old);
 
   EXPECT_EQ(capture.str(), "A\n");
 }
 
 TEST_F(InterpreterStubInterceptTest, PrintConcatenated) {
-  auto*               klass  = loader_->loadClass(kClassName);
-  auto*               method = klass->findMethod("printConcatenated", "()V");
-  runtime::Thread     thread;
-  engine::Interpreter interpreter;
-  runtime::Frame      frame(method);
-  thread.pushFrame(std::move(frame));
-
   std::ostringstream capture;
   auto*              old = std::cout.rdbuf(capture.rdbuf());
-  interpreter.interpret(&thread);
+  executeStaticMethod<void>(kClassName, "printConcatenated");
   std::cout.rdbuf(old);
 
   EXPECT_EQ(capture.str(), "value=99");
 }
 
 TEST_F(InterpreterStubInterceptTest, PrintlnErr) {
-  auto*               klass  = loader_->loadClass(kClassName);
-  auto*               method = klass->findMethod("printlnErr", "()V");
-  runtime::Thread     thread;
-  engine::Interpreter interpreter;
-  runtime::Frame      frame(method);
-  thread.pushFrame(std::move(frame));
+  // Pre-load the class so the loader's INFO log line (which goes to stderr)
+  // is emitted before we redirect stderr for the duration of the call.
+  (void)loader_->loadClass(kClassName);
 
   std::ostringstream capture;
   auto*              old = std::cerr.rdbuf(capture.rdbuf());
-  interpreter.interpret(&thread);
+  executeStaticMethod<void>(kClassName, "printlnErr");
   std::cerr.rdbuf(old);
 
   EXPECT_EQ(capture.str(), "err msg\n");
 }
 
 // ============================================================
-//  String methods — test via executeStaticMethod
+//  String methods — test via executeStaticMethod with exact
+//  descriptors (Jref is opaque and cannot encode Ljava/lang/String;).
 // ============================================================
 
+namespace {
+Jref internString(const char* s) {
+  const auto* str = oops::StringPool::getSingleton().intern(s);
+  return const_cast<std::string*>(str);
+}
+}  // namespace
+
 TEST_F(InterpreterStubInterceptTest, StringLength) {
-  // We need to pass a string argument. Since executeStaticMethod
-  // uses typed descriptor traits, we have to set up the frame manually
-  // and push the interned string as argument.
-  auto* klass  = loader_->loadClass(kClassName);
-  auto* method = klass->findMethod("stringLength", "(Ljava/lang/String;)I");
-  ASSERT_NE(method, nullptr);
-
-  runtime::Thread     thread;
-  engine::Interpreter interpreter;
-
-  // Caller frame
-  runtime::Frame caller(method);
-  caller.setPC(method->getCode().size());
-  thread.pushFrame(std::move(caller));
-
-  // Callee frame with argument
-  runtime::Frame callee(method);
-  const auto*    str = oops::StringPool::getSingleton().intern("hello");
-  callee.getLocalVariables().setRef(0, const_cast<std::string*>(str));
-  thread.pushFrame(std::move(callee));
-
-  interpreter.interpret(&thread);
-
-  Jint result = thread.getCurrentFrame().getOperandStack().popInt();
+  Jint result = executeStaticMethod<Jint>(kClassName, "stringLength", "(Ljava/lang/String;)I",
+                                          internString("hello"));
   EXPECT_EQ(result, 5);
 }
 
 TEST_F(InterpreterStubInterceptTest, StringCharAt) {
-  auto* klass  = loader_->loadClass(kClassName);
-  auto* method = klass->findMethod("stringCharAt", "(Ljava/lang/String;)C");
-
-  runtime::Thread     thread;
-  engine::Interpreter interpreter;
-
-  runtime::Frame caller(method);
-  caller.setPC(method->getCode().size());
-  thread.pushFrame(std::move(caller));
-
-  runtime::Frame callee(method);
-  const auto*    str = oops::StringPool::getSingleton().intern("hello");
-  callee.getLocalVariables().setRef(0, const_cast<std::string*>(str));
-  thread.pushFrame(std::move(callee));
-
-  interpreter.interpret(&thread);
-
-  Jint result = thread.getCurrentFrame().getOperandStack().popInt();
+  Jint result = executeStaticMethod<Jchar>(kClassName, "stringCharAt", "(Ljava/lang/String;)C",
+                                           internString("hello"));
   EXPECT_EQ(result, static_cast<Jint>('e'));  // s.charAt(1) = 'e'
 }
 
 TEST_F(InterpreterStubInterceptTest, StringIsEmpty) {
-  auto* klass  = loader_->loadClass(kClassName);
-  auto* method = klass->findMethod("stringIsEmpty", "(Ljava/lang/String;)Z");
-
-  runtime::Thread     thread;
-  engine::Interpreter interpreter;
-
-  runtime::Frame caller(method);
-  caller.setPC(method->getCode().size());
-  thread.pushFrame(std::move(caller));
-
-  runtime::Frame callee(method);
-  const auto*    str = oops::StringPool::getSingleton().intern("");
-  callee.getLocalVariables().setRef(0, const_cast<std::string*>(str));
-  thread.pushFrame(std::move(callee));
-
-  interpreter.interpret(&thread);
-
-  Jint result = thread.getCurrentFrame().getOperandStack().popInt();
+  Jint result = executeStaticMethod<Jint>(kClassName, "stringIsEmpty", "(Ljava/lang/String;)Z",
+                                          internString(""));
   EXPECT_EQ(result, 1);  // true
 }
 
 TEST_F(InterpreterStubInterceptTest, StringEquals) {
-  auto* klass  = loader_->loadClass(kClassName);
-  auto* method = klass->findMethod("stringEquals", "(Ljava/lang/String;Ljava/lang/String;)Z");
-
-  runtime::Thread     thread;
-  engine::Interpreter interpreter;
-
-  runtime::Frame caller(method);
-  caller.setPC(method->getCode().size());
-  thread.pushFrame(std::move(caller));
-
-  runtime::Frame callee(method);
-  const auto*    a = oops::StringPool::getSingleton().intern("hello");
-  const auto*    b = oops::StringPool::getSingleton().intern("hello");
-  callee.getLocalVariables().setRef(0, const_cast<std::string*>(a));
-  callee.getLocalVariables().setRef(1, const_cast<std::string*>(b));
-  thread.pushFrame(std::move(callee));
-
-  interpreter.interpret(&thread);
-
-  Jint result = thread.getCurrentFrame().getOperandStack().popInt();
+  Jint result =
+    executeStaticMethod<Jint>(kClassName, "stringEquals", "(Ljava/lang/String;Ljava/lang/String;)Z",
+                              internString("hello"), internString("hello"));
   EXPECT_EQ(result, 1);  // true
 }
 
 TEST_F(InterpreterStubInterceptTest, StringEqualsFalse) {
-  auto* klass  = loader_->loadClass(kClassName);
-  auto* method = klass->findMethod("stringEquals", "(Ljava/lang/String;Ljava/lang/String;)Z");
-
-  runtime::Thread     thread;
-  engine::Interpreter interpreter;
-
-  runtime::Frame caller(method);
-  caller.setPC(method->getCode().size());
-  thread.pushFrame(std::move(caller));
-
-  runtime::Frame callee(method);
-  const auto*    a = oops::StringPool::getSingleton().intern("hello");
-  const auto*    b = oops::StringPool::getSingleton().intern("world");
-  callee.getLocalVariables().setRef(0, const_cast<std::string*>(a));
-  callee.getLocalVariables().setRef(1, const_cast<std::string*>(b));
-  thread.pushFrame(std::move(callee));
-
-  interpreter.interpret(&thread);
-
-  Jint result = thread.getCurrentFrame().getOperandStack().popInt();
+  Jint result =
+    executeStaticMethod<Jint>(kClassName, "stringEquals", "(Ljava/lang/String;Ljava/lang/String;)Z",
+                              internString("hello"), internString("world"));
   EXPECT_EQ(result, 0);  // false
 }
 
 TEST_F(InterpreterStubInterceptTest, StringHashCode) {
-  auto* klass  = loader_->loadClass(kClassName);
-  auto* method = klass->findMethod("stringHashCode", "(Ljava/lang/String;)I");
-
-  runtime::Thread     thread;
-  engine::Interpreter interpreter;
-
-  runtime::Frame caller(method);
-  caller.setPC(method->getCode().size());
-  thread.pushFrame(std::move(caller));
-
-  runtime::Frame callee(method);
-  const auto*    str = oops::StringPool::getSingleton().intern("abc");
-  callee.getLocalVariables().setRef(0, const_cast<std::string*>(str));
-  thread.pushFrame(std::move(callee));
-
-  interpreter.interpret(&thread);
-
-  Jint result = thread.getCurrentFrame().getOperandStack().popInt();
+  Jint result = executeStaticMethod<Jint>(kClassName, "stringHashCode", "(Ljava/lang/String;)I",
+                                          internString("abc"));
   // Java hashCode of "abc" = a*31^2 + b*31 + c = 97*961 + 98*31 + 99 = 96354
   EXPECT_EQ(result, 96354);
 }
@@ -311,70 +161,23 @@ TEST_F(InterpreterStubInterceptTest, StringHashCode) {
 // ============================================================
 
 TEST_F(InterpreterStubInterceptTest, SystemCurrentTimeMillis) {
-  auto* klass = loader_->loadClass(kClassName);
-  // IMPORTANT: We test via execution of a method that calls
-  // System.currentTimeMillis and returns. Since it returns a value
-  // greater than 0, we can verify it's working.
-  auto* method = klass->findMethod("systemCurrentTimeMillis", "()J");
-
-  runtime::Thread     thread;
-  engine::Interpreter interpreter;
-
-  runtime::Frame caller(method);
-  caller.setPC(method->getCode().size());
-  thread.pushFrame(std::move(caller));
-
-  runtime::Frame callee(method);
-  thread.pushFrame(std::move(callee));
-
-  interpreter.interpret(&thread);
-
-  Jlong result = thread.getCurrentFrame().getOperandStack().popLong();
+  // Executes a method that calls System.currentTimeMillis and returns it.
+  // Since it returns a value greater than 0, we can verify it's working.
+  Jlong result = executeStaticMethod<Jlong>(kClassName, "systemCurrentTimeMillis", "()J");
   EXPECT_GT(result, 1'600'000'000'000L);  // >= ~2020 in epoch ms
 }
 
 TEST_F(InterpreterStubInterceptTest, ParseInt) {
-  auto* klass  = loader_->loadClass(kClassName);
-  auto* method = klass->findMethod("parseInt", "(Ljava/lang/String;)I");
-
-  runtime::Thread     thread;
-  engine::Interpreter interpreter;
-
-  runtime::Frame caller(method);
-  caller.setPC(method->getCode().size());
-  thread.pushFrame(std::move(caller));
-
-  runtime::Frame callee(method);
-  const auto*    str = oops::StringPool::getSingleton().intern("42");
-  callee.getLocalVariables().setRef(0, const_cast<std::string*>(str));
-  thread.pushFrame(std::move(callee));
-
-  interpreter.interpret(&thread);
-
-  Jint result = thread.getCurrentFrame().getOperandStack().popInt();
+  Jint result =
+    executeStaticMethod<Jint>(kClassName, "parseInt", "(Ljava/lang/String;)I", internString("42"));
   EXPECT_EQ(result, 42);
 }
 
 TEST_F(InterpreterStubInterceptTest, IntToString) {
-  auto* klass  = loader_->loadClass(kClassName);
-  auto* method = klass->findMethod("intToString", "(I)Ljava/lang/String;");
-
-  runtime::Thread     thread;
-  engine::Interpreter interpreter;
-
-  runtime::Frame caller(method);
-  caller.setPC(method->getCode().size());
-  thread.pushFrame(std::move(caller));
-
-  runtime::Frame callee(method);
-  callee.getLocalVariables().setInt(0, 123);
-  thread.pushFrame(std::move(callee));
-
-  interpreter.interpret(&thread);
-
-  auto* result = static_cast<std::string*>(thread.getCurrentFrame().getOperandStack().popRef());
+  Jref result = executeStaticMethod<Jref>(kClassName, "intToString", "(I)Ljava/lang/String;", 123);
   ASSERT_NE(result, nullptr);
-  EXPECT_EQ(*result, "123");
+  auto* str = static_cast<std::string*>(result);
+  EXPECT_EQ(*str, "123");
 }
 
 TEST_F(InterpreterStubInterceptTest, MathAbsInt) {

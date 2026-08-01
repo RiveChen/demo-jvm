@@ -40,12 +40,11 @@ class InterpreterUnimplementedOpcodeTest
     auto& mutable_code = const_cast<std::vector<U1>&>(method->getCode());
     mutable_code       = code;
 
+    // Unsupported-opcode tests check the fail-fast path only: a single entry
+    // frame is sufficient because the offending opcode throws immediately
+    // without needing a caller (no PC-out-of-bounds, no return value).
     runtime::Thread     thread;
     engine::Interpreter interpreter;
-
-    runtime::Frame caller_frame(method);
-    caller_frame.setPC(mutable_code.size());
-    thread.pushFrame(std::move(caller_frame));
     thread.pushFrame(runtime::Frame(method));
 
     try {

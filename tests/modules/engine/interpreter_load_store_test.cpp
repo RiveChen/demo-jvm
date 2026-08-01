@@ -114,85 +114,22 @@ TEST_F(InterpreterLoadStoreTest, DSTORE_0) {
 // ============================================================================
 
 TEST_F(InterpreterLoadStoreTest, ALOAD_Basic) {
-  auto* klass = loader_->loadClass(kClassName);
-  ASSERT_NE(klass, nullptr);
-
-  auto* method = klass->findMethod("testALOAD", "(Ljava/lang/Object;)Ljava/lang/Object;");
-  ASSERT_NE(method, nullptr);
-
-  runtime::Thread     thread;
-  engine::Interpreter interpreter;
-
-  runtime::Frame caller_frame(method);
-  caller_frame.setPC(method->getCode().size());
-  thread.pushFrame(std::move(caller_frame));
-
-  runtime::Frame callee_frame(method);
-  callee_frame.getLocalVariables().setRef(0, nullptr);
-  thread.pushFrame(std::move(callee_frame));
-
-  interpreter.interpret(&thread);
-
-  if (!thread.isStackEmpty()) {
-    auto& current_frame = thread.getCurrentFrame();
-    EXPECT_EQ(current_frame.getOperandStack().popRef(), nullptr);
-  } else {
-    FAIL() << "Stack is empty after execution";
-  }
+  // Object param + Object return via explicit descriptor (Jref cannot encode
+  // the target reference type).
+  Jref result = executeStaticMethod<Jref>(
+    kClassName, "testALOAD", "(Ljava/lang/Object;)Ljava/lang/Object;", static_cast<Jref>(nullptr));
+  EXPECT_EQ(result, nullptr);
 }
 
 TEST_F(InterpreterLoadStoreTest, ALOAD_0) {
-  auto* klass = loader_->loadClass(kClassName);
-  ASSERT_NE(klass, nullptr);
-
-  auto* method = klass->findMethod("testALOAD_0", "(Ljava/lang/Object;)Ljava/lang/Object;");
-  ASSERT_NE(method, nullptr);
-
-  runtime::Thread     thread;
-  engine::Interpreter interpreter;
-
-  runtime::Frame caller_frame(method);
-  caller_frame.setPC(method->getCode().size());
-  thread.pushFrame(std::move(caller_frame));
-
-  runtime::Frame callee_frame(method);
-  callee_frame.getLocalVariables().setRef(0, nullptr);
-  thread.pushFrame(std::move(callee_frame));
-
-  interpreter.interpret(&thread);
-
-  if (!thread.isStackEmpty()) {
-    auto& current_frame = thread.getCurrentFrame();
-    EXPECT_EQ(current_frame.getOperandStack().popRef(), nullptr);
-  } else {
-    FAIL() << "Stack is empty after execution";
-  }
+  Jref result =
+    executeStaticMethod<Jref>(kClassName, "testALOAD_0", "(Ljava/lang/Object;)Ljava/lang/Object;",
+                              static_cast<Jref>(nullptr));
+  EXPECT_EQ(result, nullptr);
 }
 
 TEST_F(InterpreterLoadStoreTest, ASTORE_Basic) {
-  auto* klass = loader_->loadClass(kClassName);
-  ASSERT_NE(klass, nullptr);
-
-  auto* method = klass->findMethod("testASTORE", "(Ljava/lang/Object;)Ljava/lang/Object;");
-  ASSERT_NE(method, nullptr);
-
-  runtime::Thread     thread;
-  engine::Interpreter interpreter;
-
-  runtime::Frame caller_frame(method);
-  caller_frame.setPC(method->getCode().size());
-  thread.pushFrame(std::move(caller_frame));
-
-  runtime::Frame callee_frame(method);
-  callee_frame.getLocalVariables().setRef(0, nullptr);
-  thread.pushFrame(std::move(callee_frame));
-
-  interpreter.interpret(&thread);
-
-  if (!thread.isStackEmpty()) {
-    auto& current_frame = thread.getCurrentFrame();
-    EXPECT_EQ(current_frame.getOperandStack().popRef(), nullptr);
-  } else {
-    FAIL() << "Stack is empty after execution";
-  }
+  Jref result = executeStaticMethod<Jref>(
+    kClassName, "testASTORE", "(Ljava/lang/Object;)Ljava/lang/Object;", static_cast<Jref>(nullptr));
+  EXPECT_EQ(result, nullptr);
 }

@@ -126,29 +126,6 @@ TEST_F(InterpreterConstantsTest, SIPUSH_SignExtendsNegativeImmediate) {
 // ============================================================================
 
 TEST_F(InterpreterConstantsTest, ACONST_NULL) {
-  auto* klass = loader_->loadClass(kClassName);
-  ASSERT_NE(klass, nullptr);
-
-  auto* method = klass->findMethod("testACONST_NULL", "()Ljava/lang/Object;");
-  ASSERT_NE(method, nullptr);
-
-  runtime::Thread     thread;
-  engine::Interpreter interpreter;
-
-  runtime::Frame caller_frame(method);
-  caller_frame.setPC(method->getCode().size());
-  thread.pushFrame(std::move(caller_frame));
-
-  runtime::Frame callee_frame(method);
-  thread.pushFrame(std::move(callee_frame));
-
-  interpreter.interpret(&thread);
-
-  if (!thread.isStackEmpty()) {
-    auto& current_frame = thread.getCurrentFrame();
-    auto  ref           = current_frame.getOperandStack().popRef();
-    EXPECT_EQ(ref, nullptr);
-  } else {
-    FAIL() << "Stack is empty after execution";
-  }
+  Jref result = executeStaticMethod<Jref>(kClassName, "testACONST_NULL", "()Ljava/lang/Object;");
+  EXPECT_EQ(result, nullptr);
 }
