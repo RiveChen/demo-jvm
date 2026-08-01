@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  # Allow manually triggering the full pipeline (e.g. sanitizer check on a
+  # branch without opening a PR) from the Actions tab.
+  workflow_dispatch:
+
+jobs:
+  # Core gate: Debug build + full test suite (403 tests).
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y ninja-build default-jdk
+
+      - name: Configure (default preset)
+        run: cmake --preset default
+
+      - name: Build
+        run: cmake --build --preset default -j$(nproc)
+
+      - name: Test
+        run: ctest --preset default
+
+  # Memory + undefined-behavior gate: ASan + UBSan build.
+  # Runs only on PRs and main to keep pushes on throwaway branches cheap.
+  sanitizers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y ninja-build default-jdk
+
+      - name: Configure (asan-ubsan preset)
+        run: cmake --preset asan-ubsan
+
+      - name: Build
+        run: cmake --build --preset asan-ubsan -j$(nproc)
+
+      - name: Test
+        run: ctest --preset asan-ubsan
