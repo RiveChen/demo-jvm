@@ -11,8 +11,10 @@ set(CLASS_OUTPUT_DIR ${CMAKE_BINARY_DIR}/test_classes) # output directory for co
 file(GLOB JAVA_SOURCES CONFIGURE_DEPENDS "${JAVA_SRC_DIR}/*.java")
 
 # 4. define compiler flags using Java 8
-# source: 8, target: 8, generate debug information: none, encoding: UTF-8
-set(JAVAC_FLAGS -source 8 -target 8 -g:none -encoding UTF-8)
+# --release 8 is stricter than -source/-target: it also pins the platform
+# API (bootclasspath) so we cannot accidentally use post-Java-8 APIs.
+# generate debug information: none, encoding: UTF-8
+set(JAVAC_FLAGS --release 8 -g:none -encoding UTF-8)
 
 # 5. create output directory
 make_directory(${CLASS_OUTPUT_DIR})
