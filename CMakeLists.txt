@@ -27,6 +27,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF) # Turn off C++ extensions to avoid compatibility
                               # issues
 
+# Print the active C++ compiler (useful when switching presets/toolchains)
+message(STATUS "C++ Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION} (${CMAKE_CXX_COMPILER})")
+message(STATUS "C++ Standard: C++${CMAKE_CXX_STANDARD}")
+
 # Generate compile_commands.json for clang-tidy and IDE support
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
