@@ -11,7 +11,7 @@
 // RunOutcome, and the Java frame stack is empty on completion.
 //
 // These tests pin the contract:
-//   push entry frame -> run -> RunOutcome{Completed(ReturnValue)}
+//   push entry frame -> run -> RunOutcome{Completed(VmValue)}
 // without any fake caller frame, setPC(code.size()), or residual operand
 // stack reads.
 // ============================================================================
@@ -36,9 +36,8 @@ TEST_F(InterpreterEntryReturnTest, IntReturnCompletesWithValue) {
 
   ASSERT_TRUE(outcome.isCompleted());
   ASSERT_FALSE(outcome.isVoid());
-  const auto& result = std::get<engine::Completed<engine::ReturnValue>>(outcome.value).result;
-  EXPECT_EQ(result.kind, engine::ReturnValue::Int);
-  EXPECT_EQ(result.i, 30);
+  const auto& result = std::get<engine::Completed<engine::VmValue>>(outcome.value).result;
+  EXPECT_EQ(std::get<Jint>(result), 30);
 }
 
 // 2. Entry LRETURN returns Long to the host.
@@ -52,9 +51,8 @@ TEST_F(InterpreterEntryReturnTest, LongReturnCompletesWithValue) {
 
   ASSERT_TRUE(outcome.isCompleted());
   ASSERT_FALSE(outcome.isVoid());
-  const auto& result = std::get<engine::Completed<engine::ReturnValue>>(outcome.value).result;
-  EXPECT_EQ(result.kind, engine::ReturnValue::Long);
-  EXPECT_EQ(result.l, 12);
+  const auto& result = std::get<engine::Completed<engine::VmValue>>(outcome.value).result;
+  EXPECT_EQ(std::get<Jlong>(result), 12);
 }
 
 // 3. Entry ARETURN returns Reference to the host.
@@ -68,9 +66,8 @@ TEST_F(InterpreterEntryReturnTest, RefReturnCompletesWithValue) {
 
   ASSERT_TRUE(outcome.isCompleted());
   ASSERT_FALSE(outcome.isVoid());
-  const auto& result = std::get<engine::Completed<engine::ReturnValue>>(outcome.value).result;
-  EXPECT_EQ(result.kind, engine::ReturnValue::Reference);
-  EXPECT_EQ(result.r, nullptr);
+  const auto& result = std::get<engine::Completed<engine::VmValue>>(outcome.value).result;
+  EXPECT_EQ(std::get<Jref>(result), nullptr);
 }
 
 // 4. Entry RETURN (void) completes with a Void return value.
@@ -117,7 +114,6 @@ TEST_F(InterpreterEntryReturnTest, NestedCallsAlsoReturnViaRunOutcome) {
 
   ASSERT_TRUE(outcome.isCompleted());
   ASSERT_FALSE(outcome.isVoid());
-  const auto& result = std::get<engine::Completed<engine::ReturnValue>>(outcome.value).result;
-  EXPECT_EQ(result.kind, engine::ReturnValue::Int);
-  EXPECT_EQ(result.i, 120);
+  const auto& result = std::get<engine::Completed<engine::VmValue>>(outcome.value).result;
+  EXPECT_EQ(std::get<Jint>(result), 120);
 }

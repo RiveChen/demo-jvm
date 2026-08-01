@@ -68,11 +68,7 @@ RunOutcome Interpreter::interpret(runtime::Thread* thread) {
     auto&       rt_cp      = method->getOwnerKlass()->getRuntimeConstantPool();
     const auto& code       = method->getCode();
 
-    // TODO: PC reaching the end of code is an illegal method ending
-    // and should fail fast with a VM error. It is currently treated as a
-    // normal return so the test helper can read a value the interpreter
-    // already pushed (e.g. an implicit IRETURN). This couples test helper
-    // semantics with production interpreter behavior and must be decoupled.
+    // PC reaching the end of code is an illegal method ending and should fail fast.
     if (pc >= code.size()) {
       throw std::runtime_error("pc outreach bytecode");
     }
@@ -1207,8 +1203,7 @@ RunOutcome Interpreter::interpret(runtime::Thread* thread) {
           caller_frame.getOperandStack().pushInt(ret);
           pc = caller_frame.getPC();
         } else {
-          return RunOutcome{
-            Completed<ReturnValue>{ReturnValue{.kind = ReturnValue::Int, .i = ret}}};
+          return RunOutcome{Completed<VmValue>{Jint{ret}}};
         }
       } break;
       case LRETURN: {
@@ -1221,8 +1216,7 @@ RunOutcome Interpreter::interpret(runtime::Thread* thread) {
           caller_frame.getOperandStack().pushLong(ret);
           pc = caller_frame.getPC();
         } else {
-          return RunOutcome{
-            Completed<ReturnValue>{ReturnValue{.kind = ReturnValue::Long, .l = ret}}};
+          return RunOutcome{Completed<VmValue>{Jlong{ret}}};
         }
       } break;
       case FRETURN: {
@@ -1235,8 +1229,7 @@ RunOutcome Interpreter::interpret(runtime::Thread* thread) {
           caller_frame.getOperandStack().pushFloat(ret);
           pc = caller_frame.getPC();
         } else {
-          return RunOutcome{
-            Completed<ReturnValue>{ReturnValue{.kind = ReturnValue::Float, .f = ret}}};
+          return RunOutcome{Completed<VmValue>{Jfloat{ret}}};
         }
       } break;
       case DRETURN: {
@@ -1249,8 +1242,7 @@ RunOutcome Interpreter::interpret(runtime::Thread* thread) {
           caller_frame.getOperandStack().pushDouble(ret);
           pc = caller_frame.getPC();
         } else {
-          return RunOutcome{
-            Completed<ReturnValue>{ReturnValue{.kind = ReturnValue::Double, .d = ret}}};
+          return RunOutcome{Completed<VmValue>{Jdouble{ret}}};
         }
       } break;
       case ARETURN: {
@@ -1263,8 +1255,7 @@ RunOutcome Interpreter::interpret(runtime::Thread* thread) {
           caller_frame.getOperandStack().pushRef(ret);
           pc = caller_frame.getPC();
         } else {
-          return RunOutcome{
-            Completed<ReturnValue>{ReturnValue{.kind = ReturnValue::Reference, .r = ret}}};
+          return RunOutcome{Completed<VmValue>{Jref{ret}}};
         }
       } break;
       case RETURN: {

@@ -11,7 +11,6 @@
 
 #include "utilities/types.hpp"
 
-#include <cstdint>
 #include <variant>
 
 namespace jvm::runtime {
@@ -27,23 +26,6 @@ namespace jvm::engine {
 /// layer. References are opaque pointers (Jref).
 using VmValue = std::variant<Jint, Jlong, Jfloat, Jdouble, Jref>;
 
-struct ReturnValue {
-  enum Kind : uint8_t {
-    Int,
-    Long,
-    Float,
-    Double,
-    Reference,
-  } kind;
-  union {
-    Jint    i;
-    Jlong   l;
-    Jfloat  f;
-    Jdouble d;
-    Jref    r;
-  };
-};
-
 /// @brief A completed method invocation whose declared return type is void.
 struct CompletedVoid {};
 
@@ -56,11 +38,11 @@ struct Completed {
 /// @brief The outcome of running the interpreter to completion.
 ///
 /// Successful completions are represented by CompletedVoid (void return) or
-/// Completed<ReturnValue> (a typed return value). Future stages will add
+/// Completed<VmValue> (a typed return value). Future stages will add
 /// UncaughtException, YieldedAtSafepoint, Blocked, and VmError as additional
 /// alternatives.
 struct RunOutcome {
-  std::variant<CompletedVoid, Completed<ReturnValue>> value;
+  std::variant<CompletedVoid, Completed<VmValue>> value;
 
   bool isCompleted() const { return value.index() <= 1; }
   bool isVoid() const { return std::holds_alternative<CompletedVoid>(value); }

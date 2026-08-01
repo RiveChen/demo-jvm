@@ -24,7 +24,6 @@
 using namespace jvm;
 
 namespace detail {
-using engine::ReturnValue;
 using engine::VmValue;
 
 // Traits for JVM types.
@@ -36,7 +35,7 @@ struct JvmTraits<Jint> {
   static constexpr std::string_view descriptor = "I";
   static constexpr U2               slots      = 1;
   static VmValue                    toVmValue(Jint val) { return val; }
-  static Jint                       fromReturn(const ReturnValue& rv) { return rv.i; }
+  static Jint                       fromVmValue(const VmValue& v) { return std::get<Jint>(v); }
 };
 
 template <>
@@ -44,7 +43,7 @@ struct JvmTraits<Jlong> {
   static constexpr std::string_view descriptor = "J";
   static constexpr U2               slots      = 2;
   static VmValue                    toVmValue(Jlong val) { return val; }
-  static Jlong                      fromReturn(const ReturnValue& rv) { return rv.l; }
+  static Jlong                      fromVmValue(const VmValue& v) { return std::get<Jlong>(v); }
 };
 
 template <>
@@ -52,7 +51,7 @@ struct JvmTraits<Jfloat> {
   static constexpr std::string_view descriptor = "F";
   static constexpr U2               slots      = 1;
   static VmValue                    toVmValue(Jfloat val) { return val; }
-  static Jfloat                     fromReturn(const ReturnValue& rv) { return rv.f; }
+  static Jfloat                     fromVmValue(const VmValue& v) { return std::get<Jfloat>(v); }
 };
 
 template <>
@@ -60,7 +59,7 @@ struct JvmTraits<Jdouble> {
   static constexpr std::string_view descriptor = "D";
   static constexpr U2               slots      = 2;
   static VmValue                    toVmValue(Jdouble val) { return val; }
-  static Jdouble                    fromReturn(const ReturnValue& rv) { return rv.d; }
+  static Jdouble                    fromVmValue(const VmValue& v) { return std::get<Jdouble>(v); }
 };
 
 template <>
@@ -68,7 +67,7 @@ struct JvmTraits<Jboolean> {
   static constexpr std::string_view descriptor = "Z";
   static constexpr U2               slots      = 1;
   static VmValue                    toVmValue(Jboolean val) { return static_cast<Jint>(val); }
-  static Jboolean fromReturn(const ReturnValue& rv) { return static_cast<Jboolean>(rv.i); }
+  static Jboolean fromVmValue(const VmValue& v) { return static_cast<Jboolean>(std::get<Jint>(v)); }
 };
 
 template <>
@@ -76,7 +75,7 @@ struct JvmTraits<Jbyte> {
   static constexpr std::string_view descriptor = "B";
   static constexpr U2               slots      = 1;
   static VmValue                    toVmValue(Jbyte val) { return static_cast<Jint>(val); }
-  static Jbyte fromReturn(const ReturnValue& rv) { return static_cast<Jbyte>(rv.i); }
+  static Jbyte fromVmValue(const VmValue& v) { return static_cast<Jbyte>(std::get<Jint>(v)); }
 };
 
 template <>
@@ -84,7 +83,7 @@ struct JvmTraits<Jshort> {
   static constexpr std::string_view descriptor = "S";
   static constexpr U2               slots      = 1;
   static VmValue                    toVmValue(Jshort val) { return static_cast<Jint>(val); }
-  static Jshort fromReturn(const ReturnValue& rv) { return static_cast<Jshort>(rv.i); }
+  static Jshort fromVmValue(const VmValue& v) { return static_cast<Jshort>(std::get<Jint>(v)); }
 };
 
 template <>
@@ -92,7 +91,7 @@ struct JvmTraits<Jchar> {
   static constexpr std::string_view descriptor = "C";
   static constexpr U2               slots      = 1;
   static VmValue                    toVmValue(Jchar val) { return static_cast<Jint>(val); }
-  static Jchar fromReturn(const ReturnValue& rv) { return static_cast<Jchar>(rv.i); }
+  static Jchar fromVmValue(const VmValue& v) { return static_cast<Jchar>(std::get<Jint>(v)); }
 };
 
 template <>
@@ -100,53 +99,12 @@ struct JvmTraits<Jref> {
   static constexpr std::string_view descriptor = "Ljava/lang/Object;";
   static constexpr U2               slots      = 1;
   static VmValue                    toVmValue(Jref val) { return val; }
-  static Jref                       fromReturn(const ReturnValue& rv) { return rv.r; }
+  static Jref                       fromVmValue(const VmValue& v) { return std::get<Jref>(v); }
 };
 
 template <>
 struct JvmTraits<void> {
   static constexpr std::string_view descriptor = "V";
-};
-
-// Expected ReturnValue kind for a given C++ return type.
-template <typename T>
-struct ExpectedReturnKind;
-
-template <>
-struct ExpectedReturnKind<Jint> {
-  static constexpr ReturnValue::Kind value = ReturnValue::Int;
-};
-template <>
-struct ExpectedReturnKind<Jboolean> {
-  static constexpr ReturnValue::Kind value = ReturnValue::Int;
-};
-template <>
-struct ExpectedReturnKind<Jbyte> {
-  static constexpr ReturnValue::Kind value = ReturnValue::Int;
-};
-template <>
-struct ExpectedReturnKind<Jshort> {
-  static constexpr ReturnValue::Kind value = ReturnValue::Int;
-};
-template <>
-struct ExpectedReturnKind<Jchar> {
-  static constexpr ReturnValue::Kind value = ReturnValue::Int;
-};
-template <>
-struct ExpectedReturnKind<Jlong> {
-  static constexpr ReturnValue::Kind value = ReturnValue::Long;
-};
-template <>
-struct ExpectedReturnKind<Jfloat> {
-  static constexpr ReturnValue::Kind value = ReturnValue::Float;
-};
-template <>
-struct ExpectedReturnKind<Jdouble> {
-  static constexpr ReturnValue::Kind value = ReturnValue::Double;
-};
-template <>
-struct ExpectedReturnKind<Jref> {
-  static constexpr ReturnValue::Kind value = ReturnValue::Reference;
 };
 
 // Marshal a VmValue into local variable slots according to the JVM slot
@@ -412,22 +370,14 @@ class InterpreterTestBase : public ::testing::Test {
       }
       return;
     } else {
-      const auto* completed = std::get_if<engine::Completed<engine::ReturnValue>>(&outcome.value);
+      // Non-void: the outcome must carry a Completed<VmValue>.
+      const auto* completed = std::get_if<engine::Completed<engine::VmValue>>(&outcome.value);
       if (completed == nullptr) {
-        ADD_FAILURE() << "executeStaticMethod: expected Completed<ReturnValue> for " << class_name
+        ADD_FAILURE() << "executeStaticMethod: expected Completed<VmValue> for " << class_name
                       << "." << method_name << " " << exact_descriptor;
         return Ret{};
       }
-      const auto&    result        = completed->result;
-      constexpr auto expected_kind = detail::ExpectedReturnKind<Ret>::value;
-      if (result.kind != expected_kind) {
-        ADD_FAILURE() << "executeStaticMethod: return kind mismatch for " << class_name << "."
-                      << method_name << " " << exact_descriptor << " (expected "
-                      << static_cast<int>(expected_kind) << ", got "
-                      << static_cast<int>(result.kind) << ")";
-        return Ret{};
-      }
-      return detail::JvmTraits<Ret>::fromReturn(result);
+      return detail::JvmTraits<Ret>::fromVmValue(completed->result);
     }
   }
 };
