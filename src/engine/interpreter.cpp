@@ -50,7 +50,7 @@ namespace {
 
 // (readability-function-size, hicpp-function-size,
 // readability-function-cognitive-complexity) NOLINTNEXTLINE
-void Interpreter::interpret(runtime::Thread* thread) {
+RunOutcome Interpreter::interpret(runtime::Thread* thread) {
   // Cache pc in a local register for the hot loop.
   // The authoritative pc lives in the current frame; we spill it back
   // before any stack operation (invoke/return) and reload after popping.
@@ -58,7 +58,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
 
   while (true) {
     if (thread->isStackEmpty()) {
-      return;
+      throw std::runtime_error("can not run on an empty stack");
     }
 
     auto&       frame      = thread->getCurrentFrame();
@@ -74,7 +74,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
     // already pushed (e.g. an implicit IRETURN). This couples test helper
     // semantics with production interpreter behavior and must be decoupled.
     if (pc >= code.size()) {
-      return;
+      throw std::runtime_error("pc outreach bytecode");
     }
 
     // fetch opcode
@@ -1206,6 +1206,9 @@ void Interpreter::interpret(runtime::Thread* thread) {
           auto& caller_frame = thread->getCurrentFrame();
           caller_frame.getOperandStack().pushInt(ret);
           pc = caller_frame.getPC();
+        } else {
+          return RunOutcome{
+            Completed<ReturnValue>{ReturnValue{.kind = ReturnValue::Int, .i = ret}}};
         }
       } break;
       case LRETURN: {
@@ -1217,6 +1220,9 @@ void Interpreter::interpret(runtime::Thread* thread) {
           auto& caller_frame = thread->getCurrentFrame();
           caller_frame.getOperandStack().pushLong(ret);
           pc = caller_frame.getPC();
+        } else {
+          return RunOutcome{
+            Completed<ReturnValue>{ReturnValue{.kind = ReturnValue::Long, .l = ret}}};
         }
       } break;
       case FRETURN: {
@@ -1228,6 +1234,9 @@ void Interpreter::interpret(runtime::Thread* thread) {
           auto& caller_frame = thread->getCurrentFrame();
           caller_frame.getOperandStack().pushFloat(ret);
           pc = caller_frame.getPC();
+        } else {
+          return RunOutcome{
+            Completed<ReturnValue>{ReturnValue{.kind = ReturnValue::Float, .f = ret}}};
         }
       } break;
       case DRETURN: {
@@ -1239,6 +1248,9 @@ void Interpreter::interpret(runtime::Thread* thread) {
           auto& caller_frame = thread->getCurrentFrame();
           caller_frame.getOperandStack().pushDouble(ret);
           pc = caller_frame.getPC();
+        } else {
+          return RunOutcome{
+            Completed<ReturnValue>{ReturnValue{.kind = ReturnValue::Double, .d = ret}}};
         }
       } break;
       case ARETURN: {
@@ -1250,6 +1262,9 @@ void Interpreter::interpret(runtime::Thread* thread) {
           auto& caller_frame = thread->getCurrentFrame();
           caller_frame.getOperandStack().pushRef(ret);
           pc = caller_frame.getPC();
+        } else {
+          return RunOutcome{
+            Completed<ReturnValue>{ReturnValue{.kind = ReturnValue::Reference, .r = ret}}};
         }
       } break;
       case RETURN: {
@@ -1263,7 +1278,7 @@ void Interpreter::interpret(runtime::Thread* thread) {
         if (!thread->isStackEmpty()) {
           pc = thread->getCurrentFrame().getPC();
         } else {
-          return;
+          return RunOutcome{CompletedVoid{}};
         }
       } break;
       /* #endregion Returns */
