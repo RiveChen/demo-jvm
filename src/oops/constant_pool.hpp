@@ -12,6 +12,7 @@
 
 #include "utilities/types.hpp"
 
+#include <optional>
 #include <string>
 #include <variant>
 #include <vector>

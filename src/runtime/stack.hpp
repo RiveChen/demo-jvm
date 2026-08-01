@@ -12,6 +12,7 @@
 #include "frame.hpp"
 
 #include <stack>
+#include <stdexcept>
 
 namespace jvm::runtime {
 

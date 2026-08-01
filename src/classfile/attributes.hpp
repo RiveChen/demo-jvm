@@ -11,6 +11,8 @@
 
 #include "utilities/types.hpp"
 
+#include <memory>
+#include <string>
 #include <vector>
 
 namespace jvm::classfile {

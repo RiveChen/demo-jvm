@@ -11,6 +11,7 @@
 #include "utilities/slot.hpp"
 
 #include <cstddef>
+#include <stdexcept>
 #include <vector>
 
 namespace jvm::runtime {
