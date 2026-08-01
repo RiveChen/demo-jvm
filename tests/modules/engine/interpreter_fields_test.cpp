@@ -59,24 +59,24 @@ TEST_F(InterpreterFieldsTest, PutStaticInt_UpdateValue) {
 // ============================================================================
 
 TEST_F(InterpreterFieldsTest, GetStaticLong_InitialValue) {
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testGetStaticLong"), 0LL);
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testGetStaticLong"), Jlong{0});
 }
 
 TEST_F(InterpreterFieldsTest, PutStaticLong_Basic) {
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testPutStaticLong", 123456789LL), 123456789LL);
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testGetStaticLong"), 123456789LL);
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testPutStaticLong", Jlong{123456789}), Jlong{123456789});
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testGetStaticLong"), Jlong{123456789});
 }
 
 TEST_F(InterpreterFieldsTest, PutStaticLong_NegativeValue) {
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testPutStaticLong", -987654321LL),
-            -987654321LL);
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testGetStaticLong"), -987654321LL);
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testPutStaticLong", Jlong{-987654321}),
+            Jlong{-987654321});
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testGetStaticLong"), Jlong{-987654321});
 }
 
 TEST_F(InterpreterFieldsTest, PutStaticLong_LargeValue) {
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testPutStaticLong", 9223372036854775807LL),
-            9223372036854775807LL);
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testGetStaticLong"), 9223372036854775807LL);
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testPutStaticLong", Jlong{9223372036854775807}),
+            Jlong{9223372036854775807});
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testGetStaticLong"), Jlong{9223372036854775807});
 }
 
 // ============================================================================

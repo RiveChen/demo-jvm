@@ -102,41 +102,41 @@ TEST_F(InterpreterArithmeticTest, IREM_MinByNegativeOneReturnsZero) {
 // ============================================================================
 
 TEST_F(InterpreterArithmeticTest, LADD_Basic) {
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLADD", 10LL, 20LL), 30LL);
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLADD", -5LL, 10LL), 5LL);
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLADD", Jlong{10}, Jlong{20}), Jlong{30});
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLADD", Jlong{-5}, Jlong{10}), Jlong{5});
 }
 
 TEST_F(InterpreterArithmeticTest, LSUB_Basic) {
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLSUB", 20LL, 10LL), 10LL);
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLSUB", 10LL, 20LL), -10LL);
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLSUB", Jlong{20}, Jlong{10}), Jlong{10});
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLSUB", Jlong{10}, Jlong{20}), Jlong{-10});
 }
 
 TEST_F(InterpreterArithmeticTest, LMUL_Basic) {
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLMUL", 5LL, 6LL), 30LL);
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLMUL", -5LL, 6LL), -30LL);
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLMUL", Jlong{5}, Jlong{6}), Jlong{30});
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLMUL", Jlong{-5}, Jlong{6}), Jlong{-30});
 }
 
 TEST_F(InterpreterArithmeticTest, LDIV_Basic) {
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLDIV", 20LL, 5LL), 4LL);
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLDIV", 21LL, 5LL), 4LL);
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLDIV", Jlong{20}, Jlong{5}), Jlong{4});
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLDIV", Jlong{21}, Jlong{5}), Jlong{4});
 }
 
 TEST_F(InterpreterArithmeticTest, LDIV_DivideByZero) {
-  EXPECT_THROW(executeStaticMethod<Jlong>(kClassName, "testLDIV", 10LL, 0LL), std::runtime_error);
+  EXPECT_THROW(executeStaticMethod<Jlong>(kClassName, "testLDIV", Jlong{10}, Jlong{0}), std::runtime_error);
 }
 
 TEST_F(InterpreterArithmeticTest, LREM_Basic) {
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLREM", 20LL, 5LL), 0LL);
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLREM", 21LL, 5LL), 1LL);
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLREM", Jlong{20}, Jlong{5}), Jlong{0});
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLREM", Jlong{21}, Jlong{5}), Jlong{1});
 }
 
 TEST_F(InterpreterArithmeticTest, LREM_DivideByZero) {
-  EXPECT_THROW(executeStaticMethod<Jlong>(kClassName, "testLREM", 10LL, 0LL), std::runtime_error);
+  EXPECT_THROW(executeStaticMethod<Jlong>(kClassName, "testLREM", Jlong{10}, Jlong{0}), std::runtime_error);
 }
 
 TEST_F(InterpreterArithmeticTest, LNEG_Basic) {
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLNEG", 10LL), -10LL);
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLNEG", -10LL), 10LL);
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLNEG", Jlong{10}), Jlong{-10});
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLNEG", Jlong{-10}), Jlong{10});
 }
 
 TEST_F(InterpreterArithmeticTest, LADD_MaxPlusOneWrapsToMin) {
@@ -298,50 +298,50 @@ TEST_F(InterpreterArithmeticTest, IUSHR_Basic) {
 // ============================================================================
 
 TEST_F(InterpreterArithmeticTest, LAND_Basic) {
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLAND", 0x0FLL, 0xF0LL), 0x00LL);
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLAND", 0xFFLL, 0x0FLL), 0x0FLL);
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLAND", 0xAALL, 0x55LL), 0x00LL);
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLAND", 0xFFFFFFFFLL, 0xFFFFFFFFLL),
-            0xFFFFFFFFLL);
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLAND", Jlong{0x0F}, Jlong{0xF0}), Jlong{0x00});
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLAND", Jlong{0xFF}, Jlong{0x0F}), Jlong{0x0F});
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLAND", Jlong{0xAA}, Jlong{0x55}), Jlong{0x00});
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLAND", Jlong{0xFFFFFFFF}, Jlong{0xFFFFFFFF}),
+            Jlong{0xFFFFFFFF});
 }
 
 TEST_F(InterpreterArithmeticTest, LOR_Basic) {
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLOR", 0x0FLL, 0xF0LL), 0xFFLL);
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLOR", 0xAALL, 0x55LL), 0xFFLL);
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLOR", 0LL, 0xFFLL), 0xFFLL);
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLOR", 0xFFLL, 0x00LL), 0xFFLL);
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLOR", Jlong{0x0F}, Jlong{0xF0}), Jlong{0xFF});
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLOR", Jlong{0xAA}, Jlong{0x55}), Jlong{0xFF});
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLOR", Jlong{0}, Jlong{0xFF}), Jlong{0xFF});
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLOR", Jlong{0xFF}, Jlong{0x00}), Jlong{0xFF});
 }
 
 TEST_F(InterpreterArithmeticTest, LXOR_Basic) {
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLXOR", 0xFFLL, 0xFFLL), 0x00LL);
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLXOR", 0xAALL, 0x55LL), 0xFFLL);
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLXOR", 0x0FLL, 0xF0LL), 0xFFLL);
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLXOR", 0LL, 0xFFLL), 0xFFLL);
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLXOR", Jlong{0xFF}, Jlong{0xFF}), Jlong{0x00});
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLXOR", Jlong{0xAA}, Jlong{0x55}), Jlong{0xFF});
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLXOR", Jlong{0x0F}, Jlong{0xF0}), Jlong{0xFF});
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLXOR", Jlong{0}, Jlong{0xFF}), Jlong{0xFF});
 }
 
 TEST_F(InterpreterArithmeticTest, LSHL_Basic) {
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLSHL", 1LL, 1), 2LL);
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLSHL", 1LL, 3), 8LL);
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLSHL", 5LL, 2), 20LL);
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLSHL", 0x4000000000000000LL, 1),
-            0x8000000000000000LL);
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLSHL", Jlong{1}, 1), Jlong{2});
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLSHL", Jlong{1}, 3), Jlong{8});
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLSHL", Jlong{5}, 2), Jlong{20});
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLSHL", Jlong{0x4000000000000000}, 1),
+            std::numeric_limits<Jlong>::min());
 }
 
 TEST_F(InterpreterArithmeticTest, LSHR_Basic) {
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLSHR", 8LL, 1), 4LL);
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLSHR", 32LL, 3), 4LL);
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLSHR", -8LL, 1),
-            -4LL);  // Arithmetic shift preserves sign
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLSHR", -32LL, 3), -4LL);
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLSHR", Jlong{8}, 1), Jlong{4});
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLSHR", Jlong{32}, 3), Jlong{4});
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLSHR", Jlong{-8}, 1),
+            Jlong{-4});  // Arithmetic shift preserves sign
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLSHR", Jlong{-32}, 3), Jlong{-4});
 }
 
 TEST_F(InterpreterArithmeticTest, LUSHR_Basic) {
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLUSHR", 8LL, 1), 4LL);
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLUSHR", 32LL, 3), 4LL);
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLUSHR", -8LL, 1),
-            0x7FFFFFFFFFFFFFFCLL);  // Logical shift
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLUSHR", -1LL, 63),
-            1LL);  // Logical shift right 63 bits
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLUSHR", Jlong{8}, 1), Jlong{4});
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLUSHR", Jlong{32}, 3), Jlong{4});
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLUSHR", Jlong{-8}, 1),
+            Jlong{0x7FFFFFFFFFFFFFFC});  // Logical shift
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLUSHR", Jlong{-1}, 63),
+            Jlong{1});  // Logical shift right 63 bits
 }
 
 }  // namespace

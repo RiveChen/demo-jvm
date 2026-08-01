@@ -45,11 +45,11 @@ TEST_F(InterpreterConstantsTest, ICONST_5) {
 // ============================================================================
 
 TEST_F(InterpreterConstantsTest, LCONST_0) {
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLCONST_0"), 0LL);
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLCONST_0"), Jlong{0});
 }
 
 TEST_F(InterpreterConstantsTest, LCONST_1) {
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLCONST_1"), 1LL);
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLCONST_1"), Jlong{1});
 }
 
 // ============================================================================

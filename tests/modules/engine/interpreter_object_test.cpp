@@ -20,7 +20,7 @@ TEST_F(InterpreterObjectTest, NewPutGetIntField) {
 }
 
 TEST_F(InterpreterObjectTest, NewPutGetLongField) {
-  const Jlong v = 0x1122334455667788LL;  // 64-bit value through a category-2 field
+  const Jlong v = Jlong{0x1122334455667788};  // 64-bit value through a category-2 field
   EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLongField", v), v);
 }
 

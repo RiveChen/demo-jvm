@@ -13,7 +13,7 @@ TEST_F(InterpreterStackTest, POP_Basic) {
 }
 
 TEST_F(InterpreterStackTest, POP2_Basic) {
-  EXPECT_EQ(executeStaticMethod<Jlong>("tests.data.java.StackTest", "testPOP2", 10LL, 20LL), 30LL);
+  EXPECT_EQ(executeStaticMethod<Jlong>("tests.data.java.StackTest", "testPOP2", Jlong{10}, Jlong{20}), Jlong{30});
 }
 
 TEST_F(InterpreterStackTest, DUP_Basic) {
@@ -30,7 +30,7 @@ TEST_F(InterpreterStackTest, DUP_X2_Basic) {
 }
 
 TEST_F(InterpreterStackTest, DUP2_Basic) {
-  EXPECT_EQ(executeStaticMethod<Jlong>("tests.data.java.StackTest", "testDUP2", 5LL), 10LL);
+  EXPECT_EQ(executeStaticMethod<Jlong>("tests.data.java.StackTest", "testDUP2", Jlong{5}), Jlong{10});
 }
 
 TEST_F(InterpreterStackTest, SWAP_Basic) {

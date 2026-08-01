@@ -71,7 +71,7 @@ TEST_F(InterpreterMethodInvocationTest, InvokeStatic_LongArgs_Ordering) {
 
 TEST_F(InterpreterMethodInvocationTest, InvokeStatic_LongArgs_WideValueSurvives) {
   // value beyond 32-bit range must survive the two-slot transfer intact
-  const Jlong big = 0x1122334455667788LL;
+  const Jlong big = Jlong{0x1122334455667788};
   EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testInvokeSubLong", big, Jlong{0}), big);
 }
 

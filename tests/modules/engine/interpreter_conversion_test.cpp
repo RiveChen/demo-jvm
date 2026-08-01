@@ -17,8 +17,8 @@ class InterpreterConversionTest : public InterpreterTestBase {
 // ============================================================================
 
 TEST_F(InterpreterConversionTest, I2L_Basic) {
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testI2L", 42), 42LL);
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testI2L", -42), -42LL);
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testI2L", 42), Jlong{42});
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testI2L", -42), Jlong{-42});
 }
 
 TEST_F(InterpreterConversionTest, I2F_Basic) {
@@ -36,16 +36,16 @@ TEST_F(InterpreterConversionTest, I2D_Basic) {
 // ============================================================================
 
 TEST_F(InterpreterConversionTest, L2I_Basic) {
-  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testL2I", 42LL), 42);
-  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testL2I", -42LL), -42);
+  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testL2I", Jlong{42}), 42);
+  EXPECT_EQ(executeStaticMethod<Jint>(kClassName, "testL2I", Jlong{-42}), -42);
 }
 
 TEST_F(InterpreterConversionTest, L2F_Basic) {
-  EXPECT_FLOAT_EQ(executeStaticMethod<Jfloat>(kClassName, "testL2F", 42LL), 42.0F);
+  EXPECT_FLOAT_EQ(executeStaticMethod<Jfloat>(kClassName, "testL2F", Jlong{42}), 42.0F);
 }
 
 TEST_F(InterpreterConversionTest, L2D_Basic) {
-  EXPECT_DOUBLE_EQ(executeStaticMethod<Jdouble>(kClassName, "testL2D", 42LL), 42.0);
+  EXPECT_DOUBLE_EQ(executeStaticMethod<Jdouble>(kClassName, "testL2D", Jlong{42}), 42.0);
 }
 
 // ============================================================================
@@ -82,13 +82,13 @@ TEST_F(InterpreterConversionTest, F2I_NegativeOutOfRangeFiniteValueSaturates) {
 }
 
 TEST_F(InterpreterConversionTest, F2L_Basic) {
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testF2L", 42.5F), 42LL);
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testF2L", 42.5F), Jlong{42});
 }
 
 TEST_F(InterpreterConversionTest, F2L_NaN) {
   EXPECT_EQ(
     executeStaticMethod<Jlong>(kClassName, "testF2L", std::numeric_limits<Jfloat>::quiet_NaN()),
-    0LL);
+    Jlong{0});
 }
 
 TEST_F(InterpreterConversionTest, F2L_InfinitySaturates) {
@@ -150,13 +150,13 @@ TEST_F(InterpreterConversionTest, D2I_NegativeOutOfRangeFiniteValueSaturates) {
 }
 
 TEST_F(InterpreterConversionTest, D2L_Basic) {
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testD2L", 42.5), 42LL);
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testD2L", 42.5), Jlong{42});
 }
 
 TEST_F(InterpreterConversionTest, D2L_NaN) {
   EXPECT_EQ(
     executeStaticMethod<Jlong>(kClassName, "testD2L", std::numeric_limits<Jdouble>::quiet_NaN()),
-    0LL);
+    Jlong{0});
 }
 
 TEST_F(InterpreterConversionTest, D2L_InfinitySaturates) {

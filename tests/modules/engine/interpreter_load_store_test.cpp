@@ -54,19 +54,19 @@ TEST_F(InterpreterLoadStoreTest, ISTORE_1) {
 // ============================================================================
 
 TEST_F(InterpreterLoadStoreTest, LLOAD_Basic) {
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLLOAD", 42LL), 42LL);
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLLOAD", Jlong{42}), Jlong{42});
 }
 
 TEST_F(InterpreterLoadStoreTest, LLOAD_0) {
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLLOAD_0", 100LL), 100LL);
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLLOAD_0", Jlong{100}), Jlong{100});
 }
 
 TEST_F(InterpreterLoadStoreTest, LSTORE_Basic) {
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLSTORE", 42LL), 42LL);
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLSTORE", Jlong{42}), Jlong{42});
 }
 
 TEST_F(InterpreterLoadStoreTest, LSTORE_0) {
-  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLSTORE_0", 100LL), 100LL);
+  EXPECT_EQ(executeStaticMethod<Jlong>(kClassName, "testLSTORE_0", Jlong{100}), Jlong{100});
 }
 
 // ============================================================================
