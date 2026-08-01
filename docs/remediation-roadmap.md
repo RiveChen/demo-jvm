@@ -37,9 +37,9 @@
 | 项目 | 当前结果 | 判断 |
 |---|---:|---:|
 | Debug 构建 | 成功 | 可开发 |
-| 普通测试 | 389/389 通过 | happy path 基础较好 |
-| ASan 测试 | 389/389 通过 | 已覆盖路径未发现明显内存错误 |
-| **UBSan 测试** | **389/389 通过** | 已配置 `ENABLE_UBSAN`，整数回绕/浮点转换/除零边界已修复 |
+| 普通测试 | 403/403 通过 | happy path 基础较好 |
+| ASan 测试 | 403/403 通过 | 已覆盖路径未发现明显内存错误 |
+| **UBSan 测试** | **403/403 通过** | 已配置 `ENABLE_UBSAN`，整数回绕/浮点转换/除零边界已修复 |
 | 编译告警 | 存在 | 尚未达到干净构建 |
 | `check-format` | 失败 | 质量门禁未闭环 |
 | CI | 缺失 | 提交质量依赖开发者本机 |
@@ -52,9 +52,9 @@
 |---|---|---:|---|
 | 1 | `SIPUSH` 以无符号值读取，`-32768` 被执行为 `32768` | ✅ 已修复 | `LDIV_MinByNegativeOneReturnsMin` 等边界测试 |
 | 2 | `F2I/F2L/D2I/D2L` 对 infinity 的处理不符合 JVM 规范 | ✅ 已修复 | `interpreter_conversion_test.cpp` 饱和测试 |
-| 3 | Java 整数回绕语义依赖 C++ signed overflow（UB） | ✅ 已修复 | UBSan 389/389 通过 |
+| 3 | Java 整数回绕语义依赖 C++ signed overflow（UB） | ✅ 已修复 | UBSan 403/403 通过 |
 | 4 | 多个未实现 opcode 只执行 `break`（静默错误） | ✅ 已修复 | `throwUnsupportedOpcode` fail-fast（带类/方法/PC 上下文） |
-| 5 | PC 越过方法末尾被当作正常结束 | ⏳ 待处理 | — |
+| 5 | PC 越过方法末尾被当作正常结束 | ✅ 已修复 | `pc >= code.size()` fail-fast + 入口 `IRETURN/LRETURN/ARETURN/RETURN` 返回 `RunOutcome` 协议测试（`interpreter_entry_return_test.cpp`） |
 | 6 | Parent loader 失败后不回落到 child classpath | ⏳ 待处理 | — |
 | 7 | 部分测试被注释/错误期望 | ⏳ 待处理 | —（IFNULL/IF_ACMP 等测试待恢复） |
 
@@ -137,9 +137,9 @@ P6 恢复功能开发
 > - **P1.2（立即数读取）✅ 已完成** —— 符号扩展（BIPUSH/SIPUSH/IINC/分支偏移）已覆盖。
 > - **P1.3（整数算术）✅ 已完成** —— 16 处 C++ UB 修复，详见 `docs/design/interpreter.md`「C++ UB 与 JVM 语义」。
 > - **P1.4（浮点转整数）✅ 已完成** —— `F2I`/`F2L`/`D2I`/`D2L` 饱和范围检查。
-> - **P1.5（结束条件）⏳ 尚待完成** —— 注意：非法 PC 结束当前仍被当作正常返回（`interpreter.cpp` 有待修 TODO）。
+> - **P1.5（结束条件）✅ 已完成** —— `pc = code.size()` fail-fast；入口返回 `RunOutcome`，`executeStaticMethod` 改为单入口 Frame 薄封装（不再依赖伪 caller Frame / 残留 operand stack）。验收见 `interpreter_entry_return_test.cpp`。
 
-P1 是本轮最高优先级。这里没有完成之前，不应把“389 个测试通过”当作实现正确的证据。
+P1 是本轮最高优先级。这里没有完成之前，不应把“403 个测试通过”当作实现正确的证据。
 
 ### P1.1 未实现 opcode 必须 fail-fast
 
@@ -316,6 +316,14 @@ PC 到达或越过 code 末尾时，解释器直接返回。这会把缺少 RETU
 TSan 暂不要求；当前运行时仍为单线程。
 
 ### P2.4 CI
+
+> 进度更新（2026-08-01）：最小 Linux CI 已加入 `.github/workflows/ci.yml`：
+> - `build-and-test` job：Debug 构建 + 403 测试全量运行（push 与 PR 到 main 均触发）。
+> - `sanitizers` job：`asan-ubsan` preset 构建 + 测试（PR 与 main 触发，避免 throwaway 分支每次跑双 Sanitizer）。
+> - 额外提供 `workflow_dispatch` 手动触发，开发者可在 feature 分支上从 Actions 页直接运行完整流水线（含 sanitizers），无需先开 PR。
+> - 依赖：`ninja-build` + `default-jdk`；GTest 通过 FetchContent 在 CI runner 上联机拉取。
+> - 测试 Java class 改用 `javac --release 8`（比 `-source/-target` 更严格，锁定平台 API）。
+> - 尚未加入 `check-format`/clang-tidy 门禁：待全仓库格式化并达成格式基线后，再追加 format job。
 
 #### 建议流水线
 
