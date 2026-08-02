@@ -23,7 +23,7 @@ namespace jvm::memory {
 /// Alignment mask for heap allocation (8-byte alignment).
 constexpr size_t kAlignment = 7;
 /// Maximum heap size (64 MB).
-constexpr size_t kHeapSize = static_cast<const size_t>(64 * 1024 * 1024);
+constexpr size_t kHeapSize = static_cast<size_t>(64 * 1024 * 1024);
 
 /**
  * @brief Singleton bump-pointer heap allocator.

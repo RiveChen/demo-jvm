@@ -138,7 +138,7 @@ class InstanceKlass : public Klass {
   size_t instance_slot_count_{};
   size_t static_slot_count_{};
 
-  OopDesc* mirror_class_object_{nullptr};
+  [[maybe_unused]] OopDesc* mirror_class_object_{nullptr};
 
   // -- Linking helpers --
   void prepareRuntimeConstantPool(classfile::ClassFile* class_file);
@@ -170,7 +170,7 @@ class ArrayKlass : public Klass {
 
 class TypeArrayKlass : public ArrayKlass {
  private:
-  BasicType type_;
+  [[maybe_unused]] BasicType type_;
 
  public:
   TypeArrayKlass(BasicType type, Jint elem_size, std::string name)

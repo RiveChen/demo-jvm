@@ -14,6 +14,7 @@
 #include "utilities/types.hpp"
 
 #include <cstdint>
+#include <stdexcept>
 #include <string_view>
 #include <vector>
 
@@ -32,7 +33,7 @@ enum class TypeKind : std::uint8_t {
 /// @brief Return the number of stack slots occupied by the given type.
 /// @param type A TypeKind value.
 /// @return 0 for Void, 2 for Long/Double, 1 otherwise.
-inline int slotCount(TypeKind type) {
+inline U2 slotCount(TypeKind type) {
   switch (type) {
     case TypeKind::Void:
       return 0;
@@ -44,6 +45,7 @@ inline int slotCount(TypeKind type) {
     case TypeKind::Ref:
       return 1;
   }
+  throw std::runtime_error("not reachable");
 }
 
 /// @brief Check if a type is category 2 (occupies 2 stack slots).
