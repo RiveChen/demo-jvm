@@ -19,14 +19,14 @@ jobs:
       - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install -y ninja-build default-jdk
 
-      - name: Configure (default preset)
-        run: cmake --preset default
+      - name: Configure
+        run: cmake --preset linux-gcc-debug
 
       - name: Build
-        run: cmake --build --preset default -j$(nproc)
+        run: cmake --build --preset linux-gcc-debug -j$(nproc)
 
       - name: Test
-        run: ctest --preset default
+        run: ctest --preset linux-gcc-debug
 
   # Memory + undefined-behavior gate: ASan + UBSan build.
   # Runs only on PRs and main to keep pushes on throwaway branches cheap.
@@ -38,11 +38,11 @@ jobs:
       - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install -y ninja-build default-jdk
 
-      - name: Configure (asan-ubsan preset)
-        run: cmake --preset asan-ubsan
+      - name: Configure
+        run: cmake --preset linux-gcc-debug-asan-ubsan
 
       - name: Build
-        run: cmake --build --preset asan-ubsan -j$(nproc)
+        run: cmake --build --preset linux-gcc-debug-asan-ubsan -j$(nproc)
 
       - name: Test
-        run: ctest --preset asan-ubsan
+        run: ctest --preset linux-gcc-debug-asan-ubsan

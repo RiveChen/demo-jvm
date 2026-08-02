@@ -135,6 +135,58 @@
       "name": "homebrew-gcc-debug-asan-ubsan",
       "displayName": "Homebrew GCC · Debug · ASan + UBSan",
       "inherits": ["toolchain-homebrew-gcc", "san-asan-ubsan"]
+    },
+    {
+      "name": "linux-gcc-debug",
+      "displayName": "Linux GCC · Debug · CI",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      },
+      "inherits": ["base-debug", "san-none"],
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "g++"
+      }
+    },
+    {
+      "name": "linux-gcc-debug-asan-ubsan",
+      "displayName": "Linux GCC · Debug · ASan + UBSan · CI",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      },
+      "inherits": ["base-debug", "san-asan-ubsan"],
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "g++"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "linux-gcc-debug",
+      "configurePreset": "linux-gcc-debug"
+    },
+    {
+      "name": "linux-gcc-debug-asan-ubsan",
+      "configurePreset": "linux-gcc-debug-asan-ubsan"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "linux-gcc-debug",
+      "configurePreset": "linux-gcc-debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "linux-gcc-debug-asan-ubsan",
+      "configurePreset": "linux-gcc-debug-asan-ubsan",
+      "output": {
+        "outputOnFailure": true
+      }
     }
   ]
 }
