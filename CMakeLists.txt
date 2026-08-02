@@ -42,7 +42,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 if(MSVC)
   add_compile_options(/W4 /permissive-)
 else()
-  add_compile_options(-Wall -Wextra -Wpedantic -Wconversion) # -Wshadow
+  add_compile_options(-Wall -Wextra -Wpedantic -Wconversion -Wextra-semi) # -Wshadow
 endif()
 
 # Address Sanitizer

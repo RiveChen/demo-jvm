@@ -43,7 +43,7 @@ static Klass* arrayKlassForName(classfile::ClassLoader* loader, const std::strin
     res = oops::MethodArea::getSingleton().getOrCreateObjArrayKlass(res);
   }
   return res;
-};
+}
 
 Klass* RuntimeConstantPool::resolveClass(U2 index) {
   auto& slot = infos_.at(index);

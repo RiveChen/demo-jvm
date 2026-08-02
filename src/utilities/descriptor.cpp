@@ -84,4 +84,4 @@ MethodType parseMethodDescriptor(std::string_view desc) {
   return {.params = params, .ret = ret, .arg_slot_count = arg_slot_count};
 }
 
-};  // namespace jvm::descriptor
+}  // namespace jvm::descriptor
