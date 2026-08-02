@@ -38,12 +38,23 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-# Global compiler options
-if(MSVC)
-  add_compile_options(/W4 /permissive-)
-else()
-  add_compile_options(-Wall -Wextra -Wpedantic -Wconversion -Wextra-semi) # -Wshadow
-endif()
+# Project warning options. Apply these explicitly to first-party targets so
+# dependencies added through FetchContent do not inherit the project's lint
+# policy.
+function(demo_jvm_enable_warnings target)
+  if(MSVC)
+    target_compile_options(
+      ${target} PRIVATE $<$<COMPILE_LANGUAGE:CXX>:/W4>
+                        $<$<COMPILE_LANGUAGE:CXX>:/permissive->)
+  else()
+    target_compile_options(
+      ${target} PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-Wall>
+                        $<$<COMPILE_LANGUAGE:CXX>:-Wextra>
+                        $<$<COMPILE_LANGUAGE:CXX>:-Wpedantic>
+                        $<$<COMPILE_LANGUAGE:CXX>:-Wconversion>
+                        $<$<COMPILE_LANGUAGE:CXX>:-Wextra-semi>)
+  endif()
+endfunction()
 
 # Address Sanitizer
 option(ENABLE_ASAN "Enable Address Sanitizer" OFF)

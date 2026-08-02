@@ -1,4 +1,5 @@
 add_executable(test_heap heap_test.cpp)
+demo_jvm_enable_warnings(test_heap)
 target_link_libraries(test_heap PRIVATE jvm_memory jvm_classfile GTest::gtest_main)
 
 # compile testing .java files to .class files

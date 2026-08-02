@@ -1,5 +1,6 @@
 add_library(jvm_classfile STATIC class_file_parser.cpp constant_pool.cpp
                                  attributes.cpp members.cpp class_loader.cpp)
+demo_jvm_enable_warnings(jvm_classfile)
 target_link_libraries(
   jvm_classfile
   PUBLIC jvm_utilities
