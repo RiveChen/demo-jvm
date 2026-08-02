@@ -9,7 +9,7 @@ add_subdirectory(runtime)
 add_subdirectory(engine)
 
 add_executable(demo-jvm main.cpp)
-demo_jvm_enable_warnings(demo-jvm)
+demo_jvm_configure_target(demo-jvm)
 
 target_link_libraries(demo-jvm PRIVATE jvm_classfile jvm_engine)
 

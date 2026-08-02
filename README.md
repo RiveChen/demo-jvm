@@ -28,15 +28,20 @@ A teaching JVM 8 implementation written in modern C++20, built to learn the JVM 
 ## Quick Start
 
 ```sh
-# Configure + build (default Debug, no sanitizers)
-cmake --preset default
-cmake --build build
+# Configure + build the development preset
+cmake --preset dev
+cmake --build --preset dev
 
 # Run all tests
-ctest --test-dir build --output-on-failure
+ctest --preset dev
 
 # Run HelloWorld
-./build/bin/demo-jvm build/test_classes tests.data.java.HelloWorld
+./build/dev/bin/demo-jvm build/dev/test_classes tests.data.java.HelloWorld
+
+# Optimized build
+cmake --preset release
+cmake --build --preset release
+ctest --preset release
 ```
 
 ## Sanitizers (UBSan / ASan)
@@ -45,18 +50,17 @@ Enable via [CMakePresets.json](CMakePresets.json):
 
 ```sh
 # UndefinedBehaviorSanitizer
-cmake --preset ubsan && cmake --build build
-ctest --test-dir build --output-on-failure
+cmake --preset ubsan
+cmake --build --preset ubsan
+ctest --preset ubsan
 
 # AddressSanitizer
-cmake --preset asan && cmake --build build
-ctest --test-dir build --output-on-failure
-
-# Both
-cmake --preset asan-ubsan && cmake --build build
+cmake --preset asan
+cmake --build --preset asan
+ctest --preset asan
 ```
 
-> All presets share the `build/` directory; switching presets only reconfigures (seconds) and incrementally rebuilds affected files.
+Each preset has an isolated directory under `build/<preset>`.
 
 ## Developer Toolchain
 
@@ -65,16 +69,17 @@ cmake --preset asan-ubsan && cmake --build build
 | CMake Tools (VSCode extension) | Configure/build/test                     | `.vscode/settings.json`, `CMakePresets.json`            |
 | clangd                         | Completion, navigation, live diagnostics | `.clangd`, `.clang-tidy`                                |
 | clang-tidy                     | Static analysis                          | `.clang-tidy`                                           |
-| clang-format                   | Code formatting                          | `.clang-format` (`cmake --build build --target format`) |
+| clang-format                   | Code formatting                          | `.clang-format` (`cmake --build build/dev --target format`) |
 | C++ TestMate                   | GoogleTest discovery (Testing panel)     | `.vscode/settings.json`                                 |
 
-`compile_commands.json` is generated in `build/` for clangd / clang-tidy.
+`compile_commands.json` is generated in each `build/<preset>/` directory for clangd / clang-tidy.
 
 ## Quality Gates
 
 ```sh
-cmake --build build                # compile with -Wall -Wextra -Wpedantic -Wshadow -Wconversion
-cmake --build build --target check-format   # format check
-cmake --preset ubsan               # UBSan full test suite
-cmake --preset asan                # ASan full test suite
+cmake --build --preset dev
+cmake --build build/dev --target check-format
+cmake --build --preset release
+cmake --build --preset asan && ctest --preset asan
+cmake --build --preset ubsan && ctest --preset ubsan
 ```

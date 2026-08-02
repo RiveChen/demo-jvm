@@ -2,13 +2,29 @@
   "version": 8,
   "configurePresets": [
     {
-      "name": "base-debug",
+      "name": "base-common",
       "hidden": true,
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
+        "BUILD_TESTING": "ON",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "base-debug",
+      "hidden": true,
+      "inherits": "base-common",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "base-release",
+      "hidden": true,
+      "inherits": "base-common",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
       }
     },
     {
@@ -44,53 +60,73 @@
       }
     },
     {
-      "name": "linux-gcc-debug",
-      "displayName": "Linux GCC · Debug · CI",
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Linux"
-      },
-      "inherits": ["base-debug", "san-none"],
-      "cacheVariables": {
-        "CMAKE_CXX_COMPILER": "g++"
-      }
+      "name": "dev",
+      "displayName": "Development",
+      "description": "Debug build with tests and no sanitizers.",
+      "inherits": ["base-debug", "san-none"]
     },
     {
-      "name": "linux-gcc-debug-asan-ubsan",
-      "displayName": "Linux GCC · Debug · ASan + UBSan · CI",
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Linux"
-      },
-      "inherits": ["base-debug", "san-asan-ubsan"],
-      "cacheVariables": {
-        "CMAKE_CXX_COMPILER": "g++"
-      }
+      "name": "release",
+      "displayName": "Release",
+      "description": "Optimized release build with tests.",
+      "inherits": ["base-release", "san-none"]
+    },
+    {
+      "name": "asan",
+      "displayName": "AddressSanitizer",
+      "description": "Debug build instrumented with AddressSanitizer.",
+      "inherits": ["base-debug", "san-asan"]
+    },
+    {
+      "name": "ubsan",
+      "displayName": "UndefinedBehaviorSanitizer",
+      "description": "Debug build instrumented with UndefinedBehaviorSanitizer.",
+      "inherits": ["base-debug", "san-ubsan"]
     }
   ],
   "buildPresets": [
     {
-      "name": "linux-gcc-debug",
-      "configurePreset": "linux-gcc-debug"
+      "name": "dev",
+      "configurePreset": "dev"
     },
     {
-      "name": "linux-gcc-debug-asan-ubsan",
-      "configurePreset": "linux-gcc-debug-asan-ubsan"
+      "name": "release",
+      "configurePreset": "release"
+    },
+    {
+      "name": "asan",
+      "configurePreset": "asan"
+    },
+    {
+      "name": "ubsan",
+      "configurePreset": "ubsan"
     }
   ],
   "testPresets": [
     {
-      "name": "linux-gcc-debug",
-      "configurePreset": "linux-gcc-debug",
+      "name": "dev",
+      "configurePreset": "dev",
       "output": {
         "outputOnFailure": true
       }
     },
     {
-      "name": "linux-gcc-debug-asan-ubsan",
-      "configurePreset": "linux-gcc-debug-asan-ubsan",
+      "name": "release",
+      "configurePreset": "release",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "asan",
+      "configurePreset": "asan",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "ubsan",
+      "configurePreset": "ubsan",
       "output": {
         "outputOnFailure": true
       }

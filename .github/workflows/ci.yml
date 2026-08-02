@@ -10,9 +10,16 @@ on:
   workflow_dispatch:
 
 jobs:
-  # Core gate: Debug build + full test suite (403 tests).
+  # Core gates exercise the same stable presets used by developers.
   build-and-test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        preset: [dev, release]
+    env:
+      CC: gcc
+      CXX: g++
     steps:
       - uses: actions/checkout@v4
 
@@ -20,18 +27,24 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y ninja-build default-jdk
 
       - name: Configure
-        run: cmake --preset linux-gcc-debug
+        run: cmake --preset ${{ matrix.preset }}
 
       - name: Build
-        run: cmake --build --preset linux-gcc-debug -j$(nproc)
+        run: cmake --build --preset ${{ matrix.preset }} -j$(nproc)
 
       - name: Test
-        run: ctest --preset linux-gcc-debug
+        run: ctest --preset ${{ matrix.preset }}
 
-  # Memory + undefined-behavior gate: ASan + UBSan build.
-  # Runs only on PRs and main to keep pushes on throwaway branches cheap.
+  # Keep sanitizer failures isolated so the failing runtime is unambiguous.
   sanitizers:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        preset: [asan, ubsan]
+    env:
+      CC: gcc
+      CXX: g++
     steps:
       - uses: actions/checkout@v4
 
@@ -39,10 +52,10 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y ninja-build default-jdk
 
       - name: Configure
-        run: cmake --preset linux-gcc-debug-asan-ubsan
+        run: cmake --preset ${{ matrix.preset }}
 
       - name: Build
-        run: cmake --build --preset linux-gcc-debug-asan-ubsan -j$(nproc)
+        run: cmake --build --preset ${{ matrix.preset }} -j$(nproc)
 
       - name: Test
-        run: ctest --preset linux-gcc-debug-asan-ubsan
+        run: ctest --preset ${{ matrix.preset }}

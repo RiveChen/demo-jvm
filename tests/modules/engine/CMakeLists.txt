@@ -17,7 +17,7 @@ function(add_interpreter_test name)
   set(target "test_interpreter_${name}")
 
   add_executable(${target} "interpreter_${name}_test.cpp")
-  demo_jvm_enable_warnings(${target})
+  demo_jvm_configure_target(${target})
 
   target_link_libraries(
     ${target}

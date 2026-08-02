@@ -6,6 +6,8 @@ project(
   DESCRIPTION "A C++ implementation of JVM"
   LANGUAGES CXX)
 
+include(CTest)
+
 if("${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
   message(
     FATAL_ERROR
@@ -21,14 +23,9 @@ if("${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
     ")
 endif()
 
-# Modern CMake: Set C++ standard per target instead of globally
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF) # Turn off C++ extensions to avoid compatibility issues
-
 # Print the active C++ compiler (useful when switching presets/toolchains)
 message(STATUS "C++ Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION} (${CMAKE_CXX_COMPILER})")
-message(STATUS "C++ Standard: C++${CMAKE_CXX_STANDARD}")
+message(STATUS "C++ Standard: C++20 (target compile feature)")
 
 # Generate compile_commands.json for clang-tidy and IDE support
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -38,71 +35,93 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-# Project warning options. Apply these explicitly to first-party targets so
-# dependencies added through FetchContent do not inherit the project's lint
-# policy.
-function(demo_jvm_enable_warnings target)
-  if(MSVC)
-    target_compile_options(
-      ${target} PRIVATE $<$<COMPILE_LANGUAGE:CXX>:/W4>
-                        $<$<COMPILE_LANGUAGE:CXX>:/permissive->)
-  else()
-    target_compile_options(
-      ${target} PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-Wall>
-                        $<$<COMPILE_LANGUAGE:CXX>:-Wextra>
-                        $<$<COMPILE_LANGUAGE:CXX>:-Wpedantic>
-                        $<$<COMPILE_LANGUAGE:CXX>:-Wconversion>
-                        $<$<COMPILE_LANGUAGE:CXX>:-Wextra-semi>)
-  endif()
-endfunction()
-
-# Address Sanitizer
 option(ENABLE_ASAN "Enable Address Sanitizer" OFF)
-if(ENABLE_ASAN AND NOT MSVC)
-  message(STATUS "Address Sanitizer Enabled")
-  add_compile_options(-fsanitize=address -fno-omit-frame-pointer -g)
-  add_link_options(-fsanitize=address)
+option(ENABLE_UBSAN "Enable Undefined Behavior Sanitizer" OFF)
+
+# First-party targets opt into one shared target-level build strategy. Third-party
+# dependencies added through FetchContent do not inherit these requirements.
+add_library(demo_jvm_build_options INTERFACE)
+target_compile_features(demo_jvm_build_options INTERFACE cxx_std_20)
+
+if(MSVC)
+  target_compile_options(
+    demo_jvm_build_options
+    INTERFACE $<$<COMPILE_LANGUAGE:CXX>:/W4>
+              $<$<COMPILE_LANGUAGE:CXX>:/permissive->)
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang|AppleClang)$")
+  target_compile_options(
+    demo_jvm_build_options
+    INTERFACE $<$<COMPILE_LANGUAGE:CXX>:-Wall>
+              $<$<COMPILE_LANGUAGE:CXX>:-Wextra>
+              $<$<COMPILE_LANGUAGE:CXX>:-Wpedantic>
+              $<$<COMPILE_LANGUAGE:CXX>:-Wconversion>
+              $<$<COMPILE_LANGUAGE:CXX>:-Wextra-semi>)
+else()
+  message(WARNING "No warning policy is defined for ${CMAKE_CXX_COMPILER_ID}")
 endif()
 
-# Undefined Behavior Sanitizer
-option(ENABLE_UBSAN "Enable Undefined Behavior Sanitizer" OFF)
-if(ENABLE_UBSAN AND NOT MSVC)
+if(ENABLE_ASAN OR ENABLE_UBSAN)
+  if(NOT CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang|AppleClang)$")
+    message(FATAL_ERROR "The configured compiler does not support this project's sanitizer flags")
+  endif()
+
+  target_compile_options(
+    demo_jvm_build_options INTERFACE -fno-omit-frame-pointer)
+endif()
+
+if(ENABLE_ASAN)
+  message(STATUS "Address Sanitizer Enabled")
+  target_compile_options(demo_jvm_build_options INTERFACE -fsanitize=address)
+  target_link_options(demo_jvm_build_options INTERFACE -fsanitize=address)
+endif()
+
+if(ENABLE_UBSAN)
   message(STATUS "Undefined Behavior Sanitizer Enabled")
   # NOTE: No -fno-sanitize-recover here on purpose.
   # With recovery enabled, UBSan reports violations to stderr and lets the
   # process continue, so all tests within one executable still run to
   # completion instead of aborting at the first violation (SIGABRT).
-  add_compile_options(-fsanitize=undefined -fno-omit-frame-pointer -g)
-  add_link_options(-fsanitize=undefined)
+  target_compile_options(demo_jvm_build_options INTERFACE -fsanitize=undefined)
+  target_link_options(demo_jvm_build_options INTERFACE -fsanitize=undefined)
 endif()
 
-# GoogleTest Integration
-include(FetchContent)
-FetchContent_Declare(
-  googletest
-  GIT_REPOSITORY https://github.com/google/googletest.git
-  GIT_TAG v1.17.0)
+function(demo_jvm_configure_target target)
+  if(NOT TARGET ${target})
+    message(FATAL_ERROR "Cannot configure unknown target: ${target}")
+  endif()
 
-# For Windows: Prevent overriding the parent project's compiler/linker settings
-set(gtest_force_shared_crt
-    ON
-    CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(googletest)
+  set_target_properties(${target} PROPERTIES CXX_EXTENSIONS OFF)
+  target_link_libraries(${target} PRIVATE demo_jvm_build_options)
+endfunction()
 
-# Add subdirectories
+# Production targets are always available.
 add_subdirectory(src)
 
-# Enable testing
-enable_testing()
-add_subdirectory(tests)
+if(BUILD_TESTING)
+  # Test-only dependencies and targets stay out of production-only builds.
+  include(FetchContent)
+  FetchContent_Declare(
+    googletest
+    GIT_REPOSITORY https://github.com/google/googletest.git
+    GIT_TAG v1.17.0)
 
-# Add a custom target to run all tests
-add_custom_target(
-  test_all
-  COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure --progress
-  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-  COMMENT "Running all tests (with output on failure)..."
-  USES_TERMINAL)
+  # For Windows: Prevent overriding the parent project's compiler/linker settings.
+  if(MSVC)
+    set(gtest_force_shared_crt
+        ON
+        CACHE BOOL "" FORCE)
+  endif()
+
+  FetchContent_MakeAvailable(googletest)
+  add_subdirectory(tests)
+
+  add_custom_target(
+    test_all
+    COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure --progress
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    COMMENT "Running all tests (with output on failure)..."
+    USES_TERMINAL)
+endif()
 
 # Format all C++ source files with clang-format
 file(
