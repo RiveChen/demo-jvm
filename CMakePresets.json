@@ -2,100 +2,139 @@
   "version": 8,
   "configurePresets": [
     {
-      "name": "default",
-      "displayName": "Default (no sanitizers)",
-      "description": "Standard build without sanitizers.",
+      "name": "base-debug",
+      "hidden": true,
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build",
+      "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}"
+      }
+    },
+
+    {
+      "name": "toolchain-apple-clang",
+      "hidden": true,
+      "inherits": "base-debug",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "/usr/bin/clang",
+        "CMAKE_CXX_COMPILER": "/usr/bin/clang++"
+      }
+    },
+    {
+      "name": "toolchain-homebrew-llvm",
+      "hidden": true,
+      "inherits": "base-debug",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "/opt/homebrew/opt/llvm/bin/clang",
+        "CMAKE_CXX_COMPILER": "/opt/homebrew/opt/llvm/bin/clang++"
+      }
+    },
+    {
+      "name": "toolchain-homebrew-gcc",
+      "hidden": true,
+      "inherits": "base-debug",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "/opt/homebrew/bin/aarch64-apple-darwin25-gcc-16",
+        "CMAKE_CXX_COMPILER": "/opt/homebrew/bin/aarch64-apple-darwin25-g++-16"
+      }
+    },
+
+    {
+      "name": "san-none",
+      "hidden": true,
+      "cacheVariables": {
         "ENABLE_ASAN": "OFF",
         "ENABLE_UBSAN": "OFF"
       }
     },
     {
-      "name": "asan",
-      "displayName": "AddressSanitizer",
-      "description": "Build with AddressSanitizer enabled.",
-      "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build",
+      "name": "san-asan",
+      "hidden": true,
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
         "ENABLE_ASAN": "ON",
         "ENABLE_UBSAN": "OFF"
       }
     },
     {
-      "name": "ubsan",
-      "displayName": "UndefinedBehaviorSanitizer",
-      "description": "Build with UndefinedBehaviorSanitizer enabled.",
-      "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build",
+      "name": "san-ubsan",
+      "hidden": true,
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
         "ENABLE_ASAN": "OFF",
         "ENABLE_UBSAN": "ON"
       }
     },
     {
-      "name": "asan-ubsan",
-      "displayName": "ASan + UBSan",
-      "description": "Build with both AddressSanitizer and UndefinedBehaviorSanitizer enabled.",
-      "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build",
+      "name": "san-asan-ubsan",
+      "hidden": true,
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
         "ENABLE_ASAN": "ON",
         "ENABLE_UBSAN": "ON"
       }
-    }
-  ],
-  "buildPresets": [
+    },
+
     {
-      "name": "default",
-      "configurePreset": "default"
+      "name": "apple-clang-debug",
+      "displayName": "Apple Clang · Debug",
+      "inherits": ["toolchain-apple-clang", "san-none"]
     },
     {
-      "name": "asan",
-      "configurePreset": "asan"
+      "name": "apple-clang-debug-asan",
+      "displayName": "Apple Clang · Debug · ASan",
+      "inherits": ["toolchain-apple-clang", "san-asan"]
     },
     {
-      "name": "ubsan",
-      "configurePreset": "ubsan"
+      "name": "apple-clang-debug-ubsan",
+      "displayName": "Apple Clang · Debug · UBSan",
+      "inherits": ["toolchain-apple-clang", "san-ubsan"]
     },
     {
-      "name": "asan-ubsan",
-      "configurePreset": "asan-ubsan"
-    }
-  ],
-  "testPresets": [
+      "name": "apple-clang-debug-asan-ubsan",
+      "displayName": "Apple Clang · Debug · ASan + UBSan",
+      "inherits": ["toolchain-apple-clang", "san-asan-ubsan"]
+    },
+
     {
-      "name": "default",
-      "configurePreset": "default",
-      "output": {
-        "outputOnFailure": true
-      }
+      "name": "homebrew-llvm-debug",
+      "displayName": "Homebrew LLVM · Debug",
+      "inherits": ["toolchain-homebrew-llvm", "san-none"]
     },
     {
-      "name": "asan",
-      "configurePreset": "asan",
-      "output": {
-        "outputOnFailure": true
-      }
+      "name": "homebrew-llvm-debug-asan",
+      "displayName": "Homebrew LLVM · Debug · ASan",
+      "inherits": ["toolchain-homebrew-llvm", "san-asan"]
     },
     {
-      "name": "ubsan",
-      "configurePreset": "ubsan",
-      "output": {
-        "outputOnFailure": true
-      }
+      "name": "homebrew-llvm-debug-ubsan",
+      "displayName": "Homebrew LLVM · Debug · UBSan",
+      "inherits": ["toolchain-homebrew-llvm", "san-ubsan"]
     },
     {
-      "name": "asan-ubsan",
-      "configurePreset": "asan-ubsan",
-      "output": {
-        "outputOnFailure": true
-      }
+      "name": "homebrew-llvm-debug-asan-ubsan",
+      "displayName": "Homebrew LLVM · Debug · ASan + UBSan",
+      "inherits": ["toolchain-homebrew-llvm", "san-asan-ubsan"]
+    },
+
+    {
+      "name": "homebrew-gcc-debug",
+      "displayName": "Homebrew GCC · Debug",
+      "inherits": ["toolchain-homebrew-gcc", "san-none"]
+    },
+    {
+      "name": "homebrew-gcc-debug-asan",
+      "displayName": "Homebrew GCC · Debug · ASan",
+      "inherits": ["toolchain-homebrew-gcc", "san-asan"]
+    },
+    {
+      "name": "homebrew-gcc-debug-ubsan",
+      "displayName": "Homebrew GCC · Debug · UBSan",
+      "inherits": ["toolchain-homebrew-gcc", "san-ubsan"]
+    },
+    {
+      "name": "homebrew-gcc-debug-asan-ubsan",
+      "displayName": "Homebrew GCC · Debug · ASan + UBSan",
+      "inherits": ["toolchain-homebrew-gcc", "san-asan-ubsan"]
     }
   ]
 }

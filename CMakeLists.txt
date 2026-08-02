@@ -24,8 +24,7 @@ endif()
 # Modern CMake: Set C++ standard per target instead of globally
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF) # Turn off C++ extensions to avoid compatibility
-                              # issues
+set(CMAKE_CXX_EXTENSIONS OFF) # Turn off C++ extensions to avoid compatibility issues
 
 # Print the active C++ compiler (useful when switching presets/toolchains)
 message(STATUS "C++ Compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION} (${CMAKE_CXX_COMPILER})")
@@ -43,7 +42,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 if(MSVC)
   add_compile_options(/W4 /permissive-)
 else()
-  add_compile_options(-Wall -Wextra -Wpedantic -Wshadow -Wconversion)
+  add_compile_options(-Wall -Wextra -Wpedantic -Wconversion) # -Wshadow
 endif()
 
 # Address Sanitizer
@@ -89,7 +88,7 @@ add_subdirectory(tests)
 # Add a custom target to run all tests
 add_custom_target(
   test_all
-  COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure --progress # --parallel 8
+  COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure --progress
   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
   COMMENT "Running all tests (with output on failure)..."
   USES_TERMINAL)

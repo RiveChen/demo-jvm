@@ -19,41 +19,48 @@
 # -----------------------------------------------------------
 Diagnostics:
   Suppress:
-    - "readability-identifier-length"
-    - "misc-use-anonymous-namespace"
-    - "modernize-use-nodiscard"
-    - "cppcoreguidelines-pro-type-static-cast-downcast"
+  - "readability-identifier-length"
+  - "misc-use-anonymous-namespace"
+  - "modernize-use-nodiscard"
+  - "cppcoreguidelines-pro-type-static-cast-downcast"
   # Fine-tune clang-tidy behavior within clangd
   ClangTidy:
-    FastCheckFilter: None
+    FastCheckFilter: Loose
     Remove:
-      - bugprone-easily-swappable-parameters
-      - cppcoreguidelines-pro-type-union-access
-      - cppcoreguidelines-avoid-c-arrays
-      - cppcoreguidelines-pro-type-static-cast-downcast
-      - cppcoreguidelines-avoid-magic-numbers
-      - portability-avoid-pragma-once
-      - misc-non-private-member-variables-in-classes
-      - misc-no-recursion
-      - misc-use-anonymous-namespace
-      - modernize-use-trailing-return-type
-      - modernize-use-nodiscard
-      - readability-identifier-length
-      - google-*
-      - llvmlibc-*
-      - fuchsia-*
-      - android-*
-      - zircon-*
-      - abseil-*
-      - darwin-*
-      - objc-*
+    - bugprone-easily-swappable-parameters
+    - cppcoreguidelines-pro-type-union-access
+    - cppcoreguidelines-avoid-c-arrays
+    - cppcoreguidelines-pro-type-static-cast-downcast
+    - cppcoreguidelines-avoid-magic-numbers
+    # - portability-avoid-pragma-once
+    - misc-non-private-member-variables-in-classes
+    - misc-no-recursion
+    - misc-use-anonymous-namespace
+    - modernize-use-trailing-return-type
+    - modernize-use-nodiscard
+    - readability-identifier-length
+    - google-*
+    - llvmlibc-*
+    - fuchsia-*
+    - android-*
+    - zircon-*
+    - abseil-*
+    - darwin-*
+    - objc-*
+---
 
 # -----------------------------------------------------------
 # Suppress ALL warnings in third-party dependencies
 # (googletest fetched via FetchContent into build/_deps/)
 # -----------------------------------------------------------
+
 If:
-  PathMatch: build/_deps/.*
+  PathMatch: '(^|.*/)_deps/.*'
+
+Diagnostics:
+  Suppress: '*'
+  ClangTidy:
+    Remove: '*'
 
 CompileFlags:
-  Add: [-w]
+  Add: [ -w ]
